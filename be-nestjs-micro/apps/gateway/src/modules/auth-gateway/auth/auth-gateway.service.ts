@@ -1,0 +1,59 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { catchError, firstValueFrom, throwError } from 'rxjs';
+import { LoginRequestDto } from './dto/request/login.request.dto';
+import { RegisterRequestDto } from './dto/request/register.dto';
+import { LoginResultDto } from '@app/contracts/iam/auth/results/login.result.dto';
+import { RegisterResultDto } from '@app/contracts/iam/auth/results/register.result.dto';
+import { LoginCommandDto } from '@app/contracts/iam/auth/commands/login.command.dto';
+import { RegisterCommandDto } from '@app/contracts/iam/auth/commands/register.command.dto';
+import { IAM_PATTERNS } from '@app/messaging/constants/patterns.constant';
+import { mapRpcErrorToHttpException } from '@app/common/utils/map-rpc-error-to-http.utils';
+
+@Injectable()
+export class AuthGatewayService {
+  constructor(
+    @Inject('IAM_SERVICE')
+    private readonly iamClient: ClientProxy,
+  ) {}
+
+  async login(payload: LoginRequestDto): Promise<LoginResultDto> {
+    const command: LoginCommandDto = {
+      email: payload.email,
+      password: payload.password,
+    };
+    return firstValueFrom(
+      this.iamClient
+        .send<LoginResultDto, LoginCommandDto>(IAM_PATTERNS.LOGIN, command)
+        .pipe(
+          catchError((error: unknown) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
+    );
+  }
+
+  async register(payload: RegisterRequestDto): Promise<RegisterResultDto> {
+    const command: RegisterCommandDto = {
+      email: payload.email,
+      password: payload.password,
+      fullName: payload.fullName,
+    };
+    return firstValueFrom(
+      this.iamClient
+        .send<
+          RegisterResultDto,
+          RegisterCommandDto
+        >(IAM_PATTERNS.REGISTER, command)
+        .pipe(
+          catchError((error: unknown) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
+    );
+  }
+
+  // async getProfile(userId: string) {
+  //   return firstValueFrom(this.iamClient.send('iam.profile.get', { userId }));
+  // }
+}

@@ -1,0 +1,58 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../generated/catalog"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+model Category {
+    id          String  @id @default(uuid()) @db.Uuid
+    name        String  @unique @db.VarChar(120)
+    slug        String  @unique @db.VarChar(140)
+    description String? @db.Text
+    image       String? @db.VarChar(255)
+    isActive    Boolean @default(true)
+    sortOrder   Int     @default(0)
+
+    menuItems MenuItem[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    // deletedAt DateTime?
+
+    @@index([name])
+    @@index([sortOrder])
+    @@index([isActive])
+    @@map("categories")
+}
+
+model MenuItem {
+    id          String  @id @default(uuid()) @db.Uuid
+    name        String  @db.VarChar(150)
+    slug        String  @unique @db.VarChar(180)
+    description String? @db.Text
+
+    /// scale: 0 = không có số lẻ, hợp giá VNĐ
+    price Decimal @db.Decimal(10, 0)
+
+    image       String? @db.VarChar(255)
+    sku         String? @unique @db.VarChar(50)
+    isActive    Boolean @default(true)
+    isAvailable Boolean @default(true)
+    sortOrder   Int     @default(0)
+
+    categoryId String   @db.Uuid
+    category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    // deletedAt DateTime?
+
+    @@index([name])
+    @@index([categoryId])
+    @@index([sortOrder])
+    @@index([isActive])
+    @@map("menu_items")
+}
