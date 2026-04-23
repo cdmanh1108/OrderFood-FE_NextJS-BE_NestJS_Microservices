@@ -1,8 +1,10 @@
 import type {
   CreateMenuItemRequest,
   DeleteMenuItemResponse,
+  GetMenuItemsRequest,
   ListMenuItemsRequest,
   MenuItemApiModel,
+  MenuItemSimpleApiModel,
   PaginatedMenuItemsResponse,
   SetMenuItemActiveRequest,
   UpdateMenuItemRequest,
@@ -16,6 +18,16 @@ export const menuItemApi = {
     return httpService.get<PaginatedMenuItemsResponse>(MENU_ITEM_ENDPOINT, {
       params: query,
     });
+  },
+
+  menu(query?: GetMenuItemsRequest): Promise<MenuItemSimpleApiModel[]> {
+    return httpService.get<MenuItemSimpleApiModel[]>(`${MENU_ITEM_ENDPOINT}/menu`, {
+      params: query,
+    });
+  },
+
+  featured(): Promise<MenuItemSimpleApiModel[]> {
+    return httpService.get<MenuItemSimpleApiModel[]>(`${MENU_ITEM_ENDPOINT}/featured`);
   },
 
   getById(id: string): Promise<MenuItemApiModel> {

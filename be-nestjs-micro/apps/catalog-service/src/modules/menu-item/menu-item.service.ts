@@ -4,8 +4,10 @@ import { CatalogPrismaService } from '@app/database/catalog-prisma.service';
 import { ERRORS } from '@app/common/constants/error-code.constant';
 import { CreateMenuItemCommand } from '@app/contracts/catalog/menu-item/commands/create-menu-item.command';
 import { UpdateMenuItemCommand } from '@app/contracts/catalog/menu-item/commands/update-menu-item.command';
+import { GetMenuItemsQuery } from '@app/contracts/catalog/menu-item/commands/get-menu-items.query';
 import { ListMenuItemsQuery } from '@app/contracts/catalog/menu-item/commands/list-menu-items.query';
 import { MenuItemDetailResult } from '@app/contracts/catalog/menu-item/results/menu-item-detail.result';
+import { MenuItemSimpleResult } from '@app/contracts/catalog/menu-item/results/menu-item-simple.result';
 import { PaginatedMenuItemsResult } from '@app/contracts/catalog/menu-item/results/paginated-menu-items.result';
 import { DeleteMenuItemResult } from '@app/contracts/catalog/menu-item/results/delete-menu-item.result';
 import { ConfigService } from '@nestjs/config';
@@ -185,6 +187,61 @@ export class MenuItemService {
     };
   }
 
+  async findMenu(query: GetMenuItemsQuery): Promise<MenuItemSimpleResult[]> {
+    const limit = query.limit && query.limit > 0 ? Math.min(query.limit, 200) : 100;
+
+    const items = await this.prisma.menuItem.findMany({
+      where: {
+        isActive: true,
+        ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+        ...(query.keyword
+          ? {
+              OR: [
+                {
+                  name: {
+                    contains: query.keyword,
+                    mode: 'insensitive' as const,
+                  },
+                },
+                {
+                  slug: {
+                    contains: query.keyword,
+                    mode: 'insensitive' as const,
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: {
+        sortOrder: 'asc',
+      },
+      take: limit,
+    });
+
+    return items.map((item) => this.toMenuItemSimpleResult(item));
+  }
+
+  async findFeatured(limit = 3): Promise<MenuItemSimpleResult[]> {
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 10) : 3;
+
+    const items = await this.prisma.menuItem.findMany({
+      where: {
+        isActive: true,
+        isAvailable: true,
+        sortOrder: {
+          in: [0, 1, 2],
+        },
+      },
+      orderBy: {
+        sortOrder: 'asc',
+      },
+      take: safeLimit,
+    });
+
+    return items.map((item) => this.toMenuItemSimpleResult(item));
+  }
+
   async setActive(id: string, isActive: boolean): Promise<MenuItemDetailResult> {
     const current = await this.prisma.menuItem.findUnique({ where: { id } });
 
@@ -295,6 +352,20 @@ export class MenuItemService {
       sortOrder: menuItem.sortOrder,
       createdAt: menuItem.createdAt,
       updatedAt: menuItem.updatedAt,
+    };
+  }
+
+  private toMenuItemSimpleResult(menuItem: {
+    name: string;
+    description: string | null;
+    image: string | null;
+    price: { toNumber(): number };
+  }): MenuItemSimpleResult {
+    return {
+      name: menuItem.name,
+      description: menuItem.description,
+      image: this.resolveImageUrl(menuItem.image),
+      price: menuItem.price.toNumber(),
     };
   }
 

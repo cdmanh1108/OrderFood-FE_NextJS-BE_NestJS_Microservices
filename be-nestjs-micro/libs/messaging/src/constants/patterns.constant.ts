@@ -33,6 +33,8 @@ export const CATALOG_PATTERNS = {
   UPDATE_MENU_ITEM: 'catalog.menu_item.update',
   GET_MENU_ITEM_DETAIL: 'catalog.menu_item.get_detail',
   LIST_MENU_ITEMS: 'catalog.menu_item.list',
+  GET_MENU_ITEMS: 'catalog.menu_item.menu',
+  GET_FEATURED_MENU_ITEMS: 'catalog.menu_item.featured',
   SET_MENU_ITEM_ACTIVE: 'catalog.menu_item.set_active',
   DELETE_MENU_ITEM: 'catalog.menu_item.delete',
 } as const;

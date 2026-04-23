@@ -16,6 +16,13 @@ export interface MenuItemApiModel {
   updatedAt: string;
 }
 
+export interface MenuItemSimpleApiModel {
+  image?: string | null;
+  name: string;
+  description?: string | null;
+  price: number;
+}
+
 export interface CreateMenuItemRequest {
   name: string;
   slug: string;
@@ -54,6 +61,12 @@ export interface ListMenuItemsRequest {
   limit?: number;
   sortBy?: "createdAt" | "name" | "price" | "sortOrder";
   sortOrder?: SortDirection;
+}
+
+export interface GetMenuItemsRequest {
+  keyword?: string;
+  categoryId?: string;
+  limit?: number;
 }
 
 export interface PaginatedMenuItemsResponse {

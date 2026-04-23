@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { UtensilsCrossed, Mail, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
+import Image from "next/image";
 import { Input } from "../../components/shared/Input";
 import { PasswordInput } from "../../components/shared/PasswordInput";
 import { Button } from "../../components/shared/Button";
@@ -65,7 +66,14 @@ export default function LoginPage() {
         <div className="bg-white rounded-[var(--radius-card)] shadow-[var(--shadow-wood)] overflow-hidden">
           <div className="bg-gradient-to-br from-brand-yellow to-brand-amber px-8 py-10 text-center">
             <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-white shadow-lg">
-              <UtensilsCrossed className="text-brand-brown" size={32} />
+              <Image
+                src="/images/logo.jpg"
+                alt="Bún đậu làng mơ logo"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+                priority
+              />
             </div>
             <h1 className="text-2xl font-bold text-brand-brown mb-2">
               Bún Đậu Làng Mơ

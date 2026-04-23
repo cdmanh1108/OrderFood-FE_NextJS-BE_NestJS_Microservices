@@ -1,11 +1,12 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { UtensilsCrossed, ShoppingCart } from 'lucide-react';
-import { cn } from '../../../utils/cn';
-import { Button } from '../shared/Button';
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { ShoppingCart } from "lucide-react";
+import { cn } from "../../../utils/cn";
+import { Button } from "../shared/Button";
 
 interface PublicHeaderProps {
   cartItemsCount?: number;
@@ -22,24 +23,35 @@ export function PublicHeader({ cartItemsCount = 0 }: PublicHeaderProps) {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-lg bg-gradient-to-br from-brand-yellow to-brand-amber shadow-sm">
-              <UtensilsCrossed className="text-brand-brown" size={24} />
+            <div className="flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-lg bg-white shadow-sm overflow-hidden">
+              <Image
+                src="/images/logo.jpg"
+                alt="Bún đậu làng mơ logo"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+                priority
+              />
             </div>
             <div>
-              <h1 className="text-lg lg:text-xl font-semibold text-brand-brown">Bún Đậu Làng Mơ</h1>
-              <p className="text-xs text-brand-gray-500 hidden sm:block">Hương vị truyền thống Hà Nội</p>
+              <h1 className="text-lg lg:text-xl font-semibold text-brand-brown">
+                Bún Đậu Làng Mơ
+              </h1>
+              <p className="text-xs text-brand-gray-500 hidden sm:block">
+                Hương vị truyền thống Hà Nội
+              </p>
             </div>
           </Link>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-              <Link
+            <Link
               href="/"
               className={cn(
-                'text-sm font-medium transition-colors',
-                isActive('/')
-                  ? 'text-brand-brown'
-                  : 'text-brand-gray-600 hover:text-brand-brown'
+                "text-sm font-medium transition-colors",
+                isActive("/")
+                  ? "text-brand-brown"
+                  : "text-brand-gray-600 hover:text-brand-brown",
               )}
             >
               Trang Chủ
@@ -47,10 +59,10 @@ export function PublicHeader({ cartItemsCount = 0 }: PublicHeaderProps) {
             <Link
               href="/menu"
               className={cn(
-                'text-sm font-medium transition-colors',
-                isActive('/menu')
-                  ? 'text-brand-brown'
-                  : 'text-brand-gray-600 hover:text-brand-brown'
+                "text-sm font-medium transition-colors",
+                isActive("/menu")
+                  ? "text-brand-brown"
+                  : "text-brand-gray-600 hover:text-brand-brown",
               )}
             >
               Thực Đơn
@@ -71,12 +83,20 @@ export function PublicHeader({ cartItemsCount = 0 }: PublicHeaderProps) {
               )}
             </Link>
             <Link href="/login">
-              <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex"
+              >
                 Đăng Nhập
               </Button>
             </Link>
             <Link href="/signup">
-              <Button variant="primary" size="sm" className="hidden sm:inline-flex">
+              <Button
+                variant="primary"
+                size="sm"
+                className="hidden sm:inline-flex"
+              >
                 Đăng Ký
               </Button>
             </Link>
