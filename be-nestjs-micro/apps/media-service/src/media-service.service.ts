@@ -1,6 +1,6 @@
 ﻿import { Injectable } from '@nestjs/common';
 import { CreateUploadUrlCommand } from '@app/contracts/media/commands/create-upload-url.command';
-import { UploadUrlResult } from '@app/contracts/media/result/upload-url.result';
+import { UploadUrlResult } from '@app/contracts/media/results/upload-url.result';
 import { MediaUrlBuilder } from './providers/media-url.builder';
 import { S3Provider } from './providers/s3.provider';
 

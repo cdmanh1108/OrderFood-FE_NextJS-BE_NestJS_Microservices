@@ -1,0 +1,8 @@
+export enum FulfillmentStatus {
+  NONE = 'NONE',
+  PREPARING = 'PREPARING',
+  READY_FOR_PICKUP = 'READY_FOR_PICKUP',
+  SHIPPING = 'SHIPPING',
+  DELIVERED = 'DELIVERED',
+  FAILED = 'FAILED',
+}

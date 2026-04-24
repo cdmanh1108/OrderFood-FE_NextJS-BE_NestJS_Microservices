@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { CreateUploadUrlRequestDto } from './dto/request/create-upload-url.request.dto';
 import { RMQ_SERVICES } from '@app/messaging/constants/services.constants';
-import { UploadUrlResult } from '@app/contracts/media/result/upload-url.result';
+import { UploadUrlResult } from '@app/contracts/media/results/upload-url.result';
 import { CreateUploadUrlCommand } from '@app/contracts/media/commands/create-upload-url.command';
 import { MEDIA_PATTERNS } from '@app/messaging/constants/patterns.constant';
 

@@ -104,7 +104,9 @@ export default function CustomerMenuPage() {
   } = useCart();
   const { setError: setErrorStatus, setSuccess } = useUIStore();
 
-  const [categories, setCategories] = useState<MenuCategorySimpleApiModel[]>([]);
+  const [categories, setCategories] = useState<MenuCategorySimpleApiModel[]>(
+    [],
+  );
   const [menuItems, setMenuItems] = useState<MenuItemSimpleApiModel[]>([]);
 
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY_ID);
@@ -214,12 +216,20 @@ export default function CustomerMenuPage() {
     });
   };
 
-  const handleAddToCart = (item: MenuItemSimpleApiModel) => {
+  const handleAddToCart = async (item: MenuItemSimpleApiModel) => {
     const quantity = getSelectedQuantity(item.id);
     const cartMenuItem = mapMenuCardToCartMenuItem(item, selectedCategory);
 
-    addItem(cartMenuItem, quantity);
-    setSuccess(`Đã thêm ${quantity} x ${item.name} vào giỏ hàng`);
+    try {
+      await addItem(cartMenuItem, quantity);
+      setSuccess(`Đã thêm ${quantity} x ${item.name} vào giỏ hàng`);
+    } catch (error) {
+      setErrorStatus(
+        error instanceof Error
+          ? error.message
+          : "Khong the them mon vao gio hang",
+      );
+    }
   };
 
   const handleStartEditAddress = () => {
@@ -253,7 +263,7 @@ export default function CustomerMenuPage() {
 
     try {
       await new Promise((resolve) => window.setTimeout(resolve, 900));
-      clearCart();
+      await clearCart();
       setIsCartModalOpen(false);
       setSuccess("Đặt hàng thành công (mock). Bạn có thể kết nối API sau.");
     } finally {
@@ -424,7 +434,7 @@ export default function CustomerMenuPage() {
                     type="button"
                     className="w-full"
                     variant="secondary"
-                    onClick={() => handleAddToCart(item)}
+                    onClick={() => void handleAddToCart(item)}
                   >
                     Thêm vào giỏ
                   </Button>
@@ -631,7 +641,15 @@ export default function CustomerMenuPage() {
 
                         <button
                           type="button"
-                          onClick={() => removeItem(item.menuItem.id)}
+                          onClick={() =>
+                            void removeItem(item.menuItem.id).catch((error) => {
+                              setErrorStatus(
+                                error instanceof Error
+                                  ? error.message
+                                  : "Khong the xoa mon khoi gio hang",
+                              );
+                            })
+                          }
                           className="rounded-lg p-2 text-brand-gray-400 transition hover:bg-red-50 hover:text-red-500"
                         >
                           <Trash2 size={16} />
@@ -643,10 +661,16 @@ export default function CustomerMenuPage() {
                           <button
                             type="button"
                             onClick={() =>
-                              updateQuantity(
+                              void updateQuantity(
                                 item.menuItem.id,
                                 item.quantity - 1,
-                              )
+                              ).catch((error) => {
+                                setErrorStatus(
+                                  error instanceof Error
+                                    ? error.message
+                                    : "Khong the cap nhat so luong mon",
+                                );
+                              })
                             }
                             disabled={item.quantity <= 1}
                             className="px-2 py-1.5 text-brand-gray-600 transition hover:bg-brand-gray-100 disabled:opacity-40"
@@ -659,10 +683,16 @@ export default function CustomerMenuPage() {
                           <button
                             type="button"
                             onClick={() =>
-                              updateQuantity(
+                              void updateQuantity(
                                 item.menuItem.id,
                                 item.quantity + 1,
-                              )
+                              ).catch((error) => {
+                                setErrorStatus(
+                                  error instanceof Error
+                                    ? error.message
+                                    : "Khong the cap nhat so luong mon",
+                                );
+                              })
                             }
                             className="px-2 py-1.5 text-brand-gray-600 transition hover:bg-brand-gray-100"
                           >
@@ -679,7 +709,16 @@ export default function CustomerMenuPage() {
                         className="mt-3"
                         value={item.note ?? ""}
                         onChange={(event) =>
-                          updateNotes(item.menuItem.id, event.target.value)
+                          void updateNotes(
+                            item.menuItem.id,
+                            event.target.value,
+                          ).catch((error) => {
+                            setErrorStatus(
+                              error instanceof Error
+                                ? error.message
+                                : "Khong the cap nhat ghi chu mon",
+                            );
+                          })
                         }
                         placeholder="Ghi chú cho món này (không bắt buộc)"
                       />

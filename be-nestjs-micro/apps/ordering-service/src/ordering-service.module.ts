@@ -1,10 +1,18 @@
 import { Module } from '@nestjs/common';
-import { OrderingServiceController } from './ordering-service.controller';
-import { OrderingServiceService } from './ordering-service.service';
+import { ConfigModule } from '@nestjs/config';
+import { OrderingPrismaModule } from '@app/database/ordering-prisma.module';
+import { LoggerModule } from '@app/logger';
+import { CartModule } from './modules/cart/cart.module';
 
 @Module({
-  imports: [],
-  controllers: [OrderingServiceController],
-  providers: [OrderingServiceService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env.ordering-service',
+    }),
+    LoggerModule,
+    OrderingPrismaModule,
+    CartModule,
+  ],
 })
 export class OrderingServiceModule {}

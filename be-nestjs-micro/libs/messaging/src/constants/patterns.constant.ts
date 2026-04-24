@@ -45,10 +45,33 @@ export const CATALOG_PATTERNS = {
 // ORDERING SERVICE
 // ======================
 export const ORDERING_PATTERNS = {
-  CREATE_ORDER: 'ordering.create_order',
-  GET_ORDER_DETAIL: 'ordering.get_order_detail',
-  LIST_ORDERS: 'ordering.list_orders',
-  CANCEL_ORDER: 'ordering.cancel_order',
+  // Address
+  CREATE_ADDRESS: 'ordering.address.create',
+  UPDATE_ADDRESS: 'ordering.address.update',
+  GET_ADDRESS_DETAIL: 'ordering.address.get_detail',
+  LIST_ADDRESSES: 'ordering.address.list',
+  SET_DEFAULT_ADDRESS: 'ordering.address.set_default',
+  DELETE_ADDRESS: 'ordering.address.delete',
+
+  // Cart
+  GET_ACTIVE_CART: 'ordering.cart.get_active',
+  ADD_CART_ITEM: 'ordering.cart.add_item',
+  UPDATE_CART_ITEM: 'ordering.cart.update_item',
+  REMOVE_CART_ITEM: 'ordering.cart.remove_item',
+  SET_CART_ADDRESS: 'ordering.cart.set_address',
+  SET_CART_NOTE: 'ordering.cart.set_note',
+  CLEAR_CART: 'ordering.cart.clear',
+
+  // Checkout
+  PREVIEW_CHECKOUT: 'ordering.checkout.preview',
+  PLACE_ORDER: 'ordering.checkout.place_order',
+  CREATE_ORDER: 'ordering.checkout.place_order',
+
+  // Order
+  GET_ORDER_DETAIL: 'ordering.order.get_detail',
+  LIST_ORDERS: 'ordering.order.list',
+  CANCEL_ORDER: 'ordering.order.cancel',
+  UPDATE_ORDER_STATUS: 'ordering.order.update_status',
 } as const;
 
 // ======================

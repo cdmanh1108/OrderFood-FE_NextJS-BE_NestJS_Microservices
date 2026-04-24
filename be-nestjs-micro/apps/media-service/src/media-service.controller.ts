@@ -7,7 +7,7 @@ import {
 } from '@nestjs/microservices';
 import { MEDIA_PATTERNS } from '@app/messaging/constants/patterns.constant';
 import type { CreateUploadUrlCommand } from '@app/contracts/media/commands/create-upload-url.command';
-import { UploadUrlResult } from '@app/contracts/media/result/upload-url.result';
+import { UploadUrlResult } from '@app/contracts/media/results/upload-url.result';
 import { handleRpcMessage } from '@app/common/rmq/rpc-message.helper';
 import { MediaService } from './media-service.service';
 

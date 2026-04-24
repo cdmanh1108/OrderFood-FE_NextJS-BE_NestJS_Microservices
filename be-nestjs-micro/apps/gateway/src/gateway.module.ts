@@ -6,6 +6,7 @@ import { MediaGatewayModule } from './modules/media-gateway/media-gateway.module
 import { CatalogGatewayModule } from './modules/catalog-gateway/catalog-gateway.module';
 import { LoggerModule } from '@app/logger';
 import { UserGatewayModule } from './modules/auth-gateway/user/user-gateway.module';
+import { OrderingGatewayModule } from './modules/ordering-gateway/ordering-gateway.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UserGatewayModule } from './modules/auth-gateway/user/user-gateway.modu
     UserGatewayModule,
     CatalogGatewayModule,
     MediaGatewayModule,
+    OrderingGatewayModule,
   ],
   controllers: [GatewayController],
 })

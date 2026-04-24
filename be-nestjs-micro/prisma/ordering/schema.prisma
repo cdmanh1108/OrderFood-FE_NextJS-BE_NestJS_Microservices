@@ -55,7 +55,7 @@ enum FulfillmentStatus {
 
 model Address {
     id     String @id @default(uuid()) @db.Uuid
-    userId String @db.Uuid
+    userId String @db.VarChar(30)
 
     receiverName  String @db.VarChar(120)
     receiverPhone String @db.VarChar(20)
@@ -83,7 +83,7 @@ model Address {
 
 model Cart {
     id     String  @id @default(uuid()) @db.Uuid
-    userId String? @db.Uuid
+    userId String? @db.VarChar(30)
 
     channel OrderChannel
     source  OrderSource
@@ -159,7 +159,7 @@ model Order {
     id   String @id @default(uuid()) @db.Uuid
     code String @unique @db.VarChar(50)
 
-    userId String? @db.Uuid
+    userId String? @db.VarChar(30)
 
     channel OrderChannel
     source  OrderSource
