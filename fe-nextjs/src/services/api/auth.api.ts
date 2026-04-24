@@ -1,4 +1,5 @@
 import type {
+  AuthUser,
   AuthFlowResponse,
   LoginRequest,
   RegisterRequest,
@@ -29,6 +30,18 @@ export const authApi = {
     return httpService.post<AuthFlowResponse, VerifyEmailRequest>(
       `${AUTH_ENDPOINT}/verify-email`,
       payload,
+      { skipAuth: true },
+    );
+  },
+
+  me(): Promise<AuthUser | null> {
+    return httpService.get<AuthUser | null>(`${AUTH_ENDPOINT}/me`);
+  },
+
+  logout(): Promise<{ loggedOut: boolean }> {
+    return httpService.post<{ loggedOut: boolean }>(
+      `${AUTH_ENDPOINT}/logout`,
+      undefined,
       { skipAuth: true },
     );
   },

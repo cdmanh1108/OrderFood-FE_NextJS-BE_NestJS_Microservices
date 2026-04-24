@@ -11,16 +11,16 @@ import {
   User as UserIcon,
   Lock,
 } from "lucide-react";
-import { DashboardLayout } from "../../../components/layout/DashboardLayout";
-import { Button } from "../../../components/shared/Button";
-import { Input } from "../../../components/shared/Input";
-import { PasswordInput } from "../../../components/shared/PasswordInput";
-import { Modal } from "../../../components/shared/Modal";
-import { Badge } from "../../../components/shared/Badge";
-import { DataTable, Column } from "../../../components/shared/DataTable";
-import { ConfirmDialog } from "../../../components/shared/ConfirmDialog";
-import { formatDate } from "../../../../utils/cn";
-import { useUIStore } from "../../../../stores/ui-store";
+import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
+import { Button } from "@/app/components/shared/Button";
+import { Input } from "@/app/components/shared/Input";
+import { PasswordInput } from "@/app/components/shared/PasswordInput";
+import { Modal } from "@/app/components/shared/Modal";
+import { Badge } from "@/app/components/shared/Badge";
+import { DataTable, Column } from "@/app/components/shared/DataTable";
+import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
+import { formatDate } from "@/utils/cn";
+import { useUIStore } from "@/stores/ui-store";
 import { staffUserApi } from "@/services/api";
 import type { StaffUserApiModel } from "@/types/api";
 

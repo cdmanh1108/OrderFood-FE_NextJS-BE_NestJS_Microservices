@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { Save } from 'lucide-react';
-import { DashboardLayout } from '../../../components/layout/DashboardLayout';
-import { Button } from '../../../components/shared/Button';
-import { Input } from '../../../components/shared/Input';
-import { Alert } from '../../../components/shared/Alert';
-import { mockSettings } from '../../../../services/mock-data';
-import type { RestaurantSettings } from '../../../../types';
+import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
+import { Button } from "@/app/components/shared/Button";
+import { Input } from "@/app/components/shared/Input";
+import { Alert } from "@/app/components/shared/Alert";
+import { mockSettings } from "@/services/mock-data";
+import type { RestaurantSettings } from "@/types";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<RestaurantSettings>(mockSettings);

@@ -1,11 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { authApi } from "@/services/api";
-import {
-  clearAuthSession,
-  getAuthSession,
-  setAuthSession,
-} from "@/services/http";
-import type { AuthFlowResponse, AuthSession, AuthUser } from "@/types/api";
+import type { AuthUser } from "@/types/api";
 import { UserRole } from "../types";
 import type { AuthContextType, LoginCredentials, User } from "../types";
 
@@ -35,34 +30,32 @@ function mapAuthUserToAppUser(authUser: AuthUser): User {
   };
 }
 
-function toVerifiedSession(response: AuthFlowResponse): AuthSession | null {
-  if (!response.isEmailVerified) {
-    return null;
-  }
-
-  if (!response.accessToken || !response.refreshToken) {
-    throw new Error("Phan hoi dang nhap khong hop le");
-  }
-
-  return {
-    accessToken: response.accessToken,
-    refreshToken: response.refreshToken,
-    user: response.user,
-  };
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const session = getAuthSession();
-    if (session?.user) {
-      setUser(mapAuthUserToAppUser(session.user));
+  const loadCurrentUser = useCallback(async (): Promise<AuthUser | null> => {
+    try {
+      return await authApi.me();
+    } catch {
+      return null;
     }
-
-    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      setIsLoading(true);
+
+      try {
+        const currentUser = await loadCurrentUser();
+        setUser(currentUser ? mapAuthUserToAppUser(currentUser) : null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void initializeAuth();
+  }, [loadCurrentUser]);
 
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
@@ -73,10 +66,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password: credentials.password,
       });
 
-      const session = toVerifiedSession(response);
-      if (session) {
-        setAuthSession(session);
-        setUser(mapAuthUserToAppUser(session.user));
+      if (response.isEmailVerified) {
+        const currentUser = await loadCurrentUser();
+        setUser(currentUser ? mapAuthUserToAppUser(currentUser) : null);
+      } else {
+        setUser(null);
       }
 
       return {
@@ -89,7 +83,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    clearAuthSession();
+
+    void authApi.logout().catch(() => {
+      // ignore logout network errors on client state reset
+    });
   };
 
   const value: AuthContextType = {

@@ -1,30 +1,36 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { DashboardLayout } from '../../../components/layout/DashboardLayout';
-import { Button } from '../../../components/shared/Button';
-import { Input } from '../../../components/shared/Input';
-import { Modal } from '../../../components/shared/Modal';
-import { Badge } from '../../../components/shared/Badge';
-import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
-import { mockTables } from '../../../../services/mock-data';
-import type { Table } from '../../../../types';
-import { TableStatus } from '../../../../types';
+import React, { useState } from "react";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
+import { Button } from "@/app/components/shared/Button";
+import { Input } from "@/app/components/shared/Input";
+import { Modal } from "@/app/components/shared/Modal";
+import { Badge } from "@/app/components/shared/Badge";
+import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
+import { mockTables } from "@/services/mock-data";
+import type { Table } from "@/types";
+import { TableStatus } from "@/types";
 
 export default function TablesPage() {
   const [tables, setTables] = useState<Table[]>(mockTables);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [deletingTable, setDeletingTable] = useState<Table | null>(null);
-  const [formData, setFormData] = useState({ number: '', seats: 4 });
+  const [formData, setFormData] = useState({ number: "", seats: 4 });
 
   const getStatusBadge = (status: TableStatus) => {
     const config = {
-      [TableStatus.AVAILABLE]: { variant: 'success' as const, label: 'Còn trống' },
-      [TableStatus.OCCUPIED]: { variant: 'danger' as const, label: 'Đang sử dụng' },
-      [TableStatus.RESERVED]: { variant: 'warning' as const, label: 'Đã đặt' },
-      [TableStatus.CLEANING]: { variant: 'info' as const, label: 'Đang dọn' },
+      [TableStatus.AVAILABLE]: {
+        variant: "success" as const,
+        label: "Còn trống",
+      },
+      [TableStatus.OCCUPIED]: {
+        variant: "danger" as const,
+        label: "Đang sử dụng",
+      },
+      [TableStatus.RESERVED]: { variant: "warning" as const, label: "Đã đặt" },
+      [TableStatus.CLEANING]: { variant: "info" as const, label: "Đang dọn" },
     };
     return config[status];
   };
@@ -37,8 +43,8 @@ export default function TablesPage() {
         tables.map((table) =>
           table.id === editingTable.id
             ? { ...table, ...formData, updatedAt: new Date().toISOString() }
-            : table
-        )
+            : table,
+        ),
       );
       setEditingTable(null);
     } else {
@@ -53,7 +59,7 @@ export default function TablesPage() {
       setIsCreateModalOpen(false);
     }
 
-    setFormData({ number: '', seats: 4 });
+    setFormData({ number: "", seats: 4 });
   };
 
   return (
@@ -64,7 +70,9 @@ export default function TablesPage() {
             <h1 className="text-2xl lg:text-3xl font-bold text-brand-brown mb-2">
               Quản Lý Bàn Ăn
             </h1>
-            <p className="text-brand-gray-600">Quản lý trạng thái và thông tin bàn ăn</p>
+            <p className="text-brand-gray-600">
+              Quản lý trạng thái và thông tin bàn ăn
+            </p>
           </div>
           <Button
             variant="primary"
@@ -88,13 +96,15 @@ export default function TablesPage() {
                     <h3 className="text-2xl font-bold text-brand-brown mb-1">
                       {table.number}
                     </h3>
-                    <p className="text-sm text-brand-gray-600">{table.seats} chỗ ngồi</p>
+                    <p className="text-sm text-brand-gray-600">
+                      {table.seats} chỗ ngồi
+                    </p>
                   </div>
                   <Badge variant={badge.variant} size="sm">
                     {badge.label}
                   </Badge>
                 </div>
-                
+
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -128,9 +138,9 @@ export default function TablesPage() {
         onClose={() => {
           setIsCreateModalOpen(false);
           setEditingTable(null);
-          setFormData({ number: '', seats: 4 });
+          setFormData({ number: "", seats: 4 });
         }}
-        title={editingTable ? 'Sửa Bàn Ăn' : 'Thêm Bàn Ăn Mới'}
+        title={editingTable ? "Sửa Bàn Ăn" : "Thêm Bàn Ăn Mới"}
         footer={
           <>
             <Button
@@ -142,8 +152,12 @@ export default function TablesPage() {
             >
               Hủy
             </Button>
-            <Button variant="primary" onClick={handleSave} disabled={!formData.number}>
-              {editingTable ? 'Cập Nhật' : 'Tạo Mới'}
+            <Button
+              variant="primary"
+              onClick={handleSave}
+              disabled={!formData.number}
+            >
+              {editingTable ? "Cập Nhật" : "Tạo Mới"}
             </Button>
           </>
         }
@@ -153,7 +167,9 @@ export default function TablesPage() {
             label="Số Bàn"
             placeholder="Nhập số bàn (VD: B01)"
             value={formData.number}
-            onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, number: e.target.value })
+            }
             required
           />
           <Input
@@ -161,7 +177,9 @@ export default function TablesPage() {
             type="number"
             min="1"
             value={formData.seats.toString()}
-            onChange={(e) => setFormData({ ...formData, seats: parseInt(e.target.value) || 1 })}
+            onChange={(e) =>
+              setFormData({ ...formData, seats: parseInt(e.target.value) || 1 })
+            }
             required
           />
         </div>

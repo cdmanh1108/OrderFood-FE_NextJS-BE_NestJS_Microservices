@@ -1,19 +1,28 @@
-import React from 'react';
-import { TrendingUp, ShoppingBag, DollarSign, Table } from 'lucide-react';
-import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { Badge } from '../../components/shared/Badge';
-import { mockDashboardStats } from '../../../services/mock-data';
-import { formatCurrency, formatDateTime } from '../../../utils/cn';
-import { OrderStatus } from '../../../types';
+import React from "react";
+import { TrendingUp, ShoppingBag, DollarSign, Table } from "lucide-react";
+import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
+import { Badge } from "@/app/components/shared/Badge";
+import { mockDashboardStats } from "@/services/mock-data";
+import { formatCurrency, formatDateTime } from "@/utils/cn";
+import { OrderStatus } from "@/types";
 
 const getOrderStatusBadge = (status: OrderStatus) => {
   const config = {
-    [OrderStatus.PENDING]: { variant: 'warning' as const, label: 'Chờ xác nhận' },
-    [OrderStatus.CONFIRMED]: { variant: 'info' as const, label: 'Đã xác nhận' },
-    [OrderStatus.PREPARING]: { variant: 'warning' as const, label: 'Đang chuẩn bị' },
-    [OrderStatus.READY]: { variant: 'success' as const, label: 'Sẵn sàng' },
-    [OrderStatus.COMPLETED]: { variant: 'success' as const, label: 'Hoàn thành' },
-    [OrderStatus.CANCELLED]: { variant: 'danger' as const, label: 'Đã hủy' },
+    [OrderStatus.PENDING]: {
+      variant: "warning" as const,
+      label: "Chờ xác nhận",
+    },
+    [OrderStatus.CONFIRMED]: { variant: "info" as const, label: "Đã xác nhận" },
+    [OrderStatus.PREPARING]: {
+      variant: "warning" as const,
+      label: "Đang chuẩn bị",
+    },
+    [OrderStatus.READY]: { variant: "success" as const, label: "Sẵn sàng" },
+    [OrderStatus.COMPLETED]: {
+      variant: "success" as const,
+      label: "Hoàn thành",
+    },
+    [OrderStatus.CANCELLED]: { variant: "danger" as const, label: "Đã hủy" },
   };
 
   return config[status];
@@ -112,7 +121,10 @@ export default function DashboardPage() {
             <div className="p-6">
               <div className="space-y-4">
                 {stats.topSellingItems.map((item, index) => (
-                  <div key={item.menuItem.id} className="flex items-center gap-4">
+                  <div
+                    key={item.menuItem.id}
+                    className="flex items-center gap-4"
+                  >
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-yellow/20 font-bold text-brand-brown">
                       #{index + 1}
                     </div>
@@ -147,7 +159,10 @@ export default function DashboardPage() {
                 {stats.recentOrders.map((order) => {
                   const badgeConfig = getOrderStatusBadge(order.status);
                   return (
-                    <div key={order.id} className="flex items-start gap-4 pb-4 border-b border-brand-gray-100 last:border-0 last:pb-0">
+                    <div
+                      key={order.id}
+                      className="flex items-start gap-4 pb-4 border-b border-brand-gray-100 last:border-0 last:pb-0"
+                    >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-medium text-brand-brown">
@@ -158,7 +173,8 @@ export default function DashboardPage() {
                           </Badge>
                         </div>
                         <p className="text-sm text-brand-gray-600">
-                          {order.table?.number || 'Mang về'} • {formatDateTime(order.createdAt)}
+                          {order.table?.number || "Mang về"} •{" "}
+                          {formatDateTime(order.createdAt)}
                         </p>
                       </div>
                       <div className="text-right">

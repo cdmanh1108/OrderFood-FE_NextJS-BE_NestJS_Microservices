@@ -1,16 +1,16 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
-import { DashboardLayout } from "../../../components/layout/DashboardLayout";
-import { Button } from "../../../components/shared/Button";
-import { Input } from "../../../components/shared/Input";
-import { Modal } from "../../../components/shared/Modal";
-import { Badge } from "../../../components/shared/Badge";
-import { DataTable, Column } from "../../../components/shared/DataTable";
-import { ConfirmDialog } from "../../../components/shared/ConfirmDialog";
-import { useUIStore } from "../../../../stores/ui-store";
-import { formatDate, toSlug } from "../../../../utils/cn";
+import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
+import { Button } from "@/app/components/shared/Button";
+import { Input } from "@/app/components/shared/Input";
+import { Modal } from "@/app/components/shared/Modal";
+import { Badge } from "@/app/components/shared/Badge";
+import { DataTable, Column } from "@/app/components/shared/DataTable";
+import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
+import { useUIStore } from "@/stores/ui-store";
+import { formatDate, toSlug } from "@/utils/cn";
 import { categoryApi } from "@/services/api";
 import type {
   CategoryApiModel,

@@ -2,15 +2,15 @@
 
 import React, { useState } from 'react';
 import { Search, Eye } from 'lucide-react';
-import { DashboardLayout } from '../../../components/layout/DashboardLayout';
-import { Input } from '../../../components/shared/Input';
-import { Badge } from '../../../components/shared/Badge';
-import { DataTable, Column } from '../../../components/shared/DataTable';
-import { Button } from '../../../components/shared/Button';
-import { mockOrders } from '../../../../services/mock-data';
-import { formatCurrency, formatDateTime } from '../../../../utils/cn';
-import type { Order } from '../../../../types';
-import { OrderStatus, PaymentStatus } from '../../../../types';
+import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
+import { Input } from "@/app/components/shared/Input";
+import { Badge } from "@/app/components/shared/Badge";
+import { DataTable, Column } from "@/app/components/shared/DataTable";
+import { Button } from "@/app/components/shared/Button";
+import { mockOrders } from "@/services/mock-data";
+import { formatCurrency, formatDateTime } from "@/utils/cn";
+import type { Order } from "@/types";
+import { OrderStatus, PaymentStatus } from "@/types";
 
 export default function OrdersPage() {
   const [orders] = useState<Order[]>(mockOrders);

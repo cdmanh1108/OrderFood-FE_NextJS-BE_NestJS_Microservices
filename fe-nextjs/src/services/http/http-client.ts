@@ -1,11 +1,9 @@
 import axios, {
   AxiosError,
   AxiosResponse,
-  InternalAxiosRequestConfig,
   type AxiosRequestConfig,
 } from "axios";
 import type { ApiEnvelope, ApiErrorEnvelope } from "@/types/api";
-import { getAccessToken } from "./auth-storage";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api/v1";
@@ -36,24 +34,10 @@ export class ApiClientError extends Error {
 const httpClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: DEFAULT_TIMEOUT_MS,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
-});
-
-httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const mutableConfig = config as InternalAxiosRequestConfig & {
-    skipAuth?: boolean;
-  };
-
-  if (!mutableConfig.skipAuth) {
-    const accessToken = getAccessToken();
-    if (accessToken) {
-      mutableConfig.headers.Authorization = `Bearer ${accessToken}`;
-    }
-  }
-
-  return mutableConfig;
 });
 
 httpClient.interceptors.response.use(

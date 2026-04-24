@@ -1,9 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { decodeJwtPayload, isExpired } from "@/utils/jwt";
-import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 
-export default async function PrivateLayout({
+export default async function AdminStaffLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -21,5 +20,10 @@ export default async function PrivateLayout({
     redirect("/login");
   }
 
-  return <ProtectedRoute>{children}</ProtectedRoute>;
+  if (payload.role !== "ADMIN" && payload.role !== "STAFF") {
+    redirect("/");
+  }
+
+  return <>{children}</>;
 }
+
