@@ -11,7 +11,7 @@ import { DataTable, Column } from "@/app/components/shared/DataTable";
 import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
 import { useUIStore } from "@/stores/ui-store";
 import { formatCurrency, toSlug } from "@/utils/cn";
-import { resolveImageContentType } from "../../../../../../utils/media";
+import { resolveImageContentType } from "../../../../../utils/media";
 import { categoryApi, mediaApi, menuItemApi } from "@/services/api";
 import {
   MenuItemApiModel,
@@ -693,4 +693,3 @@ export default function MenuItemPage() {
     </>
   );
 }
-

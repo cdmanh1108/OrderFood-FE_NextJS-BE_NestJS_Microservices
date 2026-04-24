@@ -19,32 +19,32 @@ const adminSidebarItems: SidebarItem[] = [
   },
   {
     label: "Nhân viên",
-    path: "/admin/dashboard/staff",
+    path: "/admin/staff",
     icon: Users,
   },
   {
     label: "Danh mục",
-    path: "/admin/dashboard/category",
+    path: "/admin/category",
     icon: FolderTree,
   },
   {
     label: "Món ăn",
-    path: "/admin/dashboard/menu-item",
+    path: "/admin/menu-item",
     icon: UtensilsCrossed,
   },
   {
     label: "Bàn ăn",
-    path: "/admin/dashboard/tables",
+    path: "/admin/tables",
     icon: Table,
   },
   {
     label: "Đơn hàng",
-    path: "/admin/dashboard/orders",
+    path: "/admin/orders",
     icon: ShoppingBag,
   },
   {
     label: "Cài đặt",
-    path: "/admin/dashboard/settings",
+    path: "/admin/settings",
     icon: Settings,
   },
 ];
