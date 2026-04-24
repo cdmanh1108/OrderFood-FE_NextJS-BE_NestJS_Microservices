@@ -7,9 +7,8 @@ export interface VerifyEmailResultDto {
   user: {
     id: string;
     email: string;
-    fullName: string | null;
+    fullName: string;
     role: UserRole;
     isEmailVerified: boolean;
   };
 }
-

@@ -30,6 +30,11 @@ export class CategoryCatalogGatewayController {
     return this.categoryCatalogService.findAll(query);
   }
 
+  @Get('menu-categories')
+  findMenuCategories() {
+    return this.categoryCatalogService.findMenuCategories();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.categoryCatalogService.findOne(id);
@@ -41,10 +46,7 @@ export class CategoryCatalogGatewayController {
   }
 
   @Patch(':id/active')
-  setActive(
-    @Param('id') id: string,
-    @Body() dto: SetCategoryActiveRequestDto,
-  ) {
+  setActive(@Param('id') id: string, @Body() dto: SetCategoryActiveRequestDto) {
     return this.categoryCatalogService.setActive(id, dto);
   }
 

@@ -12,6 +12,12 @@ export interface CategoryApiModel {
   updatedAt: string;
 }
 
+export interface MenuCategorySimpleApiModel {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface CreateCategoryRequest {
   name: string;
   slug: string;

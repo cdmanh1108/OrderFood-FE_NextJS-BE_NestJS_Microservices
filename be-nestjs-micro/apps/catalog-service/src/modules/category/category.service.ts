@@ -8,10 +8,15 @@ import { ListCategoriesQuery } from '@app/contracts/catalog/category/commands/li
 import { CategoryDetailResult } from '@app/contracts/catalog/category/results/category-detail.result';
 import { PaginatedCategoriesResult } from '@app/contracts/catalog/category/results/paginated-categories.result';
 import { DeleteCategoryResult } from '@app/contracts/catalog/category/results/delete-category.result';
+import { MenuCategorySimpleResult } from '@app/contracts/catalog/menu-item/results/menu-category-simple.result';
+import { CatalogCacheService } from '../cache/catalog-cache.service';
 
 @Injectable()
 export class CategoryService {
-  constructor(private readonly prisma: CatalogPrismaService) {}
+  constructor(
+    private readonly prisma: CatalogPrismaService,
+    private readonly catalogCacheService: CatalogCacheService,
+  ) {}
 
   async create(command: CreateCategoryCommand): Promise<CategoryDetailResult> {
     const existedBySlug = await this.prisma.category.findUnique({
@@ -46,6 +51,8 @@ export class CategoryService {
         isActive: command.isActive ?? true,
       },
     });
+
+    await this.catalogCacheService.clearMenuCategoriesCache();
 
     return this.toCategoryDetailResult(created);
   }
@@ -118,6 +125,8 @@ export class CategoryService {
       where: { id },
       data,
     });
+
+    await this.catalogCacheService.clearMenuCategoriesCache();
 
     return this.toCategoryDetailResult(updated);
   }
@@ -192,6 +201,42 @@ export class CategoryService {
     };
   }
 
+  async findMenuCategories(): Promise<MenuCategorySimpleResult[]> {
+    const cached = await this.catalogCacheService.getMenuCategories();
+    if (cached !== null) {
+      return cached;
+    }
+
+    const categories = await this.prisma.category.findMany({
+      where: {
+        isActive: true,
+        menuItems: {
+          some: {
+            isActive: true,
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+      orderBy: {
+        sortOrder: 'asc',
+      },
+    });
+
+    const result = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+    }));
+
+    await this.catalogCacheService.setMenuCategories(result);
+
+    return result;
+  }
+
   async setActive(
     id: string,
     isActive: boolean,
@@ -209,6 +254,8 @@ export class CategoryService {
       where: { id },
       data: { isActive },
     });
+
+    await this.catalogCacheService.clearMenuCategoriesCache();
 
     return this.toCategoryDetailResult(updated);
   }
@@ -235,6 +282,7 @@ export class CategoryService {
     }
 
     await this.prisma.category.delete({ where: { id } });
+    await this.catalogCacheService.clearMenuCategoriesCache();
 
     return {
       id,

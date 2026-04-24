@@ -3,6 +3,7 @@ import type {
   CreateCategoryRequest,
   DeleteCategoryResponse,
   ListCategoriesRequest,
+  MenuCategorySimpleApiModel,
   PaginatedCategoriesResponse,
   SetCategoryActiveRequest,
   UpdateCategoryRequest,
@@ -16,6 +17,12 @@ export const categoryApi = {
     return httpService.get<PaginatedCategoriesResponse>(CATEGORY_ENDPOINT, {
       params: query,
     });
+  },
+
+  menuCategories(): Promise<MenuCategorySimpleApiModel[]> {
+    return httpService.get<MenuCategorySimpleApiModel[]>(
+      `${CATEGORY_ENDPOINT}/menu-categories`,
+    );
   },
 
   getById(id: string): Promise<CategoryApiModel> {

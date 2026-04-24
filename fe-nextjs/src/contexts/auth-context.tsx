@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { authApi } from "@/services/api";
 import type { AuthUser } from "@/types/api";
 import { UserRole } from "../types";
@@ -21,7 +27,7 @@ function mapRoleToUserRole(role?: AuthUser["role"]): UserRole {
 function mapAuthUserToAppUser(authUser: AuthUser): User {
   return {
     id: authUser.id,
-    name: authUser.fullName ?? authUser.email,
+    name: authUser.fullName,
     email: authUser.email,
     phone: "",
     role: mapRoleToUserRole(authUser.role),

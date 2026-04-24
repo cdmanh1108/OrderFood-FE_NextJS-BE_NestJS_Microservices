@@ -25,6 +25,7 @@ export const CATALOG_PATTERNS = {
   UPDATE_CATEGORY: 'catalog.category.update',
   GET_CATEGORY_DETAIL: 'catalog.category.get_detail',
   LIST_CATEGORIES: 'catalog.category.list',
+  GET_MENU_CATEGORIES: 'catalog.category.menu_categories',
   SET_CATEGORY_ACTIVE: 'catalog.category.set_active',
   DELETE_CATEGORY: 'catalog.category.delete',
   FIND_CATEGORY: 'catalog.category.find-one',

@@ -18,27 +18,27 @@ const userSidebarItems: SidebarItem[] = [
   },
   {
     label: "Đặt món online",
-    path: "order-food",
+    path: "/order-food",
     icon: ShoppingBag,
   },
   {
     label: "Lịch sử đơn hàng",
-    path: "order-history",
+    path: "/order-history",
     icon: History,
   },
   {
     label: "Thông tin cá nhân",
-    path: "profile",
+    path: "/profile",
     icon: User,
   },
   {
     label: "Đánh giá",
     icon: MessageSquare,
-    path: "order-review",
+    path: "/order-review",
   },
   {
     label: "Hỗ trợ",
-    path: "support",
+    path: "/support",
     icon: Headset,
   },
 ];

@@ -102,7 +102,7 @@ export class AuthGatewayController {
     return {
       id: user.sub,
       email: user.email,
-      fullName: null,
+      fullName: user.fullName,
       role: user.role,
       isEmailVerified: true,
     };

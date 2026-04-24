@@ -8,23 +8,17 @@ import { Button } from "../../components/shared/Button";
 import { Input } from "../../components/shared/Input";
 import { formatCurrency } from "../../../utils/cn";
 import { categoryApi, menuItemApi } from "@/services/api";
-import type { CategoryApiModel, MenuItemSimpleApiModel } from "@/types/api";
+import type {
+  MenuCategorySimpleApiModel,
+  MenuItemSimpleApiModel,
+} from "@/types/api";
 
 type CategoryFilter = "all" | string;
 
 type PublicCartItem = {
-  key: string;
   menuItem: MenuItemSimpleApiModel;
   quantity: number;
 };
-
-const getMenuItemKey = (item: MenuItemSimpleApiModel): string =>
-  [
-    item.name.trim().toLowerCase(),
-    item.price.toString(),
-    item.image ?? "",
-    item.description ?? "",
-  ].join("::");
 
 export default function MenuPage() {
   const router = useRouter();
@@ -36,7 +30,7 @@ export default function MenuPage() {
 
   const [keyword, setKeyword] = useState("");
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
-  const [categories, setCategories] = useState<CategoryApiModel[]>([]);
+  const [categories, setCategories] = useState<MenuCategorySimpleApiModel[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItemSimpleApiModel[]>([]);
   const [cart, setCart] = useState<PublicCartItem[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -47,14 +41,8 @@ export default function MenuPage() {
     setIsLoadingCategories(true);
 
     try {
-      const response = await categoryApi.list({
-        isActive: true,
-        page: 1,
-        limit: 100,
-        sortBy: "sortOrder",
-        sortOrder: "asc",
-      });
-      setCategories(response.items);
+      const response = await categoryApi.menuCategories();
+      setCategories(response);
       setErrorMessage(null);
     } catch (error) {
       setErrorMessage(
@@ -160,52 +148,52 @@ export default function MenuPage() {
     loadMenuItems,
   ]);
 
-  const addToCart = (menuItemKey: string) => {
+  const addToCart = (menuItemId: string) => {
     const selectedMenuItem =
-      menuItems.find((item) => getMenuItemKey(item) === menuItemKey) ??
-      cart.find((item) => item.key === menuItemKey)?.menuItem;
+      menuItems.find((item) => item.id === menuItemId) ??
+      cart.find((item) => item.menuItem.id === menuItemId)?.menuItem;
 
     if (!selectedMenuItem) {
       return;
     }
 
     setCart((prev) => {
-      const existingItem = prev.find((item) => item.key === menuItemKey);
+      const existingItem = prev.find((item) => item.menuItem.id === menuItemId);
 
       if (existingItem) {
         return prev.map((item) =>
-          item.key === menuItemKey
+          item.menuItem.id === menuItemId
             ? { ...item, quantity: item.quantity + 1 }
             : item,
         );
       }
 
-      return [...prev, { key: menuItemKey, menuItem: selectedMenuItem, quantity: 1 }];
+      return [...prev, { menuItem: selectedMenuItem, quantity: 1 }];
     });
   };
 
-  const removeFromCart = (menuItemKey: string) => {
+  const removeFromCart = (menuItemId: string) => {
     setCart((prev) => {
-      const existingItem = prev.find((item) => item.key === menuItemKey);
+      const existingItem = prev.find((item) => item.menuItem.id === menuItemId);
 
       if (!existingItem) {
         return prev;
       }
 
       if (existingItem.quantity === 1) {
-        return prev.filter((item) => item.key !== menuItemKey);
+        return prev.filter((item) => item.menuItem.id !== menuItemId);
       }
 
       return prev.map((item) =>
-        item.key === menuItemKey
+        item.menuItem.id === menuItemId
           ? { ...item, quantity: item.quantity - 1 }
           : item,
       );
     });
   };
 
-  const getItemQuantity = (menuItemKey: string): number => {
-    const item = cart.find((cartItem) => cartItem.key === menuItemKey);
+  const getItemQuantity = (menuItemId: string): number => {
+    const item = cart.find((cartItem) => cartItem.menuItem.id === menuItemId);
     return item?.quantity || 0;
   };
 
@@ -299,13 +287,12 @@ export default function MenuPage() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-32">
-            {menuItems.map((item, index) => {
-              const itemKey = getMenuItemKey(item);
-              const quantity = getItemQuantity(itemKey);
+            {menuItems.map((item) => {
+              const quantity = getItemQuantity(item.id);
 
               return (
                 <div
-                  key={`${itemKey}-${index}`}
+                  key={item.id}
                   className="bg-white rounded-[var(--radius-card)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] transition-all duration-300 overflow-hidden"
                 >
                   <div className="aspect-[4/3] bg-gradient-to-br from-brand-yellow/20 to-brand-amber/20 flex items-center justify-center relative overflow-hidden">
@@ -336,7 +323,7 @@ export default function MenuPage() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => addToCart(itemKey)}
+                          onClick={() => addToCart(item.id)}
                           leftIcon={<Plus size={16} />}
                         >
                           Thêm
@@ -344,7 +331,7 @@ export default function MenuPage() {
                       ) : (
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => removeFromCart(itemKey)}
+                            onClick={() => removeFromCart(item.id)}
                             className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-gray-100 hover:bg-brand-gray-200 text-brand-brown transition-colors"
                           >
                             <Minus size={16} />
@@ -353,7 +340,7 @@ export default function MenuPage() {
                             {quantity}
                           </span>
                           <button
-                            onClick={() => addToCart(itemKey)}
+                            onClick={() => addToCart(item.id)}
                             className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-yellow hover:bg-brand-amber text-brand-brown transition-colors"
                           >
                             <Plus size={16} />

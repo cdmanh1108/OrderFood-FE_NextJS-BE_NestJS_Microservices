@@ -36,12 +36,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existingItem) {
         return prev.map((i) =>
           i.menuItem.id === item.id
-            ? { ...i, quantity: i.quantity + quantity, notes: notes || i.note }
+            ? { ...i, quantity: i.quantity + quantity, note: notes || i.note }
             : i,
         );
       }
 
-      return [...prev, { menuItem: item, quantity, notes }];
+      return [...prev, { menuItem: item, quantity, note: notes }];
     });
   };
 
@@ -62,7 +62,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateNotes = (menuItemId: string, notes: string) => {
     setCartItems((prev) =>
-      prev.map((i) => (i.menuItem.id === menuItemId ? { ...i, notes } : i)),
+      prev.map((i) => (i.menuItem.id === menuItemId ? { ...i, note: notes } : i)),
     );
   };
 

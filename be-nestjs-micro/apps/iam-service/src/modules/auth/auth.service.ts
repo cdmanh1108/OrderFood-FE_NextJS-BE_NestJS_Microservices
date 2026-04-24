@@ -34,7 +34,7 @@ function normalizeUserRole(role: string): UserRole {
 interface AuthUserEntity {
   id: string;
   email: string;
-  fullName: string | null;
+  fullName: string;
   role: string;
   isEmailVerified: boolean;
 }
@@ -83,7 +83,7 @@ export class AuthService {
     return this.buildAuthResult({
       id: user.id,
       email: user.email,
-      fullName: user.fullName ?? null,
+      fullName: user.fullName,
       role: user.role,
       isEmailVerified: true,
     });
@@ -127,7 +127,7 @@ export class AuthService {
     return this.buildAuthResult({
       id: pendingUser.id,
       email: pendingUser.email,
-      fullName: pendingUser.fullName ?? null,
+      fullName: pendingUser.fullName,
       role: pendingUser.role,
       isEmailVerified: false,
     });
@@ -172,7 +172,7 @@ export class AuthService {
       return this.buildAuthResult({
         id: verifiedUser.id,
         email: verifiedUser.email,
-        fullName: verifiedUser.fullName ?? null,
+        fullName: verifiedUser.fullName,
         role: verifiedUser.role,
         isEmailVerified: true,
       });
@@ -181,7 +181,7 @@ export class AuthService {
     return this.buildAuthResult({
       id: user.id,
       email: user.email,
-      fullName: user.fullName ?? null,
+      fullName: user.fullName,
       role: user.role,
       isEmailVerified: true,
     });
@@ -195,6 +195,7 @@ export class AuthService {
         accessToken: this.jwtService.signAccessToken({
           sub: payload.sub,
           role: payload.role,
+          fullName: payload.fullName,
           email: payload.email,
         }),
       };
@@ -262,6 +263,7 @@ export class AuthService {
       ? this.issueTokens({
           id: user.id,
           email: user.email,
+          fullName: user.fullName,
           role,
         })
       : {
@@ -283,13 +285,19 @@ export class AuthService {
     };
   }
 
-  private issueTokens(input: { id: string; role: UserRole; email: string }): {
+  private issueTokens(input: {
+    id: string;
+    role: UserRole;
+    email: string;
+    fullName: string;
+  }): {
     accessToken: string;
     refreshToken: string;
   } {
     const payload: JwtPayload = {
       sub: input.id,
       role: input.role,
+      fullName: input.fullName,
       email: input.email,
     };
 

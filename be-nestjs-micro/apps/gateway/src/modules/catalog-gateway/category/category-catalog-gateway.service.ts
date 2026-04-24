@@ -17,6 +17,8 @@ import { DeleteCategoryCommand } from '@app/contracts/catalog/category/commands/
 import { CategoryDetailResult } from '@app/contracts/catalog/category/results/category-detail.result';
 import { PaginatedCategoriesResult } from '@app/contracts/catalog/category/results/paginated-categories.result';
 import { DeleteCategoryResult } from '@app/contracts/catalog/category/results/delete-category.result';
+import { GetMenuCategoriesQuery } from '@app/contracts/catalog/menu-item/commands/get-menu-categories.query';
+import { MenuCategorySimpleResult } from '@app/contracts/catalog/menu-item/results/menu-category-simple.result';
 
 @Injectable()
 export class CategoryCatalogGatewayService {
@@ -37,10 +39,10 @@ export class CategoryCatalogGatewayService {
 
     return firstValueFrom(
       this.catalogClient
-        .send<CategoryDetailResult, CreateCategoryCommand>(
-          CATALOG_PATTERNS.CREATE_CATEGORY,
-          command,
-        )
+        .send<
+          CategoryDetailResult,
+          CreateCategoryCommand
+        >(CATALOG_PATTERNS.CREATE_CATEGORY, command)
         .pipe(
           catchError((error: unknown) =>
             throwError(() => mapRpcErrorToHttpException(error)),
@@ -64,10 +66,10 @@ export class CategoryCatalogGatewayService {
 
     return firstValueFrom(
       this.catalogClient
-        .send<CategoryDetailResult, UpdateCategoryCommand>(
-          CATALOG_PATTERNS.UPDATE_CATEGORY,
-          command,
-        )
+        .send<
+          CategoryDetailResult,
+          UpdateCategoryCommand
+        >(CATALOG_PATTERNS.UPDATE_CATEGORY, command)
         .pipe(
           catchError((error: unknown) =>
             throwError(() => mapRpcErrorToHttpException(error)),
@@ -81,10 +83,10 @@ export class CategoryCatalogGatewayService {
 
     return firstValueFrom(
       this.catalogClient
-        .send<CategoryDetailResult, GetCategoryDetailQuery>(
-          CATALOG_PATTERNS.GET_CATEGORY_DETAIL,
-          query,
-        )
+        .send<
+          CategoryDetailResult,
+          GetCategoryDetailQuery
+        >(CATALOG_PATTERNS.GET_CATEGORY_DETAIL, query)
         .pipe(
           catchError((error: unknown) =>
             throwError(() => mapRpcErrorToHttpException(error)),
@@ -93,7 +95,9 @@ export class CategoryCatalogGatewayService {
     );
   }
 
-  async findAll(dto: ListCategoriesRequestDto): Promise<PaginatedCategoriesResult> {
+  async findAll(
+    dto: ListCategoriesRequestDto,
+  ): Promise<PaginatedCategoriesResult> {
     const query: ListCategoriesQuery = {
       keyword: dto.keyword,
       isActive: dto.isActive,
@@ -105,10 +109,27 @@ export class CategoryCatalogGatewayService {
 
     return firstValueFrom(
       this.catalogClient
-        .send<PaginatedCategoriesResult, ListCategoriesQuery>(
-          CATALOG_PATTERNS.LIST_CATEGORIES,
-          query,
-        )
+        .send<
+          PaginatedCategoriesResult,
+          ListCategoriesQuery
+        >(CATALOG_PATTERNS.LIST_CATEGORIES, query)
+        .pipe(
+          catchError((error: unknown) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
+    );
+  }
+
+  async findMenuCategories(): Promise<MenuCategorySimpleResult[]> {
+    const query: GetMenuCategoriesQuery = {};
+
+    return firstValueFrom(
+      this.catalogClient
+        .send<
+          MenuCategorySimpleResult[],
+          GetMenuCategoriesQuery
+        >(CATALOG_PATTERNS.GET_MENU_CATEGORIES, query)
         .pipe(
           catchError((error: unknown) =>
             throwError(() => mapRpcErrorToHttpException(error)),
@@ -128,10 +149,10 @@ export class CategoryCatalogGatewayService {
 
     return firstValueFrom(
       this.catalogClient
-        .send<CategoryDetailResult, SetCategoryActiveCommand>(
-          CATALOG_PATTERNS.SET_CATEGORY_ACTIVE,
-          command,
-        )
+        .send<
+          CategoryDetailResult,
+          SetCategoryActiveCommand
+        >(CATALOG_PATTERNS.SET_CATEGORY_ACTIVE, command)
         .pipe(
           catchError((error: unknown) =>
             throwError(() => mapRpcErrorToHttpException(error)),
@@ -145,10 +166,10 @@ export class CategoryCatalogGatewayService {
 
     return firstValueFrom(
       this.catalogClient
-        .send<DeleteCategoryResult, DeleteCategoryCommand>(
-          CATALOG_PATTERNS.DELETE_CATEGORY,
-          command,
-        )
+        .send<
+          DeleteCategoryResult,
+          DeleteCategoryCommand
+        >(CATALOG_PATTERNS.DELETE_CATEGORY, command)
         .pipe(
           catchError((error: unknown) =>
             throwError(() => mapRpcErrorToHttpException(error)),

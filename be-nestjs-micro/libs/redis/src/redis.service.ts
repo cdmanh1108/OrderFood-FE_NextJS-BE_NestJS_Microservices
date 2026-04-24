@@ -40,4 +40,11 @@ export class RedisService {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return JSON.parse(raw);
   }
+
+  async delByPattern(pattern: string): Promise<void> {
+    const keys = await this.redis.keys(pattern);
+    if (keys.length === 0) return;
+
+    await this.redis.del(...keys);
+  }
 }

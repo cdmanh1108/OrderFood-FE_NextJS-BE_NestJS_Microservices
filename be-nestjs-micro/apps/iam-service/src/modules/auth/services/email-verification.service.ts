@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { RedisService } from 'libs/redis/src';
-import { getRedisConfig } from '@app/config/redis/redis.config';
+import { RedisService } from 'libs/redis';
 
 interface VerifyCodeData {
   email: string;
@@ -11,15 +9,9 @@ interface VerifyCodeData {
 
 @Injectable()
 export class EmailVerificationService {
-  private readonly ttl: number;
+  private readonly ttl: number = 60;
 
-  constructor(
-    private readonly redisService: RedisService,
-    private readonly configService: ConfigService,
-  ) {
-    const redisConfig = getRedisConfig(this.configService);
-    this.ttl = redisConfig.ttlVerifyCode;
-  }
+  constructor(private readonly redisService: RedisService) {}
 
   private getKey(userId: string): string {
     return `auth:verify-email:${userId}`;

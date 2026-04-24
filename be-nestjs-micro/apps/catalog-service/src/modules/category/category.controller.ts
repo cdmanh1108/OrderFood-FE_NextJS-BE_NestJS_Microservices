@@ -14,6 +14,7 @@ import type { GetCategoryDetailQuery } from '@app/contracts/catalog/category/com
 import type { ListCategoriesQuery } from '@app/contracts/catalog/category/commands/list-categories.query';
 import type { SetCategoryActiveCommand } from '@app/contracts/catalog/category/commands/set-category-active.command';
 import type { DeleteCategoryCommand } from '@app/contracts/catalog/category/commands/delete-category.command';
+import type { GetMenuCategoriesQuery } from '@app/contracts/catalog/menu-item/commands/get-menu-categories.query';
 
 @Controller()
 export class CategoryController {
@@ -52,6 +53,16 @@ export class CategoryController {
   @MessagePattern(CATALOG_PATTERNS.LIST_CATEGORIES)
   findAll(@Payload() query: ListCategoriesQuery, @Ctx() context: RmqContext) {
     return handleRpcMessage(context, () => this.categoryService.findAll(query));
+  }
+
+  @MessagePattern(CATALOG_PATTERNS.GET_MENU_CATEGORIES)
+  findMenuCategories(
+    @Payload() _query: GetMenuCategoriesQuery,
+    @Ctx() context: RmqContext,
+  ) {
+    return handleRpcMessage(context, () =>
+      this.categoryService.findMenuCategories(),
+    );
   }
 
   @MessagePattern(CATALOG_PATTERNS.SET_CATEGORY_ACTIVE)

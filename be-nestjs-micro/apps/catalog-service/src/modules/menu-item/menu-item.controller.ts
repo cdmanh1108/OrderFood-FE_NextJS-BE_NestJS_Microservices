@@ -28,7 +28,9 @@ export class MenuItemController {
     @Payload() command: CreateMenuItemCommand,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.menuItemService.create(command));
+    return handleRpcMessage(context, () =>
+      this.menuItemService.create(command),
+    );
   }
 
   @MessagePattern(CATALOG_PATTERNS.UPDATE_MENU_ITEM)
@@ -46,7 +48,9 @@ export class MenuItemController {
     @Payload() query: GetMenuItemDetailQuery,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.menuItemService.findOne(query.id));
+    return handleRpcMessage(context, () =>
+      this.menuItemService.findOne(query.id),
+    );
   }
 
   @MessagePattern(CATALOG_PATTERNS.LIST_MENU_ITEMS)
@@ -56,7 +60,9 @@ export class MenuItemController {
 
   @MessagePattern(CATALOG_PATTERNS.GET_MENU_ITEMS)
   findMenu(@Payload() query: GetMenuItemsQuery, @Ctx() context: RmqContext) {
-    return handleRpcMessage(context, () => this.menuItemService.findMenu(query));
+    return handleRpcMessage(context, () =>
+      this.menuItemService.findMenu(query),
+    );
   }
 
   @MessagePattern(CATALOG_PATTERNS.GET_FEATURED_MENU_ITEMS)
@@ -84,6 +90,8 @@ export class MenuItemController {
     @Payload() command: DeleteMenuItemCommand,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.menuItemService.remove(command.id));
+    return handleRpcMessage(context, () =>
+      this.menuItemService.remove(command.id),
+    );
   }
 }

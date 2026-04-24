@@ -11,6 +11,7 @@ import { MenuItemSimpleResult } from '@app/contracts/catalog/menu-item/results/m
 import { PaginatedMenuItemsResult } from '@app/contracts/catalog/menu-item/results/paginated-menu-items.result';
 import { DeleteMenuItemResult } from '@app/contracts/catalog/menu-item/results/delete-menu-item.result';
 import { ConfigService } from '@nestjs/config';
+import { CatalogCacheService } from '../cache/catalog-cache.service';
 
 @Injectable()
 export class MenuItemService {
@@ -19,6 +20,7 @@ export class MenuItemService {
   constructor(
     private readonly prisma: CatalogPrismaService,
     private readonly configService: ConfigService,
+    private readonly catalogCacheService: CatalogCacheService,
   ) {
     this.mediaPublicBaseUrl = (
       this.configService.get<string>('AWS_S3_PUBLIC_BASE_URL') ?? ''
@@ -50,6 +52,8 @@ export class MenuItemService {
       },
     });
 
+    await this.clearMenuRelatedCache();
+
     return this.toMenuItemDetailResult(created);
   }
 
@@ -74,7 +78,11 @@ export class MenuItemService {
       await this.ensureSlugUnique(command.slug, id);
     }
 
-    if (command.sku !== undefined && command.sku !== current.sku && command.sku) {
+    if (
+      command.sku !== undefined &&
+      command.sku !== current.sku &&
+      command.sku
+    ) {
       await this.ensureSkuUnique(command.sku, id);
     }
 
@@ -92,11 +100,14 @@ export class MenuItemService {
 
     if (command.name !== undefined) data.name = command.name;
     if (command.slug !== undefined) data.slug = command.slug;
-    if (command.description !== undefined) data.description = command.description;
-    if (command.image !== undefined) data.image = this.normalizeImageInput(command.image);
+    if (command.description !== undefined)
+      data.description = command.description;
+    if (command.image !== undefined)
+      data.image = this.normalizeImageInput(command.image);
     if (command.sku !== undefined) data.sku = command.sku;
     if (command.price !== undefined) data.price = command.price;
-    if (command.isAvailable !== undefined) data.isAvailable = command.isAvailable;
+    if (command.isAvailable !== undefined)
+      data.isAvailable = command.isAvailable;
     if (command.sortOrder !== undefined) data.sortOrder = command.sortOrder;
     if (command.categoryId !== undefined) data.categoryId = command.categoryId;
 
@@ -108,6 +119,8 @@ export class MenuItemService {
       where: { id },
       data,
     });
+
+    await this.clearMenuRelatedCache();
 
     return this.toMenuItemDetailResult(updated);
   }
@@ -127,7 +140,8 @@ export class MenuItemService {
 
   async findAll(query: ListMenuItemsQuery): Promise<PaginatedMenuItemsResult> {
     const page = query.page && query.page > 0 ? query.page : 1;
-    const limit = query.limit && query.limit > 0 ? Math.min(query.limit, 100) : 10;
+    const limit =
+      query.limit && query.limit > 0 ? Math.min(query.limit, 100) : 10;
     const skip = (page - 1) * limit;
 
     const where = {
@@ -156,7 +170,9 @@ export class MenuItemService {
           }
         : {}),
       ...(query.categoryId ? { categoryId: query.categoryId } : {}),
-      ...(typeof query.isActive === 'boolean' ? { isActive: query.isActive } : {}),
+      ...(typeof query.isActive === 'boolean'
+        ? { isActive: query.isActive }
+        : {}),
       ...(typeof query.isAvailable === 'boolean'
         ? { isAvailable: query.isAvailable }
         : {}),
@@ -188,7 +204,13 @@ export class MenuItemService {
   }
 
   async findMenu(query: GetMenuItemsQuery): Promise<MenuItemSimpleResult[]> {
-    const limit = query.limit && query.limit > 0 ? Math.min(query.limit, 200) : 100;
+    const cached = await this.catalogCacheService.getMenu(query);
+    if (cached !== null) {
+      return cached;
+    }
+
+    const limit =
+      query.limit && query.limit > 0 ? Math.min(query.limit, 200) : 100;
 
     const items = await this.prisma.menuItem.findMany({
       where: {
@@ -219,11 +241,16 @@ export class MenuItemService {
       take: limit,
     });
 
-    return items.map((item) => this.toMenuItemSimpleResult(item));
+    const result = items.map((item) => this.toMenuItemSimpleResult(item));
+
+    await this.catalogCacheService.setMenu(query, result);
+
+    return result;
   }
 
   async findFeatured(limit = 3): Promise<MenuItemSimpleResult[]> {
-    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 10) : 3;
+    const safeLimit =
+      Number.isFinite(limit) && limit > 0 ? Math.min(limit, 10) : 3;
 
     const items = await this.prisma.menuItem.findMany({
       where: {
@@ -242,7 +269,10 @@ export class MenuItemService {
     return items.map((item) => this.toMenuItemSimpleResult(item));
   }
 
-  async setActive(id: string, isActive: boolean): Promise<MenuItemDetailResult> {
+  async setActive(
+    id: string,
+    isActive: boolean,
+  ): Promise<MenuItemDetailResult> {
     const current = await this.prisma.menuItem.findUnique({ where: { id } });
 
     if (!current) {
@@ -256,6 +286,8 @@ export class MenuItemService {
       where: { id },
       data: { isActive },
     });
+
+    await this.clearMenuRelatedCache();
 
     return this.toMenuItemDetailResult(updated);
   }
@@ -271,6 +303,7 @@ export class MenuItemService {
     }
 
     await this.prisma.menuItem.delete({ where: { id } });
+    await this.clearMenuRelatedCache();
 
     return {
       id,
@@ -291,7 +324,10 @@ export class MenuItemService {
     }
   }
 
-  private async ensureSlugUnique(slug: string, excludeId?: string): Promise<void> {
+  private async ensureSlugUnique(
+    slug: string,
+    excludeId?: string,
+  ): Promise<void> {
     const existedBySlug = await this.prisma.menuItem.findFirst({
       where: {
         slug,
@@ -307,7 +343,10 @@ export class MenuItemService {
     }
   }
 
-  private async ensureSkuUnique(sku: string, excludeId?: string): Promise<void> {
+  private async ensureSkuUnique(
+    sku: string,
+    excludeId?: string,
+  ): Promise<void> {
     const existedBySku = await this.prisma.menuItem.findFirst({
       where: {
         sku,
@@ -356,17 +395,26 @@ export class MenuItemService {
   }
 
   private toMenuItemSimpleResult(menuItem: {
+    id: string;
     name: string;
     description: string | null;
     image: string | null;
     price: { toNumber(): number };
   }): MenuItemSimpleResult {
     return {
+      id: menuItem.id,
       name: menuItem.name,
       description: menuItem.description,
       image: this.resolveImageUrl(menuItem.image),
       price: menuItem.price.toNumber(),
     };
+  }
+
+  private async clearMenuRelatedCache(): Promise<void> {
+    await Promise.all([
+      this.catalogCacheService.clearMenuCache(),
+      this.catalogCacheService.clearMenuCategoriesCache(),
+    ]);
   }
 
   private normalizeImageInput(image?: string): string | null {
@@ -393,7 +441,9 @@ export class MenuItemService {
       return null;
     }
 
-    const key = url.slice(this.mediaPublicBaseUrl.length + 1).replace(/^\/+/, '');
+    const key = url
+      .slice(this.mediaPublicBaseUrl.length + 1)
+      .replace(/^\/+/, '');
     return key || null;
   }
 

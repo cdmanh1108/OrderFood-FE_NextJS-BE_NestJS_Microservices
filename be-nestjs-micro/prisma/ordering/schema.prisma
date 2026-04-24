@@ -1,0 +1,281 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../generated/ordering"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum CartStatus {
+    ACTIVE
+    CHECKED_OUT
+    ABANDONED
+    EXPIRED
+}
+
+enum OrderChannel {
+    DINE_IN
+    ONLINE
+}
+
+enum OrderSource {
+    QR
+    WEB
+    MOBILE
+    POS
+}
+
+enum OrderStatus {
+    DRAFT
+    PLACED
+    CONFIRMED
+    PREPARING
+    READY
+    COMPLETED
+    CANCELED
+}
+
+enum PaymentStatus {
+    UNPAID
+    PENDING
+    PAID
+    FAILED
+    REFUNDED
+}
+
+enum FulfillmentStatus {
+    NONE
+    PREPARING
+    READY_FOR_PICKUP
+    SHIPPING
+    DELIVERED
+    FAILED
+}
+
+model Address {
+    id     String @id @default(uuid()) @db.Uuid
+    userId String @db.Uuid
+
+    receiverName  String @db.VarChar(120)
+    receiverPhone String @db.VarChar(20)
+
+    province String  @db.VarChar(120)
+    district String  @db.VarChar(120)
+    ward     String  @db.VarChar(120)
+    street   String? @db.VarChar(255)
+    detail   String? @db.Text
+
+    latitude  Decimal? @db.Decimal(10, 7)
+    longitude Decimal? @db.Decimal(10, 7)
+
+    isDefault Boolean @default(false)
+
+    carts Cart[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([isDefault])
+    @@map("addresses")
+}
+
+model Cart {
+    id     String  @id @default(uuid()) @db.Uuid
+    userId String? @db.Uuid
+
+    channel OrderChannel
+    source  OrderSource
+
+    tableId        String? @db.Uuid
+    tableSessionId String? @db.Uuid
+
+    addressId String?  @db.Uuid
+    address   Address? @relation(fields: [addressId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+    status CartStatus @default(ACTIVE)
+    note   String?    @db.Text
+
+    items CartItem[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    // expiresAt DateTime?
+
+    @@index([userId])
+    @@index([status])
+    @@index([tableId])
+    @@index([tableSessionId])
+    @@index([addressId])
+    @@map("carts")
+}
+
+model CartItem {
+    id     String @id @default(uuid()) @db.Uuid
+    cartId String @db.Uuid
+    cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    menuItemId       String  @db.Uuid
+    menuItemName     String  @db.VarChar(150)
+    menuItemImageUrl String? @db.VarChar(255)
+
+    unitPrice Decimal @db.Decimal(10, 0)
+    quantity  Int     @default(1)
+
+    note String? @db.Text
+
+    // modifiers CartItemModifier[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([cartId])
+    @@index([menuItemId])
+    @@map("cart_items")
+}
+
+// model CartItemModifier {
+//     id         String   @id @default(uuid()) @db.Uuid
+//     cartItemId String   @db.Uuid
+//     cartItem   CartItem @relation(fields: [cartItemId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+//     modifierGroupId  String? @db.Uuid
+//     modifierOptionId String  @db.Uuid
+
+//     name     String  @db.VarChar(150)
+//     price    Decimal @db.Decimal(10, 0)
+//     quantity Int     @default(1)
+
+//     createdAt DateTime @default(now())
+//     updatedAt DateTime @updatedAt
+
+//     @@index([cartItemId])
+//     @@index([modifierOptionId])
+//     @@map("cart_item_modifiers")
+// }
+
+model Order {
+    id   String @id @default(uuid()) @db.Uuid
+    code String @unique @db.VarChar(50)
+
+    userId String? @db.Uuid
+
+    channel OrderChannel
+    source  OrderSource
+
+    tableId        String? @db.Uuid
+    tableSessionId String? @db.Uuid
+
+    status            OrderStatus       @default(PLACED)
+    paymentStatus     PaymentStatus     @default(UNPAID)
+    fulfillmentStatus FulfillmentStatus @default(NONE)
+
+    note String? @db.Text
+
+    items           OrderItem[]
+    pricingSnapshot PricingSnapshot?
+    shippingAddress ShippingAddressSnapshot?
+
+    placedAt    DateTime?
+    confirmedAt DateTime?
+    completedAt DateTime?
+    canceledAt  DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([status])
+    @@index([paymentStatus])
+    @@index([fulfillmentStatus])
+    @@index([tableId])
+    @@index([tableSessionId])
+    @@map("orders")
+}
+
+model OrderItem {
+    id      String @id @default(uuid()) @db.Uuid
+    orderId String @db.Uuid
+    order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    menuItemId       String  @db.Uuid
+    menuItemName     String  @db.VarChar(150)
+    menuItemImageUrl String? @db.VarChar(255)
+
+    unitPrice Decimal @db.Decimal(10, 0)
+    quantity  Int
+
+    note String? @db.Text
+
+    // modifiers OrderItemModifier[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([orderId])
+    @@index([menuItemId])
+    @@map("order_items")
+}
+
+// model OrderItemModifier {
+//     id          String    @id @default(uuid()) @db.Uuid
+//     orderItemId String    @db.Uuid
+//     orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+//     modifierGroupId  String? @db.Uuid
+//     modifierOptionId String  @db.Uuid
+
+//     name     String  @db.VarChar(150)
+//     price    Decimal @db.Decimal(10, 0)
+//     quantity Int     @default(1)
+
+//     createdAt DateTime @default(now())
+//     updatedAt DateTime @updatedAt
+
+//     @@index([orderItemId])
+//     @@index([modifierOptionId])
+//     @@map("order_item_modifiers")
+// }
+
+model PricingSnapshot {
+    id      String @id @default(uuid()) @db.Uuid
+    orderId String @unique @db.Uuid
+    order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    itemsSubtotal  Decimal @db.Decimal(10, 0)
+    modifiersTotal Decimal @default(0) @db.Decimal(10, 0)
+    discountTotal  Decimal @default(0) @db.Decimal(10, 0)
+    shippingFee    Decimal @default(0) @db.Decimal(10, 0)
+    serviceFee     Decimal @default(0) @db.Decimal(10, 0)
+    taxTotal       Decimal @default(0) @db.Decimal(10, 0)
+    grandTotal     Decimal @db.Decimal(10, 0)
+
+    currency String @default("VND") @db.VarChar(10)
+
+    createdAt DateTime @default(now())
+
+    @@map("pricing_snapshots")
+}
+
+model ShippingAddressSnapshot {
+    id      String @id @default(uuid()) @db.Uuid
+    orderId String @unique @db.Uuid
+    order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    receiverName  String @db.VarChar(120)
+    receiverPhone String @db.VarChar(20)
+
+    province String  @db.VarChar(120)
+    district String  @db.VarChar(120)
+    ward     String  @db.VarChar(120)
+    street   String? @db.VarChar(255)
+    detail   String? @db.Text
+
+    latitude  Decimal? @db.Decimal(10, 7)
+    longitude Decimal? @db.Decimal(10, 7)
+
+    createdAt DateTime @default(now())
+
+    @@map("shipping_address_snapshots")
+}
