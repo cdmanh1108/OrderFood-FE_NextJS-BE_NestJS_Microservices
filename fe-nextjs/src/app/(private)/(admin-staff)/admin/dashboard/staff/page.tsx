@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -11,7 +11,6 @@ import {
   User as UserIcon,
   Lock,
 } from "lucide-react";
-import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
 import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
 import { PasswordInput } from "@/app/components/shared/PasswordInput";
@@ -117,33 +116,33 @@ export default function StaffPage() {
 
   const validateForm = (): boolean => {
     if (!formData.email.trim()) {
-      setErrorStatus("Vui lòng nhập email");
+      setErrorStatus("Vui lÃ²ng nháº­p email");
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim())) {
-      setErrorStatus("Email không hợp lệ");
+      setErrorStatus("Email khÃ´ng há»£p lá»‡");
       return false;
     }
 
     if (!formData.fullName.trim()) {
-      setErrorStatus("Vui lòng nhập họ tên");
+      setErrorStatus("Vui lÃ²ng nháº­p há» tÃªn");
       return false;
     }
 
     if (!formData.phoneNumber.trim()) {
-      setErrorStatus("Vui lòng nhập số điện thoại");
+      setErrorStatus("Vui lÃ²ng nháº­p sá»‘ Ä‘iá»‡n thoáº¡i");
       return false;
     }
 
     if (!isEditMode && formData.password.length < 6) {
-      setErrorStatus("Mật khẩu phải có ít nhất 6 ký tự");
+      setErrorStatus("Máº­t kháº©u pháº£i cÃ³ Ã­t nháº¥t 6 kÃ½ tá»±");
       return false;
     }
 
     if (isEditMode && formData.password && formData.password.length < 6) {
-      setErrorStatus("Mật khẩu mới phải có ít nhất 6 ký tự");
+      setErrorStatus("Máº­t kháº©u má»›i pháº£i cÃ³ Ã­t nháº¥t 6 kÃ½ tá»±");
       return false;
     }
 
@@ -266,7 +265,7 @@ export default function StaffPage() {
   );
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-4 lg:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -413,6 +412,6 @@ export default function StaffPage() {
         variant="danger"
         isLoading={isDeleting}
       />
-    </DashboardLayout>
+    </>
   );
 }

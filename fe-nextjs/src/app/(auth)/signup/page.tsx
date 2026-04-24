@@ -142,7 +142,7 @@ export default function SignupPage() {
       <div className="relative w-full max-w-md">
         <Link href="/" className="block text-center mb-6">
           <h1 className="text-2xl font-bold text-brand-brown mb-1 hover:text-brand-coffee transition-colors">
-            Bun Dau Lang Mo
+            Bún Đậu Làng Mơ
           </h1>
           <p className="text-sm text-brand-gray-600">Đăng ký tài khoản</p>
         </Link>

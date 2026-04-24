@@ -24,7 +24,9 @@ export class CategoryController {
     @Payload() command: CreateCategoryCommand,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.categoryService.create(command));
+    return handleRpcMessage(context, () =>
+      this.categoryService.create(command),
+    );
   }
 
   @MessagePattern(CATALOG_PATTERNS.UPDATE_CATEGORY)
@@ -42,7 +44,9 @@ export class CategoryController {
     @Payload() query: GetCategoryDetailQuery,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.categoryService.findOne(query.id));
+    return handleRpcMessage(context, () =>
+      this.categoryService.findOne(query.id),
+    );
   }
 
   @MessagePattern(CATALOG_PATTERNS.LIST_CATEGORIES)
@@ -65,6 +69,8 @@ export class CategoryController {
     @Payload() command: DeleteCategoryCommand,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.categoryService.remove(command.id));
+    return handleRpcMessage(context, () =>
+      this.categoryService.remove(command.id),
+    );
   }
 }

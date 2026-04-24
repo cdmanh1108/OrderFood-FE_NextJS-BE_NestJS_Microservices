@@ -1,9 +1,8 @@
-"use client";
+﻿"use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
 import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
 import { Modal } from "@/app/components/shared/Modal";
@@ -12,7 +11,7 @@ import { DataTable, Column } from "@/app/components/shared/DataTable";
 import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
 import { useUIStore } from "@/stores/ui-store";
 import { formatCurrency, toSlug } from "@/utils/cn";
-import { resolveImageContentType } from "../../../../../utils/media";
+import { resolveImageContentType } from "../../../../../../utils/media";
 import { categoryApi, mediaApi, menuItemApi } from "@/services/api";
 import {
   MenuItemApiModel,
@@ -420,7 +419,7 @@ export default function MenuItemPage() {
   );
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-4 lg:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -691,6 +690,7 @@ export default function MenuItemPage() {
         variant="danger"
         isLoading={isDeleting}
       />
-    </DashboardLayout>
+    </>
   );
 }
+

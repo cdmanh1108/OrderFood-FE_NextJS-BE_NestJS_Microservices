@@ -105,7 +105,8 @@ export class CategoryService {
 
     if (command.name !== undefined) data.name = command.name;
     if (command.slug !== undefined) data.slug = command.slug;
-    if (command.description !== undefined) data.description = command.description;
+    if (command.description !== undefined)
+      data.description = command.description;
     if (command.image !== undefined) data.image = command.image;
     if (command.sortOrder !== undefined) data.sortOrder = command.sortOrder;
 
@@ -134,9 +135,12 @@ export class CategoryService {
     return this.toCategoryDetailResult(category);
   }
 
-  async findAll(query: ListCategoriesQuery): Promise<PaginatedCategoriesResult> {
+  async findAll(
+    query: ListCategoriesQuery,
+  ): Promise<PaginatedCategoriesResult> {
     const page = query.page && query.page > 0 ? query.page : 1;
-    const limit = query.limit && query.limit > 0 ? Math.min(query.limit, 100) : 10;
+    const limit =
+      query.limit && query.limit > 0 ? Math.min(query.limit, 100) : 10;
     const skip = (page - 1) * limit;
 
     const where = {
@@ -158,7 +162,9 @@ export class CategoryService {
             ],
           }
         : {}),
-      ...(typeof query.isActive === 'boolean' ? { isActive: query.isActive } : {}),
+      ...(typeof query.isActive === 'boolean'
+        ? { isActive: query.isActive }
+        : {}),
     };
 
     const sortBy = query.sortBy ?? 'sortOrder';
@@ -186,7 +192,10 @@ export class CategoryService {
     };
   }
 
-  async setActive(id: string, isActive: boolean): Promise<CategoryDetailResult> {
+  async setActive(
+    id: string,
+    isActive: boolean,
+  ): Promise<CategoryDetailResult> {
     const current = await this.prisma.category.findUnique({ where: { id } });
 
     if (!current) {

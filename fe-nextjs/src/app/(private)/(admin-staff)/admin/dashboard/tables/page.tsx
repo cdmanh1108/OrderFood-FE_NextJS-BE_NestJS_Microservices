@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { Plus, Edit, Trash2 } from "lucide-react";
-import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
 import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
 import { Modal } from "@/app/components/shared/Modal";
@@ -63,7 +62,7 @@ export default function TablesPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-4 lg:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -199,6 +198,6 @@ export default function TablesPage() {
         confirmText="Xóa"
         variant="danger"
       />
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { decodeJwtPayload, isExpired } from "@/utils/jwt";
+import { UserAppLayout } from "@/app/components/layout/UserAppLayout";
 
 export default async function UserLayout({
   children,
@@ -21,9 +22,12 @@ export default async function UserLayout({
   }
 
   if (payload.role !== "USER") {
-    redirect("/dashboard");
+    if (payload.role === "ADMIN" || payload.role === "STAFF") {
+      redirect("/admin/dashboard");
+    }
+
+    redirect("/login");
   }
 
-  return <>{children}</>;
+  return <UserAppLayout>{children}</UserAppLayout>;
 }
-

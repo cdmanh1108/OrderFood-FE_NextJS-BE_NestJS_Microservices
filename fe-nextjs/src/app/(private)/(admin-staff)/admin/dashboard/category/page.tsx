@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
-import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
 import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
 import { Modal } from "@/app/components/shared/Modal";
@@ -271,7 +270,7 @@ export default function CategoryPage() {
         label: "Trạng Thái",
         render: (cat) => (
           <Badge variant={cat.isActive ? "success" : "danger"} size="sm">
-            {cat.isActive ? "Hoạt động" : "Tạm dừng"}
+            {cat.isActive ? "Hoạt Động" : "Tạm dừng"}
           </Badge>
         ),
       },
@@ -280,7 +279,7 @@ export default function CategoryPage() {
   );
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-4 lg:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -439,12 +438,12 @@ export default function CategoryPage() {
         onClose={() => setDeletingCategory(null)}
         onConfirm={() => void handleDelete()}
         title="Xóa Danh Mục"
-        message={`Bạn có chắc muốn xóa danh mục \"${deletingCategory?.name ?? ""}\"?`}
+        message={`Bạn có chắc muốn xóa danh mục "${deletingCategory?.name ?? ""}"?`}
         confirmText="Xóa"
         cancelText="Hủy"
         variant="danger"
         isLoading={isDeleting}
       />
-    </DashboardLayout>
+    </>
   );
 }

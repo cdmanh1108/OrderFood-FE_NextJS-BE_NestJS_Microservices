@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { decodeJwtPayload, isExpired } from "@/utils/jwt";
+import { AdminStaffAppLayout } from "@/app/components/layout/AdminStaffAppLayout";
 
 export default async function AdminStaffLayout({
   children,
@@ -21,9 +22,12 @@ export default async function AdminStaffLayout({
   }
 
   if (payload.role !== "ADMIN" && payload.role !== "STAFF") {
-    redirect("/");
+    if (payload.role === "USER") {
+      redirect("/dashboard");
+    }
+
+    redirect("/login");
   }
 
-  return <>{children}</>;
+  return <AdminStaffAppLayout>{children}</AdminStaffAppLayout>;
 }
-
