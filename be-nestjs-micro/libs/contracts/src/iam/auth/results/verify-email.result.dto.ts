@@ -1,6 +1,6 @@
 import { UserRole } from '../enums/user-role.enum';
 
-export interface RegisterResultDto {
+export interface VerifyEmailResultDto {
   isEmailVerified: boolean;
   accessToken: string | null;
   refreshToken: string | null;
@@ -12,3 +12,4 @@ export interface RegisterResultDto {
     isEmailVerified: boolean;
   };
 }
+

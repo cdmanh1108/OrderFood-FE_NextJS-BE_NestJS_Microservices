@@ -1,6 +1,6 @@
 import { UserRole } from '@app/contracts/iam/auth/enums/user-role.enum';
 
-export class RegisterResponseDto {
+export class VerifyEmailResponseDto {
   isEmailVerified!: boolean;
   accessToken!: string | null;
   refreshToken!: string | null;
@@ -12,3 +12,4 @@ export class RegisterResponseDto {
     isEmailVerified: boolean;
   };
 }
+

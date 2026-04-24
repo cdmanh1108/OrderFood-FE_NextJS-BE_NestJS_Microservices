@@ -5,7 +5,7 @@ import {
   getAuthSession,
   setAuthSession,
 } from "@/services/http";
-import type { AuthUser } from "@/types/api";
+import type { AuthFlowResponse, AuthSession, AuthUser } from "@/types/api";
 import { UserRole } from "../types";
 import type { AuthContextType, LoginCredentials, User } from "../types";
 
@@ -35,6 +35,22 @@ function mapAuthUserToAppUser(authUser: AuthUser): User {
   };
 }
 
+function toVerifiedSession(response: AuthFlowResponse): AuthSession | null {
+  if (!response.isEmailVerified) {
+    return null;
+  }
+
+  if (!response.accessToken || !response.refreshToken) {
+    throw new Error("Phan hoi dang nhap khong hop le");
+  }
+
+  return {
+    accessToken: response.accessToken,
+    refreshToken: response.refreshToken,
+    user: response.user,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,12 +68,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      const session = await authApi.login({
+      const response = await authApi.login({
         email: credentials.email,
         password: credentials.password,
       });
-      setAuthSession(session);
-      setUser(mapAuthUserToAppUser(session.user));
+
+      const session = toVerifiedSession(response);
+      if (session) {
+        setAuthSession(session);
+        setUser(mapAuthUserToAppUser(session.user));
+      }
+
+      return {
+        isEmailVerified: response.isEmailVerified,
+      };
     } finally {
       setIsLoading(false);
     }

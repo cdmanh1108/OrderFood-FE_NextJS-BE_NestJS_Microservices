@@ -3,11 +3,19 @@ export interface AuthUser {
   email: string;
   fullName: string | null;
   role: "ADMIN" | "STAFF" | "USER";
+  isEmailVerified: boolean;
 }
 
 export interface AuthSession {
   accessToken: string;
   refreshToken: string;
+  user: AuthUser;
+}
+
+export interface AuthFlowResponse {
+  isEmailVerified: boolean;
+  accessToken: string | null;
+  refreshToken: string | null;
   user: AuthUser;
 }
 
@@ -20,4 +28,9 @@ export interface RegisterRequest {
   email: string;
   password: string;
   fullName: string;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
 }

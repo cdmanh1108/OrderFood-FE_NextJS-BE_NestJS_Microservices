@@ -7,6 +7,7 @@ export const IAM_PATTERNS = {
 
   REGISTER: 'iam.register',
   LOGIN: 'iam.login',
+  VERIFY_EMAIL: 'iam.verify_email',
 
   CREATE_STAFF_USER: 'iam.user.staff.create',
   LIST_STAFF_USERS: 'iam.user.staff.list',

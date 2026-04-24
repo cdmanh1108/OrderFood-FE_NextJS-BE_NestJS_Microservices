@@ -1,22 +1,27 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import { AuthGatewayService } from './auth-gateway.service';
 import { LoginRequestDto } from './dto/request/login.request.dto';
 import { RegisterRequestDto } from './dto/request/register.dto';
-import { LoginResultDto } from '@app/contracts/iam/auth/results/login.result.dto';
-import { RegisterResultDto } from '@app/contracts/iam/auth/results/register.result.dto';
+import { VerifyEmailRequestDto } from './dto/request/verify-email.request.dto';
+import type { Request } from 'express';
 
 @Controller('auth')
 export class AuthGatewayController {
   constructor(private readonly authGatewayService: AuthGatewayService) {}
 
   @Post('login')
-  async login(@Body() dto: LoginRequestDto): Promise<LoginResultDto> {
+  async login(@Body() dto: LoginRequestDto) {
     return this.authGatewayService.login(dto);
   }
 
   @Post('register')
-  async register(@Body() dto: RegisterRequestDto): Promise<RegisterResultDto> {
-    return this.authGatewayService.register(dto);
+  async register(@Body() dto: RegisterRequestDto, @Req() request: Request) {
+    return this.authGatewayService.register(dto, request);
+  }
+
+  @Post('verify-email')
+  async verifyEmail(@Body() dto: VerifyEmailRequestDto) {
+    return this.authGatewayService.verifyEmail(dto);
   }
 
   //   @Get('profile')

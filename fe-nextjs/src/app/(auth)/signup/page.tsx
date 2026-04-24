@@ -7,6 +7,7 @@ import { Mail, User, Lock } from "lucide-react";
 import { Button } from "../../components/shared/Button";
 import { Input } from "../../components/shared/Input";
 import { PasswordInput } from "../../components/shared/PasswordInput";
+import { VerifyEmailModal } from "../../components/auth/VerifyEmailModal";
 import { authApi } from "@/services/api";
 import { useAuth } from "../../../contexts/auth-context";
 import { useUIStore } from "../../../stores/ui-store";
@@ -26,17 +27,23 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [verifyCode, setVerifyCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!fullName.trim()) {
+    const trimmedFullName = fullName.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedFullName) {
       setErrorStatus("Vui lòng nhập họ và tên");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
+    if (!emailRegex.test(trimmedEmail)) {
       setErrorStatus("Email không hợp lệ");
       return;
     }
@@ -54,19 +61,74 @@ export default function SignupPage() {
     startLoading("Đang tạo tài khoản...");
 
     try {
-      await authApi.register({
-        email: email.trim(),
+      const registerResult = await authApi.register({
+        email: trimmedEmail,
         password,
-        fullName: fullName.trim(),
+        fullName: trimmedFullName,
       });
 
-      await login({ email: email.trim(), password });
+      if (!registerResult.isEmailVerified) {
+        setVerifyCode("");
+        setIsVerifyModalOpen(true);
+        setSuccess("Tài khoản đã được tạo. Vui lòng xác thực email");
+        return;
+      }
+
+      const loginResult = await login({ email: trimmedEmail, password });
+      if (!loginResult.isEmailVerified) {
+        setVerifyCode("");
+        setIsVerifyModalOpen(true);
+        setSuccess("Vui lòng xác thực email để hoàn tất đăng ký");
+        return;
+      }
+
       setSuccess("Đăng ký thành công");
       router.push("/dashboard");
     } catch (err) {
       setErrorStatus(err instanceof Error ? err.message : "Đăng ký thất bại");
     } finally {
       stopLoading();
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    const trimmedEmail = email.trim();
+    const normalizedCode = verifyCode.trim();
+
+    if (!trimmedEmail) {
+      setErrorStatus("Không tìm thấy email để xác thực");
+      return;
+    }
+
+    if (normalizedCode.length !== 6) {
+      setErrorStatus("Mã xác thực gồm 6 số");
+      return;
+    }
+
+    try {
+      setIsVerifying(true);
+
+      await authApi.verifyEmail({
+        email: trimmedEmail,
+        code: normalizedCode,
+      });
+
+      const loginResult = await login({ email: trimmedEmail, password });
+      if (!loginResult.isEmailVerified) {
+        setErrorStatus("Tài khoản chưa được xác thực. Vui lòng thử lại");
+        return;
+      }
+
+      setIsVerifyModalOpen(false);
+      setVerifyCode("");
+      setSuccess("Xác thực email thành công");
+      router.push("/dashboard");
+    } catch (error) {
+      setErrorStatus(
+        error instanceof Error ? error.message : "Không thể xác thực email",
+      );
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -80,7 +142,7 @@ export default function SignupPage() {
       <div className="relative w-full max-w-md">
         <Link href="/" className="block text-center mb-6">
           <h1 className="text-2xl font-bold text-brand-brown mb-1 hover:text-brand-coffee transition-colors">
-            Bún Đậu Làng Mơ
+            Bun Dau Lang Mo
           </h1>
           <p className="text-sm text-brand-gray-600">Đăng ký tài khoản</p>
         </Link>
@@ -94,7 +156,7 @@ export default function SignupPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               leftIcon={<User size={18} />}
-              disabled={isLoading}
+              disabled={isLoading || isVerifying}
               autoComplete="name"
               required
             />
@@ -106,7 +168,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               leftIcon={<Mail size={18} />}
-              disabled={isLoading}
+              disabled={isLoading || isVerifying}
               autoComplete="email"
               required
             />
@@ -117,7 +179,7 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               leftIcon={<Lock size={18} />}
-              disabled={isLoading}
+              disabled={isLoading || isVerifying}
               autoComplete="new-password"
               required
             />
@@ -128,7 +190,7 @@ export default function SignupPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               leftIcon={<Lock size={18} />}
-              disabled={isLoading}
+              disabled={isLoading || isVerifying}
               autoComplete="new-password"
               required
             />
@@ -139,6 +201,7 @@ export default function SignupPage() {
               className="w-full"
               size="lg"
               isLoading={isLoading}
+              disabled={isVerifying}
             >
               Đăng ký
             </Button>
@@ -166,6 +229,20 @@ export default function SignupPage() {
           </Link>
         </div>
       </div>
+
+      <VerifyEmailModal
+        isOpen={isVerifyModalOpen}
+        email={email.trim()}
+        code={verifyCode}
+        onCodeChange={setVerifyCode}
+        onSubmit={handleVerifyEmail}
+        onClose={() => {
+          if (!isVerifying) {
+            setIsVerifyModalOpen(false);
+          }
+        }}
+        isLoading={isVerifying}
+      />
     </div>
   );
 }

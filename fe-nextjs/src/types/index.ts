@@ -21,10 +21,14 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface LoginResultState {
+  isEmailVerified: boolean;
+}
+
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<LoginResultState>;
   logout: () => void;
   isLoading: boolean;
 }

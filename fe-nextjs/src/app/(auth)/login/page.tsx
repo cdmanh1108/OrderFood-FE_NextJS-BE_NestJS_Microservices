@@ -8,7 +8,9 @@ import Image from "next/image";
 import { Input } from "../../components/shared/Input";
 import { PasswordInput } from "../../components/shared/PasswordInput";
 import { Button } from "../../components/shared/Button";
+import { VerifyEmailModal } from "../../components/auth/VerifyEmailModal";
 import { useAuth } from "../../../contexts/auth-context";
+import { authApi } from "@/services/api";
 import { useUIStore } from "../../../stores/ui-store";
 
 export default function LoginPage() {
@@ -23,11 +25,17 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState("");
+  const [verifyCode, setVerifyCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
       setErrorStatus("Vui lòng nhập email");
       return;
     }
@@ -38,20 +46,69 @@ export default function LoginPage() {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(trimmedEmail)) {
       setErrorStatus("Email không hợp lệ");
       return;
     }
 
     try {
       startLoading("Đang đăng nhập...");
-      await login({ email, password });
+      const loginResult = await login({ email: trimmedEmail, password });
+
+      if (!loginResult.isEmailVerified) {
+        setVerifyEmail(trimmedEmail);
+        setVerifyCode("");
+        setIsVerifyModalOpen(true);
+        setSuccess("Email chưa xác thực. Vui lòng nhập mã đã gửi qua email");
+        return;
+      }
+
       setSuccess("Đăng nhập thành công");
       router.push("/dashboard");
     } catch (err) {
       setErrorStatus(err instanceof Error ? err.message : "Đăng nhập thất bại");
     } finally {
       stopLoading();
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    const normalizedCode = verifyCode.trim();
+
+    if (!verifyEmail) {
+      setErrorStatus("Không tìm thấy email để xác thực");
+      return;
+    }
+
+    if (normalizedCode.length !== 6) {
+      setErrorStatus("Mã xác thực gồm 6 số");
+      return;
+    }
+
+    try {
+      setIsVerifying(true);
+
+      await authApi.verifyEmail({
+        email: verifyEmail,
+        code: normalizedCode,
+      });
+
+      const loginResult = await login({ email: verifyEmail, password });
+      if (!loginResult.isEmailVerified) {
+        setErrorStatus("Tài khoản chưa được xác thực. Vui lòng thử lại");
+        return;
+      }
+
+      setIsVerifyModalOpen(false);
+      setVerifyCode("");
+      setSuccess("Xác thực email thành công");
+      router.push("/dashboard");
+    } catch (error) {
+      setErrorStatus(
+        error instanceof Error ? error.message : "Không thể xác thực email",
+      );
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -68,7 +125,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-white shadow-lg">
               <Image
                 src="/images/logo.jpg"
-                alt="Bún đậu làng mơ logo"
+                alt="Bún Đậu Làng Mơ logo"
                 width={48}
                 height={48}
                 className="w-full h-full object-cover"
@@ -101,7 +158,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 leftIcon={<Mail size={18} />}
-                disabled={isLoading}
+                disabled={isLoading || isVerifying}
                 autoComplete="email"
               />
 
@@ -111,7 +168,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 leftIcon={<Lock size={18} />}
-                disabled={isLoading}
+                disabled={isLoading || isVerifying}
                 autoComplete="current-password"
               />
 
@@ -121,6 +178,7 @@ export default function LoginPage() {
                 className="w-full"
                 size="lg"
                 isLoading={isLoading}
+                disabled={isVerifying}
               >
                 {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
@@ -144,6 +202,20 @@ export default function LoginPage() {
           <p>Copyright 2026 Bún Đậu Làng Mơ</p>
         </div>
       </div>
+
+      <VerifyEmailModal
+        isOpen={isVerifyModalOpen}
+        email={verifyEmail}
+        code={verifyCode}
+        onCodeChange={setVerifyCode}
+        onSubmit={handleVerifyEmail}
+        onClose={() => {
+          if (!isVerifying) {
+            setIsVerifyModalOpen(false);
+          }
+        }}
+        isLoading={isVerifying}
+      />
     </div>
   );
 }

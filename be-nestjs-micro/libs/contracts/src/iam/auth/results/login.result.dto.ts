@@ -1,12 +1,14 @@
 import { UserRole } from '../enums/user-role.enum';
 
 export interface LoginResultDto {
-  accessToken: string;
-  refreshToken: string;
+  isEmailVerified: boolean;
+  accessToken: string | null;
+  refreshToken: string | null;
   user: {
     id: string;
     email: string;
     fullName: string | null;
     role: UserRole;
+    isEmailVerified: boolean;
   };
 }

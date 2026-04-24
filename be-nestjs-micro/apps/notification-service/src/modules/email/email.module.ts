@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EmailController } from './email.controller';
 import { EmailService } from './email.service';
-import { GmailMailProvider } from './providers/gmail-mail.provider';
+import { GmailMailProvider } from './providers/gmail.provider';
 
 @Module({
   controllers: [EmailController],
