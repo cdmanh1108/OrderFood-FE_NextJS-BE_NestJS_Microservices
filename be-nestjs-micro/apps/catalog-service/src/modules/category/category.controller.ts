@@ -6,7 +6,7 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { CATALOG_PATTERNS } from '@app/messaging/constants/patterns.constant';
-import { handleRpcMessage } from '@app/common/rmq/rpc-message.helper';
+import { handleRpcMessage } from '@app/messaging/rmq/rpc-message.helper';
 import { CategoryService } from './category.service';
 import type { CreateCategoryCommand } from '@app/contracts/catalog/category/commands/create-category.command';
 import type { UpdateCategoryCommand } from '@app/contracts/catalog/category/commands/update-category.command';

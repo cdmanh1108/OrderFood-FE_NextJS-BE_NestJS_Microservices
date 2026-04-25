@@ -6,259 +6,159 @@ Last updated: 2026-04-25
 
 - NestJS (Gateway + RMQ microservices)
 - RabbitMQ (Transport RMQ)
-- Prisma + PostgreSQL (multi-schema theo domain)
-- AWS S3 (presigned upload URL qua media-service)
-- Monorepo: `apps/` + `libs/`
+- Prisma + PostgreSQL (multi-schema by domain)
+- AWS S3 (presigned upload URL via media-service)
+- Monorepo layout: `apps/` + `libs/`
 
 ---
 
-## 2. High-level architecture
+## 2. Architecture overview
 
 ### Gateway (HTTP layer)
 
-- `apps/gateway` là entrypoint HTTP.
+- `apps/gateway` is the HTTP entrypoint.
 - Global prefix: `/api/v1`.
-- Validate request bằng `ValidationPipe`.
-- Gửi RPC qua `ClientProxy.send(...)` tới service tương ứng.
-- Bắt lỗi RPC và map sang HTTP error bằng `mapRpcErrorToHttpException`.
+- Request validation by `ValidationPipe`.
+- Call backend services through RMQ RPC (`ClientProxy.send(...)`).
+- Map RPC errors to HTTP errors with `mapRpcErrorToHttpException`.
 
 ### Microservices (business layer)
 
-- Mỗi service lắng nghe queue riêng (`iam_queue`, `catalog_queue`, `ordering_queue`, ...).
-- Handler dùng `@MessagePattern(...)`.
-- Business logic ở service class.
+- Each service consumes its own queue (`iam_queue`, `catalog_queue`, `ordering_queue`, ...).
+- RPC handlers use `@MessagePattern(...)`.
+- Async event handlers use `@EventPattern(...)` where needed.
 
 ### Shared libs
 
 - `libs/contracts`: command/query/result/enums.
-- `libs/messaging`: RMQ config, queues, service tokens, patterns.
-- `libs/common`: exception/filter/interceptor/helper dùng chung.
-- `libs/database`: Prisma service/module theo domain DB.
-- `libs/logger`: HTTP/RPC logging utilities.
+- `libs/messaging`: RMQ config, queues, patterns, transport helpers.
+- `libs/common`: shared exception/filter/interceptor/utilities.
+- `libs/database`: Prisma service/modules.
+- `libs/logger`: logging/interceptors.
 
 ---
 
-## 3. Current module map (important)
+## 3. RMQ policy status (implemented)
 
-### Gateway modules đang active
+This section records what was done to complete the RMQ policy:
 
-- `auth-gateway/auth`
-- `auth-gateway/user`
-- `catalog-gateway/category`
-- `catalog-gateway/menu-item`
-- `media-gateway`
-- `ordering-gateway/cart` (đã nối route + service)
-
-### Ordering Gateway hiện tại
-
-- `OrderingGatewayModule` hiện chỉ import `CartOrderingGatewayModule`.
-- `address/checkout/order` hiện mới có DTO (request/response), chưa có controller/service/module active.
-
-### Ordering Service hiện tại
-
-- `OrderingServiceModule` đang import `CartModule`.
-- `cart.controller.ts` đã xử lý các pattern cart.
-- `cart.service.ts` đã có logic DB cho cart.
+- Move transport helper into `libs/messaging`:
+  - New file: `libs/messaging/src/rmq/rpc-message.helper.ts`.
+  - Old file `libs/common/src/rmq/rpc-message.helper.ts` is kept as re-export for backward compatibility.
+- RPC ack/nack policy is now correct:
+  - success -> `ack`
+  - error -> `nack(false, false)` by default (no requeue)
+- Event async helper added with per-service override support:
+  - `maxRetryCount`
+  - `isRetryable(error, metadata)`
+  - `onDuplicate`
+  - `onExpired`
+  - `dedupe(eventId)` callback (for Redis integration)
+- Event metadata headers are standardized:
+  - `x-event-id`
+  - `x-expires-at`
+  - `x-retry-count`
+- Producer-side message builder added:
+  - `buildRmqEventMessage(...)` to create RMQ event record with headers.
 
 ---
 
-## 4. RMQ conventions (đang dùng)
-
-### Server/client config
+## 4. RMQ topology and config (implemented)
 
 File: `libs/messaging/src/config/rmq.config.ts`
 
-- `noAck: false`
-- `prefetchCount: 10`
-- queue durable
+### Added topology model
 
-### Ack behavior hiện tại
+- Constants:
+  - `RMQ_DEFAULT_PREFETCH_COUNT = 10`
+  - `RMQ_DEFAULT_RETRY_DELAY_MS = 15000`
+  - `RMQ_DEFAULT_MAX_RETRY_COUNT = 3`
+  - queue suffixes: `.retry`, `.dlq`
+- Helpers:
+  - `getRmqQueueTopology(...)`
+  - `createRmqRetryQueueConfigs(...)`
 
-File: `libs/common/src/rmq/rpc-message.helper.ts`
+### Queue flow
 
-- `handleRpcMessage(...)` đang `ack` trong `finally`.
-- Nghĩa là hiện tại success/error đều ack (không retry qua nack).
+- Retry flow supported:
+  - `main queue -> retry queue (TTL) -> main queue`
+  - max retry exceeded -> final DLQ
+- `createRmqServerOptions(...)` and `createRmqClientOptions(...)` now support overrides for retry topology.
 
-> Nếu muốn policy `success -> ack`, `error -> nack(false, false)` thì cần đổi helper này.
+### Backward-compatibility fix for existing queues
 
----
-
-## 5. Messaging patterns (current)
-
-File: `libs/messaging/src/constants/patterns.constant.ts`
-
-### Ordering patterns hiện có
-
-- Address:
-  - `ordering.address.create`
-  - `ordering.address.update`
-  - `ordering.address.get_detail`
-  - `ordering.address.list`
-  - `ordering.address.set_default`
-  - `ordering.address.delete`
-- Cart:
-  - `ordering.cart.get_active`
-  - `ordering.cart.add_item`
-  - `ordering.cart.update_item`
-  - `ordering.cart.remove_item`
-  - `ordering.cart.set_address`
-  - `ordering.cart.set_note`
-  - `ordering.cart.clear`
-- Checkout:
-  - `ordering.checkout.preview`
-  - `ordering.checkout.place_order`
-  - `CREATE_ORDER` alias -> `ordering.checkout.place_order`
-- Order:
-  - `ordering.order.get_detail`
-  - `ordering.order.list`
-  - `ordering.order.cancel`
-  - `ordering.order.update_status`
+- Existing RabbitMQ queue arguments are immutable.
+- To avoid `406 PRECONDITION_FAILED` on old queues, binding main queue to retry DLX is controlled by flag:
+  - `retryTopology.bindMainQueueToRetryDlx` (default: `false`)
+- This keeps current queues working without force-delete/recreate.
 
 ---
 
-## 6. Contracts status (ordering)
+## 5. Applied changes in services
 
-`libs/contracts/src/ordering` đã có đầy đủ:
+### Notification service (event consumer)
 
-- `enums/`
-  - `CartStatus`, `OrderChannel`, `OrderSource`, `OrderStatus`, `PaymentStatus`, `FulfillmentStatus`
-- `address/commands`, `address/results`
-- `cart/commands`, `cart/results`
-- `checkout/commands`, `checkout/results`
-- `order/commands`, `order/results`
+- `apps/notification-service/src/main.ts`
+  - Enable retry topology for notification queue.
+  - Read retry delay from env: `RMQ_NOTIFICATION_RETRY_DELAY_MS`.
+  - Read main-DLX binding flag from env: `RMQ_NOTIFICATION_BIND_MAIN_DLX`.
+- `apps/notification-service/src/modules/email/email.controller.ts`
+  - `@EventPattern(...)` now receives `RmqContext`.
+  - Use `handleEventMessage(...)`.
+  - Apply default policy:
+    - `maxRetryCount` from env (`NOTIFICATION_EMAIL_MAX_RETRY_COUNT`)
+    - `onDuplicate: 'ack'`
+    - `onExpired: 'ack'`
 
-Convention:
+### IAM service (event producer)
 
-- Request nội bộ: `*.command.ts` / `*.query.ts` dùng `interface`.
-- Kết quả: `*.result.ts` dùng `interface`.
+- `apps/iam-service/src/modules/auth/auth.service.ts`
+  - `notificationClient.emit(...)` now uses `buildRmqEventMessage(...)`.
+  - Publish metadata:
+    - `eventId = requestId`
+    - `ttlMs = 10 minutes`
+    - auto header `x-retry-count = 0`
 
----
+### RPC handlers import path cleanup
 
-## 7. Ordering cart API (gateway HTTP)
-
-Base: `/api/v1/carts`
-
-- `GET /active`
-- `POST /items`
-- `PATCH /items`
-- `DELETE /items`
-- `PATCH /address`
-- `PATCH /note`
-- `POST /clear`
-
-Flow:
-
-1. Gateway nhận request DTO.
-2. Map sang contract command/query.
-3. Gửi RMQ tới `ORDERING_SERVICE`.
-4. Ordering service xử lý và trả result.
+- Controllers moved from `@app/common/rmq/rpc-message.helper` to `@app/messaging/rmq/rpc-message.helper`.
+- Re-export in `libs/common` is still available to avoid breaking old imports.
 
 ---
 
-## 8. Ordering cart business logic (current)
+## 6. Environment keys
 
-Trong `apps/ordering-service/src/modules/cart/cart.service.ts`:
+Updated in `.env.example`:
 
-- `findActive`:
-  - tìm cart `ACTIVE` theo `(userId | tableId | tableSessionId)` + `channel/source`
-  - nếu không có và `createIfMissing=true` thì tạo mới
-  - chặn query mơ hồ khi không có định danh cart và không cho create
-- `addItem`:
-  - yêu cầu cart tồn tại và status `ACTIVE`
-  - nếu item đã có thì cộng quantity
-- `updateItem`:
-  - update quantity/note theo `itemId`
-- `removeItem`:
-  - xóa item khỏi cart
-- `setAddress`:
-  - cho phép clear address (`addressId` rỗng)
-  - verify address tồn tại
-  - nếu cart có `userId` thì address phải cùng user
-- `setNote`: update note ở cart
-- `clear`: xóa toàn bộ `cart_items` của cart
+- `RMQ_NOTIFICATION_RETRY_DELAY_MS=15000`
+- `RMQ_NOTIFICATION_BIND_MAIN_DLX=false`
+- `NOTIFICATION_EMAIL_MAX_RETRY_COUNT=3`
 
 ---
 
-## 9. ID/data conventions (quan trọng)
+## 7. Important operational note
 
-### IAM user id
+If you want strict RabbitMQ topology on an existing queue:
 
-File: `prisma/iam/schema.prisma`
+1. Set `RMQ_NOTIFICATION_BIND_MAIN_DLX=true`.
+2. Delete/recreate the existing `notification_queue` (or provision queue args upfront).
+3. Start service again.
 
-- `User.id` dùng `cuid()` (không phải UUID).
+If queue is already live and cannot be recreated now:
 
-### Ordering userId columns
-
-File: `prisma/ordering/schema.prisma`
-
-- `Address.userId`, `Cart.userId`, `Order.userId` đang là `@db.VarChar(30)` để tương thích CUID.
-
-### ID khác trong ordering
-
-- `address.id`, `cart.id`, `order.id`, `cartItem.id`... vẫn là UUID.
-
-### Decimal mapping
-
-- Giá/kinh độ/vĩ độ từ Prisma Decimal được map sang `number` trong service result.
+- Keep `RMQ_NOTIFICATION_BIND_MAIN_DLX=false` to avoid arg mismatch.
+- Retry/DLQ logic in helper still works via explicit republish path.
 
 ---
 
-## 10. Error handling conventions
+## 8. Verification done
 
-### Common
+Type-check passed after changes:
 
-- Dùng `AppRpcException` trong microservice.
-- Error code/message centralized ở:
-  - `libs/common/src/constants/error-code.constant.ts`
+- `npx tsc -p apps/notification-service/tsconfig.app.json --noEmit`
+- `npx tsc -p apps/iam-service/tsconfig.app.json --noEmit`
+- `npx tsc -p apps/catalog-service/tsconfig.app.json --noEmit`
+- `npx tsc -p apps/ordering-service/tsconfig.app.json --noEmit`
+- `npx tsc -p apps/media-service/tsconfig.app.json --noEmit`
 
-### Gateway
-
-- Service gateway bắt lỗi `.send(...).pipe(catchError(...))`
-- Map RPC error -> HTTP exception qua:
-  - `libs/common/src/utils/map-rpc-error-to-http.utils.ts`
-
----
-
-## 11. Frontend integration status (cart)
-
-`fe-nextjs` đã tích hợp cart API:
-
-- type: `src/types/api/cart.type.ts`
-- service: `src/services/api/cart.api.ts`
-- context: `src/contexts/cart-context.tsx`
-- page đang dùng: `src/app/(private)/(user)/order-food/page.tsx`
-
----
-
-## 12. Known gaps / next steps
-
-1. Ordering gateway:
-   - mới active `cart`
-   - `address/checkout/order` chưa có controller/service/module.
-2. Ordering service:
-   - mới có `cart` module
-   - chưa có module `address`, `checkout`, `order`.
-3. RMQ ack/nack:
-   - hiện helper ack cả khi lỗi
-   - chưa có retry policy / DLQ / dedupe eventId chuẩn hóa.
-4. Migration:
-   - cần tạo/apply migration cho đổi kiểu `userId` trong ordering schema.
-
----
-
-## 13. Quick run checklist
-
-Backend type-check:
-
-```bash
-npx tsc -p apps/gateway/tsconfig.app.json --noEmit
-npx tsc -p apps/ordering-service/tsconfig.app.json --noEmit
-```
-
-Start services (example):
-
-```bash
-npm run start:gateway
-npm run start:ordering-service
-```
-
+No TypeScript errors found.

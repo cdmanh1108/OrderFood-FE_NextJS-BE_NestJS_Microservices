@@ -6,7 +6,7 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { ORDERING_PATTERNS } from '@app/messaging/constants/patterns.constant';
-import { handleRpcMessage } from '@app/common/rmq/rpc-message.helper';
+import { handleRpcMessage } from '@app/messaging/rmq/rpc-message.helper';
 import type { GetActiveCartQuery } from '@app/contracts/ordering/cart/commands/get-active-cart.query';
 import type { AddCartItemCommand } from '@app/contracts/ordering/cart/commands/add-cart-item.command';
 import type { UpdateCartItemCommand } from '@app/contracts/ordering/cart/commands/update-cart-item.command';

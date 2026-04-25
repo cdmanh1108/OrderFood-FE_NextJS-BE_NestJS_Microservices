@@ -16,6 +16,7 @@ import { EmailVerificationService } from './services/email-verification.service'
 import { ClientProxy } from '@nestjs/microservices';
 import { NOTIFICATION_PATTERNS } from '@app/messaging/constants/patterns.constant';
 import { RMQ_SERVICES } from '@app/messaging/constants/services.constants';
+import { buildRmqEventMessage } from '@app/messaging/rmq/rpc-message.helper';
 
 type LegacyRole = UserRole;
 
@@ -247,12 +248,21 @@ export class AuthService {
       code: verificationCode,
     });
 
-    this.notificationClient.emit(NOTIFICATION_PATTERNS.SEND_VERIFY_EMAIL, {
-      requestId: input.requestId,
-      email: input.email,
-      fullName: input.fullName ?? input.email,
-      code: verificationCode,
-    });
+    this.notificationClient.emit(
+      NOTIFICATION_PATTERNS.SEND_VERIFY_EMAIL,
+      buildRmqEventMessage(
+        {
+          requestId: input.requestId,
+          email: input.email,
+          fullName: input.fullName ?? input.email,
+          code: verificationCode,
+        },
+        {
+          eventId: input.requestId,
+          ttlMs: 10 * 60 * 1000,
+        },
+      ),
+    );
   }
 
   private buildAuthResult(

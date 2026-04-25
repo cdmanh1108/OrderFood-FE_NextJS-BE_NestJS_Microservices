@@ -6,7 +6,7 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { IAM_PATTERNS } from '@app/messaging/constants/patterns.constant';
-import { handleRpcMessage } from '@app/common/rmq/rpc-message.helper';
+import { handleRpcMessage } from '@app/messaging/rmq/rpc-message.helper';
 import { UserService } from './user.service';
 import type { CreateStaffUserCommand } from '@app/contracts/iam/user/commands/create-staff-user.command';
 import type { ListStaffUsersQuery } from '@app/contracts/iam/user/commands/list-staff-users.query';

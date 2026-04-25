@@ -10,7 +10,7 @@ import type { LoginCommandDto } from '@app/contracts/iam/auth/commands/login.com
 import type { RegisterCommandDto } from '@app/contracts/iam/auth/commands/register.command.dto';
 import type { VerifyEmailCommandDto } from '@app/contracts/iam/auth/commands/verify-email.command.dto';
 // import type { RefreshTokenCommandDto } from '@app/contracts/iam/auth/commands/refresh-token.command.dto';
-import { handleRpcMessage } from '@app/common/rmq/rpc-message.helper';
+import { handleRpcMessage } from '@app/messaging/rmq/rpc-message.helper';
 import { IAM_PATTERNS } from '@app/messaging/constants/patterns.constant';
 
 @Controller()

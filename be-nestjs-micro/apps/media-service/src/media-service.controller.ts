@@ -8,7 +8,7 @@ import {
 import { MEDIA_PATTERNS } from '@app/messaging/constants/patterns.constant';
 import type { CreateUploadUrlCommand } from '@app/contracts/media/commands/create-upload-url.command';
 import { UploadUrlResult } from '@app/contracts/media/results/upload-url.result';
-import { handleRpcMessage } from '@app/common/rmq/rpc-message.helper';
+import { handleRpcMessage } from '@app/messaging/rmq/rpc-message.helper';
 import { MediaService } from './media-service.service';
 
 @Controller()

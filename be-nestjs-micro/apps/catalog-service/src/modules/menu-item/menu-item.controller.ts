@@ -1,4 +1,4 @@
-﻿import { Controller } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import {
   Ctx,
   MessagePattern,
@@ -7,7 +7,7 @@ import {
 } from '@nestjs/microservices';
 
 import { CATALOG_PATTERNS } from '@app/messaging/constants/patterns.constant';
-import { handleRpcMessage } from '@app/common/rmq/rpc-message.helper';
+import { handleRpcMessage } from '@app/messaging/rmq/rpc-message.helper';
 
 import type { CreateMenuItemCommand } from '@app/contracts/catalog/menu-item/commands/create-menu-item.command';
 import type { UpdateMenuItemCommand } from '@app/contracts/catalog/menu-item/commands/update-menu-item.command';
