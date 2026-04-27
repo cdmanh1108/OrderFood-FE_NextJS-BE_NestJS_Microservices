@@ -5,6 +5,7 @@ import { LoggerModule } from '@app/logger';
 import { CartModule } from './modules/cart/cart.module';
 import { AddressModule } from './modules/address/address.module';
 import { OrderModule } from './modules/order/order.module';
+import { CheckoutModule } from './modules/checkout/checkout.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { OrderModule } from './modules/order/order.module';
     CartModule,
     AddressModule,
     OrderModule,
+    CheckoutModule,
   ],
 })
 export class OrderingServiceModule {}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -18,7 +18,10 @@ import { Input } from "@/app/components/shared/Input";
 import { Modal } from "@/app/components/shared/Modal";
 import { useCart } from "@/contexts/cart-context";
 import { addressApi, categoryApi, menuItemApi } from "@/services/api";
-import { useUIStore } from "@/stores/ui-store";
+import { checkoutApi } from "@/services/api/checkout.api";
+import { orderApi } from "@/services/api/order.api";
+import type { CheckoutPricingResponse } from "@/services/api/checkout.api";
+import { useUI } from "@/contexts/ui-context";
 import type { MenuItem } from "@/types";
 import type {
   AddressApiModel,
@@ -159,7 +162,7 @@ export default function CustomerMenuPage() {
     updateNotes,
     updateQuantity,
   } = useCart();
-  const { setError: setErrorStatus, setSuccess } = useUIStore();
+  const { setError: setErrorStatus, setSuccess } = useUI();
 
   const [categories, setCategories] = useState<MenuCategorySimpleApiModel[]>(
     [],
@@ -175,6 +178,7 @@ export default function CustomerMenuPage() {
   const [isMenuLoading, setIsMenuLoading] = useState(true);
 
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [addresses, setAddresses] = useState<AddressApiModel[]>([]);
   const [isAddressLoading, setIsAddressLoading] = useState(false);
   const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
@@ -460,16 +464,21 @@ export default function CustomerMenuPage() {
     }
   };
 
-  const handleMockCheckout = async () => {
+  const [pricing, setPricing] = useState<CheckoutPricingResponse | null>(null);
+
+  const handleCalculateCheckout = async () => {
     if (cart.items.length === 0) {
       setErrorStatus("Giỏ hàng đang trống");
       return;
     }
-    if (!activeAddressId) {
-      if (!selectedAddress) {
-        setErrorStatus("Vui lòng chọn địa chỉ giao hàng");
-        return;
-      }
+
+    const addressToUse = activeAddressId || selectedAddress?.id;
+    if (!addressToUse) {
+      setErrorStatus("Vui lòng chọn địa chỉ giao hàng");
+      return;
+    }
+
+    if (!activeAddressId && selectedAddress) {
       try {
         await setAddress(selectedAddress.id);
       } catch (error) {
@@ -483,12 +492,60 @@ export default function CustomerMenuPage() {
     }
 
     setIsPlacingOrder(true);
-
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 900));
+      const payload = {
+        items: cart.items.map((i) => ({
+          menuItemId: i.menuItem.id,
+          quantity: i.quantity,
+          unitPrice: i.menuItem.price,
+        })),
+        shippingAddressId: addressToUse,
+      };
+      const result = await checkoutApi.calculate(payload);
+      setPricing(result);
+      setIsCartModalOpen(false);
+      setIsCheckoutModalOpen(true);
+    } catch (error: any) {
+      setErrorStatus(error.message || "Lỗi tính toán hóa đơn");
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!pricing || !selectedAddress) return;
+    
+    setIsPlacingOrder(true);
+    try {
+      const orderPayload = {
+        channel: 'ONLINE' as const,
+        source: 'WEB' as const,
+        items: cart.items.map((i) => ({
+          menuItemId: i.menuItem.id,
+          menuItemName: i.menuItem.name,
+          menuItemImageUrl: i.menuItem.image,
+          unitPrice: i.menuItem.price,
+          quantity: i.quantity,
+        })),
+        shippingAddress: {
+          receiverName: selectedAddress.receiverName,
+          receiverPhone: selectedAddress.receiverPhone,
+          province: selectedAddress.province,
+          district: selectedAddress.district,
+          ward: selectedAddress.ward,
+          street: selectedAddress.street ?? undefined,
+          detail: selectedAddress.detail ?? undefined,
+        },
+      };
+
+      await orderApi.create(orderPayload);
+      setSuccess("Đặt hàng thành công!");
       await clearCart();
       setIsCartModalOpen(false);
-      setSuccess("Đặt hàng thành công (mock). Bạn có thể kết nối API sau.");
+      setIsCheckoutModalOpen(false);
+      setPricing(null);
+    } catch (error: any) {
+      setErrorStatus(error.message || "Đặt hàng thất bại");
     } finally {
       setIsPlacingOrder(false);
     }
@@ -706,12 +763,12 @@ export default function CustomerMenuPage() {
             </Button>
             <Button
               type="button"
-              onClick={() => void handleMockCheckout()}
+              onClick={() => void handleCalculateCheckout()}
               disabled={cart.items.length === 0}
               isLoading={isPlacingOrder}
               leftIcon={!isPlacingOrder ? <CreditCard size={16} /> : undefined}
             >
-              Thanh toán (mock)
+              Tiến hành thanh toán
             </Button>
           </>
         }
@@ -1158,25 +1215,98 @@ export default function CustomerMenuPage() {
 
             <section className="rounded-2xl border border-brand-amber/20 bg-brand-beige/30 p-4">
               <div className="flex items-center justify-between text-sm text-brand-gray-700">
-                <span>Tạm tính</span>
+                <span>Tạm tính (chưa phí ship)</span>
                 <span>{formatCurrency(cart.subtotal)}</span>
-              </div>
-              <div className="mt-2 flex items-center justify-between text-sm text-brand-gray-700">
-                <span>VAT (8%)</span>
-                <span>{formatCurrency(cart.tax)}</span>
-              </div>
-              <div className="mt-2 flex items-center justify-between text-sm text-brand-gray-700">
-                <span className="inline-flex items-center gap-1">
-                  <Truck size={14} /> Phí giao hàng (mock)
-                </span>
-                <span>{formatCurrency(SHIPPING_FEE)}</span>
               </div>
               <div className="mt-3 border-t border-brand-gray-200 pt-3">
                 <div className="flex items-center justify-between text-base font-bold text-brand-brown">
-                  <span>Tổng thanh toán</span>
-                  <span>{formatCurrency(cartTotalWithShipping)}</span>
+                  <span>Tổng tiền</span>
+                  <span>{formatCurrency(cart.total)}</span>
                 </div>
               </div>
+            </section>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={isCheckoutModalOpen}
+        onClose={() => {
+          setIsCheckoutModalOpen(false);
+          setPricing(null);
+          setIsCartModalOpen(true);
+        }}
+        size="md"
+        title="Xác nhận đơn hàng"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsCheckoutModalOpen(false);
+                setPricing(null);
+                setIsCartModalOpen(true);
+              }}
+            >
+              Quay lại giỏ hàng
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handlePlaceOrder()}
+              isLoading={isPlacingOrder}
+              className="bg-brand-amber hover:bg-brand-amber/90 text-white"
+              leftIcon={!isPlacingOrder ? <CreditCard size={16} /> : undefined}
+            >
+              Xác nhận đặt hàng
+            </Button>
+          </>
+        }
+      >
+        {pricing && selectedAddress && (
+          <div className="space-y-4">
+            <section className="rounded-xl border border-brand-amber/20 bg-brand-beige/30 p-4">
+              <h3 className="font-semibold text-brand-brown mb-1">Địa chỉ nhận hàng</h3>
+              <p className="text-sm font-medium">{selectedAddress.receiverName} - {selectedAddress.receiverPhone}</p>
+              <p className="text-sm text-brand-gray-600">{formatAddressLine(selectedAddress)}</p>
+            </section>
+            
+            <section className="rounded-xl border border-brand-gray-100 bg-white p-4">
+              <h3 className="font-semibold text-brand-brown mb-3">Món đã chọn</h3>
+              <div className="space-y-2">
+                {cart.items.map(item => (
+                   <div key={item.menuItem.id} className="flex justify-between text-sm">
+                     <span className="font-medium">{item.quantity}x {item.menuItem.name}</span>
+                     <span className="text-brand-gray-700">{formatCurrency(item.menuItem.price * item.quantity)}</span>
+                   </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-brand-gray-100 bg-white p-4">
+              <h3 className="font-semibold text-brand-brown mb-3">Phương thức thanh toán</h3>
+              <p className="text-sm">{PAYMENT_METHODS.find(m => m.id === paymentMethod)?.title || 'Chưa chọn'}</p>
+            </section>
+
+            <section className="rounded-xl border border-brand-amber/20 bg-brand-beige/30 p-4">
+               <div className="flex justify-between text-sm mb-1 text-brand-gray-700">
+                 <span>Tổng tiền món</span>
+                 <span>{formatCurrency(pricing.itemsSubtotal)}</span>
+               </div>
+               <div className="flex justify-between text-sm mb-1 text-brand-gray-700">
+                 <span>Phí giao hàng</span>
+                 <span>{formatCurrency(pricing.shippingFee)}</span>
+               </div>
+               {pricing.discountTotal > 0 && (
+                 <div className="flex justify-between text-sm text-brand-danger mb-1">
+                   <span>Khuyến mãi</span>
+                   <span>-{formatCurrency(pricing.discountTotal)}</span>
+                 </div>
+               )}
+               <div className="flex justify-between font-bold text-base mt-3 pt-3 border-t border-brand-gray-200">
+                 <span className="text-brand-brown">Tổng thanh toán</span>
+                 <span className="text-brand-amber text-xl">{formatCurrency(pricing.grandTotal)}</span>
+               </div>
             </section>
           </div>
         )}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
@@ -8,7 +8,7 @@ import { Modal } from "@/app/components/shared/Modal";
 import { Badge } from "@/app/components/shared/Badge";
 import { DataTable, Column } from "@/app/components/shared/DataTable";
 import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
-import { useUIStore } from "@/stores/ui-store";
+import { useUI } from "@/contexts/ui-context";
 import { formatDate, toSlug } from "@/utils/cn";
 import { categoryApi } from "@/services/api";
 import type {
@@ -28,7 +28,7 @@ const DEFAULT_FORM: CategoryFormValues = {
 };
 
 export default function CategoryPage() {
-  const { setError: setErrorStatus, setSuccess } = useUIStore();
+  const { setError: setErrorStatus, setSuccess } = useUI();
 
   const [categories, setCategories] = useState<CategoryApiModel[]>([]);
   const [searchQuery, setSearchQuery] = useState("");

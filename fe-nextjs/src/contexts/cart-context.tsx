@@ -113,7 +113,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const loadedCart = await loadActiveCart();
     if (!loadedCart) {
-      throw new Error("Khong the khoi tao gio hang");
+      throw new Error("Lỗi khi tạo giỏ hàng");
     }
 
     return loadedCart;

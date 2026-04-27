@@ -6,6 +6,8 @@ import { Input } from "@/app/components/shared/Input";
 import { Badge } from "@/app/components/shared/Badge";
 import { DataTable, Column } from "@/app/components/shared/DataTable";
 import { Button } from "@/app/components/shared/Button";
+import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
+import { useUI } from "@/contexts/ui-context";
 import { formatCurrency } from "@/utils/cn";
 import { orderApi } from "@/services/api";
 import type { OrderApiModel, OrderStatus, PaymentStatus } from "@/types/api";
@@ -22,24 +24,43 @@ function formatDateTime(value: string | null) {
 }
 
 export default function OrdersPage() {
+  const { setSuccess, setError: setErrorStatus } = useUI();
   const [orders, setOrders] = useState<OrderApiModel[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean;
+    orderId: string;
+    newStatus: OrderStatus;
+  } | null>(null);
+
+  const fetchOrders = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const res = await orderApi.listAdmin({ page: 1, limit: 100 });
+      setOrders(res.items);
+    } catch (error) {
+      console.error("Failed to fetch orders:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setIsLoading(true);
-        const res = await orderApi.listAdmin({ page: 1, limit: 100 });
-        setOrders(res.items);
-      } catch (error) {
-        console.error("Failed to fetch orders:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
+
+  const handleUpdateStatus = async () => {
+    if (!statusModal) return;
+    try {
+      await orderApi.updateStatus(statusModal.orderId, { status: statusModal.newStatus });
+      setSuccess("Cập nhật trạng thái đơn hàng thành công");
+      setStatusModal(null);
+      await fetchOrders();
+    } catch (error: any) {
+      setErrorStatus(error.message || "Cập nhật trạng thái thất bại");
+    }
+  };
 
   const filteredOrders = orders.filter(
     (order) =>
@@ -70,6 +91,16 @@ export default function OrdersPage() {
     };
     return config[status] || { variant: "default", label: status };
   };
+
+  const orderStatuses: { value: OrderStatus; label: string }[] = [
+    { value: "DRAFT", label: "Bản nháp" },
+    { value: "PLACED", label: "Chờ xác nhận" },
+    { value: "CONFIRMED", label: "Đã xác nhận" },
+    { value: "PREPARING", label: "Đang chuẩn bị" },
+    { value: "READY", label: "Sẵn sàng" },
+    { value: "COMPLETED", label: "Hoàn thành" },
+    { value: "CANCELED", label: "Đã hủy" },
+  ];
 
   const columns: Column<OrderApiModel>[] = [
     {
@@ -115,11 +146,25 @@ export default function OrdersPage() {
       key: "status",
       label: "Trạng Thái",
       render: (order) => {
-        const badge = getOrderStatusBadge(order.status);
         return (
-          <Badge variant={badge.variant} size="sm">
-            {badge.label}
-          </Badge>
+          <select
+            className="text-sm border border-brand-gray-200 rounded-lg px-2 py-1 focus:ring-brand-amber focus:border-brand-amber outline-none"
+            value={order.status}
+            onChange={(e) => {
+              const newStatus = e.target.value as OrderStatus;
+              setStatusModal({
+                isOpen: true,
+                orderId: order.id,
+                newStatus,
+              });
+            }}
+          >
+            {orderStatuses.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
         );
       },
     },
@@ -175,6 +220,19 @@ export default function OrdersPage() {
             title: "Không tìm thấy đơn hàng",
             description: "Thử thay đổi từ khóa tìm kiếm",
           }}
+        />
+      )}
+
+      {statusModal && (
+        <ConfirmDialog
+          isOpen={statusModal.isOpen}
+          title="Xác nhận cập nhật trạng thái"
+          message={`Bạn có chắc chắn muốn chuyển đơn hàng sang trạng thái "${orderStatuses.find(s => s.value === statusModal.newStatus)?.label}"?`}
+          confirmText="Cập nhật"
+          cancelText="Hủy"
+          onConfirm={handleUpdateStatus}
+          onClose={() => setStatusModal(null)}
+          variant="warning"
         />
       )}
     </div>

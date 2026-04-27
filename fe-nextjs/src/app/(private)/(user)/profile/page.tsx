@@ -6,7 +6,7 @@ import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
 import { useAuth } from "@/contexts/auth-context";
 import { addressApi } from "@/services/api";
-import { useUIStore } from "@/stores/ui-store";
+import { useUI } from "@/contexts/ui-context";
 import type {
   AddressApiModel,
   CreateAddressRequest,
@@ -81,7 +81,7 @@ function toAddressUpdatePayload(form: AddressFormValues): UpdateAddressRequest {
 
 export default function CustomerProfilePage() {
   const { user } = useAuth();
-  const { setError: setErrorStatus, setSuccess } = useUIStore();
+  const { setError: setErrorStatus, setSuccess } = useUI();
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState({

@@ -2,12 +2,12 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { useUIStore } from "../../../stores/ui-store";
+import { useUI } from "../../../contexts/ui-context";
 import { Toaster } from "../ui/sonner";
 import { LoadingOverlay } from "./LoadingOverlay";
 
 export function GlobalAppFeedback() {
-  const { isLoading, loadingMessage, status, clearStatus } = useUIStore();
+  const { isLoading, loadingMessage, status, clearStatus } = useUI();
 
   useEffect(() => {
     if (!status) return;

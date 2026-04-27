@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -19,7 +19,7 @@ import { Badge } from "@/app/components/shared/Badge";
 import { DataTable, Column } from "@/app/components/shared/DataTable";
 import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
 import { formatDate } from "@/utils/cn";
-import { useUIStore } from "@/stores/ui-store";
+import { useUI } from "@/contexts/ui-context";
 import { staffUserApi } from "@/services/api";
 import type { StaffUserApiModel } from "@/types/api";
 
@@ -38,7 +38,7 @@ const DEFAULT_FORM: StaffFormState = {
 };
 
 export default function StaffPage() {
-  const { setError: setErrorStatus, setSuccess } = useUIStore();
+  const { setError: setErrorStatus, setSuccess } = useUI();
 
   const [users, setUsers] = useState<StaffUserApiModel[]>([]);
   const [searchQuery, setSearchQuery] = useState("");

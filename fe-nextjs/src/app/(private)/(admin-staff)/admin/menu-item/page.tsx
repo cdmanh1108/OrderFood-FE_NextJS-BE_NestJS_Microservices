@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
@@ -9,7 +9,7 @@ import { Modal } from "@/app/components/shared/Modal";
 import { Badge } from "@/app/components/shared/Badge";
 import { DataTable, Column } from "@/app/components/shared/DataTable";
 import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
-import { useUIStore } from "@/stores/ui-store";
+import { useUI } from "@/contexts/ui-context";
 import { formatCurrency, toSlug } from "@/utils/cn";
 import { resolveImageContentType } from "../../../../../utils/media";
 import { categoryApi, mediaApi, menuItemApi } from "@/services/api";
@@ -48,7 +48,7 @@ const DEFAULT_FORM: MenuItemFormState = {
 };
 
 export default function MenuItemPage() {
-  const { setError: setErrorStatus, setSuccess } = useUIStore();
+  const { setError: setErrorStatus, setSuccess } = useUI();
 
   const [menuItems, setMenuItems] = useState<MenuItemApiModel[]>([]);
   const [categories, setCategories] = useState<CategoryApiModel[]>([]);

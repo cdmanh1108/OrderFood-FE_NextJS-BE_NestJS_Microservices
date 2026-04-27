@@ -11,7 +11,7 @@ import { Button } from "../../components/shared/Button";
 import { VerifyEmailModal } from "../../components/auth/VerifyEmailModal";
 import { useAuth } from "../../../contexts/auth-context";
 import { authApi } from "@/services/api";
-import { useUIStore } from "../../../stores/ui-store";
+import { useUI } from "../../../contexts/ui-context";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function LoginPage() {
     stopLoading,
     setError: setErrorStatus,
     setSuccess,
-  } = useUIStore();
+  } = useUI();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -13,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { Roles, RolesGuard, JwtAuthGuard } from '@app/auth';
 import { UserRole } from '@app/contracts/iam/auth/enums/user-role.enum';
-import { ERRORS } from '@app/common/constants/error-code.constant';
 import { UserGatewayService } from './user-gateway.service';
 import { CreateStaffUserRequestDto } from './dto/request/create-staff-user.request.dto';
 import { ListStaffUsersRequestDto } from './dto/request/list-staff-users.request.dto';

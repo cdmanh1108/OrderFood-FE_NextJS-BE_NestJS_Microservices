@@ -10,7 +10,7 @@ import { PasswordInput } from "../../components/shared/PasswordInput";
 import { VerifyEmailModal } from "../../components/auth/VerifyEmailModal";
 import { authApi } from "@/services/api";
 import { useAuth } from "../../../contexts/auth-context";
-import { useUIStore } from "../../../stores/ui-store";
+import { useUI } from "../../../contexts/ui-context";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function SignupPage() {
     stopLoading,
     setError: setErrorStatus,
     setSuccess,
-  } = useUIStore();
+  } = useUI();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
