@@ -5,7 +5,7 @@ import { PaymentStatus } from '../../enums/payment-status.enum';
 export interface UpdateOrderStatusResult {
   id: string;
   status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  fulfillmentStatus: FulfillmentStatus;
+  paymentStatus?: PaymentStatus;
+  fulfillmentStatus?: FulfillmentStatus;
   updatedAt: Date;
 }

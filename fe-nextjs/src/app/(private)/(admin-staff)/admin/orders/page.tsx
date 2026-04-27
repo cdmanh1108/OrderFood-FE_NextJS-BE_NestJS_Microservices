@@ -1,75 +1,83 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Search, Eye } from "lucide-react";
 import { Input } from "@/app/components/shared/Input";
 import { Badge } from "@/app/components/shared/Badge";
 import { DataTable, Column } from "@/app/components/shared/DataTable";
 import { Button } from "@/app/components/shared/Button";
-import { mockOrders } from "@/services/mock-data";
-import { formatCurrency, formatDateTime } from "@/utils/cn";
-import type { Order } from "@/types";
-import { OrderStatus, PaymentStatus } from "@/types";
+import { formatCurrency } from "@/utils/cn";
+import { orderApi } from "@/services/api";
+import type { OrderApiModel, OrderStatus, PaymentStatus } from "@/types/api";
+
+function formatDateTime(value: string | null) {
+  if (!value) return "N/A";
+  return new Date(value).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function OrdersPage() {
-  const [orders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<OrderApiModel[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setIsLoading(true);
+        const res = await orderApi.listAdmin({ page: 1, limit: 100 });
+        setOrders(res.items);
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   const filteredOrders = orders.filter(
     (order) =>
-      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerName?.toLowerCase().includes(searchQuery.toLowerCase()),
+      order.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.shippingAddress?.receiverName?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const getOrderStatusBadge = (status: OrderStatus) => {
-    const config = {
-      [OrderStatus.PENDING]: {
-        variant: "warning" as const,
-        label: "Chờ xác nhận",
-      },
-      [OrderStatus.CONFIRMED]: {
-        variant: "info" as const,
-        label: "Đã xác nhận",
-      },
-      [OrderStatus.PREPARING]: {
-        variant: "warning" as const,
-        label: "Đang chuẩn bị",
-      },
-      [OrderStatus.READY]: { variant: "success" as const, label: "Sẵn sàng" },
-      [OrderStatus.COMPLETED]: {
-        variant: "success" as const,
-        label: "Hoàn thành",
-      },
-      [OrderStatus.CANCELLED]: { variant: "danger" as const, label: "Đã hủy" },
+    const config: Record<OrderStatus, { variant: "warning" | "info" | "success" | "danger" | "default"; label: string }> = {
+      DRAFT: { variant: "default", label: "Bản nháp" },
+      PLACED: { variant: "warning", label: "Chờ xác nhận" },
+      CONFIRMED: { variant: "info", label: "Đã xác nhận" },
+      PREPARING: { variant: "warning", label: "Đang chuẩn bị" },
+      READY: { variant: "success", label: "Sẵn sàng" },
+      COMPLETED: { variant: "success", label: "Hoàn thành" },
+      CANCELED: { variant: "danger", label: "Đã hủy" },
     };
-    return config[status];
+    return config[status] || { variant: "default", label: status };
   };
 
   const getPaymentStatusBadge = (status: PaymentStatus) => {
-    const config = {
-      [PaymentStatus.UNPAID]: {
-        variant: "warning" as const,
-        label: "Chưa thanh toán",
-      },
-      [PaymentStatus.PAID]: {
-        variant: "success" as const,
-        label: "Đã thanh toán",
-      },
-      [PaymentStatus.REFUNDED]: {
-        variant: "danger" as const,
-        label: "Đã hoàn tiền",
-      },
+    const config: Record<PaymentStatus, { variant: "warning" | "info" | "success" | "danger" | "default"; label: string }> = {
+      UNPAID: { variant: "warning", label: "Chưa thanh toán" },
+      PENDING: { variant: "info", label: "Đang xử lý" },
+      PAID: { variant: "success", label: "Đã thanh toán" },
+      FAILED: { variant: "danger", label: "Thất bại" },
+      REFUNDED: { variant: "danger", label: "Đã hoàn tiền" },
     };
-    return config[status];
+    return config[status] || { variant: "default", label: status };
   };
 
-  const columns: Column<Order>[] = [
+  const columns: Column<OrderApiModel>[] = [
     {
-      key: "orderNumber",
+      key: "code",
       label: "Mã Đơn",
       render: (order) => (
         <span className="font-semibold text-brand-brown">
-          {order.orderNumber}
+          {order.code}
         </span>
       ),
     },
@@ -79,11 +87,11 @@ export default function OrdersPage() {
       render: (order) => (
         <div>
           <p className="font-medium text-brand-brown">
-            {order.customerName || "Khách lẻ"}
+            {order.shippingAddress?.receiverName || "Khách lẻ"}
           </p>
-          {order.table && (
+          {order.tableId && (
             <p className="text-xs text-brand-gray-500">
-              Bàn: {order.table.number}
+              Bàn: {order.tableId}
             </p>
           )}
         </div>
@@ -99,7 +107,7 @@ export default function OrdersPage() {
       label: "Tổng Tiền",
       render: (order) => (
         <span className="font-semibold text-brand-brown">
-          {formatCurrency(order.total)}
+          {formatCurrency(order.pricingSnapshot?.grandTotal || 0)}
         </span>
       ),
     },
@@ -152,19 +160,23 @@ export default function OrdersPage() {
         />
       </div>
 
-      <DataTable
-        columns={columns}
-        data={filteredOrders}
-        actions={(order) => (
-          <Button variant="ghost" size="sm" leftIcon={<Eye size={16} />}>
-            Xem
-          </Button>
-        )}
-        emptyState={{
-          title: "Không tìm thấy đơn hàng",
-          description: "Thử thay đổi từ khóa tìm kiếm",
-        }}
-      />
+      {isLoading ? (
+        <div className="py-8 text-center text-brand-brown">Đang tải danh sách đơn hàng...</div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filteredOrders}
+          actions={(order) => (
+            <Button variant="ghost" size="sm" leftIcon={<Eye size={16} />}>
+              Xem
+            </Button>
+          )}
+          emptyState={{
+            title: "Không tìm thấy đơn hàng",
+            description: "Thử thay đổi từ khóa tìm kiếm",
+          }}
+        />
+      )}
     </div>
   );
 }

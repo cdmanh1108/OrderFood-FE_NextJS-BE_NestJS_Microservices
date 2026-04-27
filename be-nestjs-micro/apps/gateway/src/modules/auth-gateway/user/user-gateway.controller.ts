@@ -11,7 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
+import { Roles, RolesGuard, JwtAuthGuard } from '@app/auth';
 import { UserRole } from '@app/contracts/iam/auth/enums/user-role.enum';
 import { ERRORS } from '@app/common/constants/error-code.constant';
 import { UserGatewayService } from './user-gateway.service';
@@ -26,30 +26,19 @@ type RequestWithAuthUser = {
 };
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UserGatewayController {
   constructor(private readonly userGatewayService: UserGatewayService) {}
 
-  private ensureAdmin(role?: UserRole): UserRole.ADMIN {
-    if (role !== UserRole.ADMIN) {
-      throw new ForbiddenException({
-        code: ERRORS.FORBIDDEN.code,
-        message: ERRORS.FORBIDDEN.message,
-      });
-    }
-
-    return role;
-  }
 
   @Post('staff')
+  @Roles('ADMIN')
   createStaff(
     @Body() dto: CreateStaffUserRequestDto,
     @Req() request: RequestWithAuthUser,
   ) {
-    const actorRole = this.ensureAdmin(request.user?.role);
-
     return this.userGatewayService.createStaff({
-      actorRole,
+      actorRole: request.user?.role as UserRole.ADMIN,
       email: dto.email,
       fullName: dto.fullName,
       phoneNumber: dto.phoneNumber,
@@ -58,14 +47,13 @@ export class UserGatewayController {
   }
 
   @Get('staff')
+  @Roles('ADMIN')
   listStaff(
     @Query() query: ListStaffUsersRequestDto,
     @Req() request: RequestWithAuthUser,
   ) {
-    const actorRole = this.ensureAdmin(request.user?.role);
-
     return this.userGatewayService.listStaff({
-      actorRole,
+      actorRole: request.user?.role as UserRole.ADMIN,
       keyword: query.keyword,
       page: query.page,
       limit: query.limit,
@@ -73,25 +61,23 @@ export class UserGatewayController {
   }
 
   @Get('staff/:id')
+  @Roles('ADMIN')
   getStaffDetail(@Param('id') id: string, @Req() request: RequestWithAuthUser) {
-    const actorRole = this.ensureAdmin(request.user?.role);
-
     return this.userGatewayService.getStaffDetail({
-      actorRole,
+      actorRole: request.user?.role as UserRole.ADMIN,
       id,
     });
   }
 
   @Patch('staff/:id')
+  @Roles('ADMIN')
   updateStaff(
     @Param('id') id: string,
     @Body() dto: UpdateStaffUserRequestDto,
     @Req() request: RequestWithAuthUser,
   ) {
-    const actorRole = this.ensureAdmin(request.user?.role);
-
     return this.userGatewayService.updateStaff({
-      actorRole,
+      actorRole: request.user?.role as UserRole.ADMIN,
       id,
       email: dto.email,
       fullName: dto.fullName,
@@ -101,11 +87,10 @@ export class UserGatewayController {
   }
 
   @Delete('staff/:id')
+  @Roles('ADMIN')
   deleteStaff(@Param('id') id: string, @Req() request: RequestWithAuthUser) {
-    const actorRole = this.ensureAdmin(request.user?.role);
-
     return this.userGatewayService.deleteStaff({
-      actorRole,
+      actorRole: request.user?.role as UserRole.ADMIN,
       id,
     });
   }

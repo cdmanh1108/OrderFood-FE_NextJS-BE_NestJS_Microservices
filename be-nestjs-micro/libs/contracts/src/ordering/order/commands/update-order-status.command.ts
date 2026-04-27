@@ -4,7 +4,7 @@ import { PaymentStatus } from '../../enums/payment-status.enum';
 
 export interface UpdateOrderStatusCommand {
   id: string;
-  status?: OrderStatus;
+  status: OrderStatus;
   paymentStatus?: PaymentStatus;
   fulfillmentStatus?: FulfillmentStatus;
 }

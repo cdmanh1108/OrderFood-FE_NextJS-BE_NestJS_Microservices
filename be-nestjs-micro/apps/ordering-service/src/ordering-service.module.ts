@@ -4,6 +4,7 @@ import { OrderingPrismaModule } from '@app/database/ordering-prisma.module';
 import { LoggerModule } from '@app/logger';
 import { CartModule } from './modules/cart/cart.module';
 import { AddressModule } from './modules/address/address.module';
+import { OrderModule } from './modules/order/order.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AddressModule } from './modules/address/address.module';
     OrderingPrismaModule,
     CartModule,
     AddressModule,
+    OrderModule,
   ],
 })
 export class OrderingServiceModule {}

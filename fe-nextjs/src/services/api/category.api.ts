@@ -19,9 +19,11 @@ export const categoryApi = {
     });
   },
 
-  menuCategories(): Promise<MenuCategorySimpleApiModel[]> {
+  menuCategories(query?: ListCategoriesRequest): Promise<MenuCategorySimpleApiModel[]> {
     return httpService.get<MenuCategorySimpleApiModel[]>(
-      `${CATEGORY_ENDPOINT}/menu-categories`,
+      `${CATEGORY_ENDPOINT}/menu-categories`, {
+        params: query,
+      }
     );
   },
 

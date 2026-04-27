@@ -7,6 +7,7 @@ import { CatalogGatewayModule } from './modules/catalog-gateway/catalog-gateway.
 import { LoggerModule } from '@app/logger';
 import { UserGatewayModule } from './modules/auth-gateway/user/user-gateway.module';
 import { OrderingGatewayModule } from './modules/ordering-gateway/ordering-gateway.module';
+import { AuthModule } from '@app/auth';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { OrderingGatewayModule } from './modules/ordering-gateway/ordering-gatew
       isGlobal: true,
     }),
     LoggerModule,
+    AuthModule,
     AuthGatewayModule,
     UserGatewayModule,
     CatalogGatewayModule,

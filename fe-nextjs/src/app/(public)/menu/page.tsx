@@ -1,10 +1,15 @@
 ﻿"use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Minus, Search, ShoppingCart } from "lucide-react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Search, Utensils } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PublicHeader } from "../../components/layout/PublicHeader";
-import { Button } from "../../components/shared/Button";
 import { Input } from "../../components/shared/Input";
 import { formatCurrency } from "../../../utils/cn";
 import { categoryApi, menuItemApi } from "@/services/api";
@@ -15,29 +20,29 @@ import type {
 
 type CategoryFilter = "all" | string;
 
-type PublicCartItem = {
-  menuItem: MenuItemSimpleApiModel;
-  quantity: number;
-};
-
 export default function MenuPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const didLoadCategoriesRef = useRef(false);
 
   const selectedCategory =
     (searchParams.get("category") ?? "all").trim() || "all";
 
   const [keyword, setKeyword] = useState("");
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
-  const [categories, setCategories] = useState<MenuCategorySimpleApiModel[]>([]);
+  const [categories, setCategories] = useState<MenuCategorySimpleApiModel[]>(
+    [],
+  );
   const [menuItems, setMenuItems] = useState<MenuItemSimpleApiModel[]>([]);
-  const [cart, setCart] = useState<PublicCartItem[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isLoadingMenuItems, setIsLoadingMenuItems] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadCategories = useCallback(async () => {
+    if (didLoadCategoriesRef.current) return;
+    didLoadCategoriesRef.current = true;
+
     setIsLoadingCategories(true);
 
     try {
@@ -69,6 +74,7 @@ export default function MenuPage() {
           keyword: keywordQuery || undefined,
           limit: 100,
         });
+
         setErrorMessage(null);
         return response;
       } catch (error) {
@@ -86,9 +92,7 @@ export default function MenuPage() {
   );
 
   const selectedCategoryId = useMemo(() => {
-    if (selectedCategory === "all") {
-      return undefined;
-    }
+    if (selectedCategory === "all") return undefined;
 
     return categories.find((category) => category.slug === selectedCategory)
       ?.id;
@@ -105,6 +109,7 @@ export default function MenuPage() {
       }
 
       const query = params.toString();
+
       router.replace(query ? `${pathname}?${query}` : pathname, {
         scroll: false,
       });
@@ -127,10 +132,12 @@ export default function MenuPage() {
   }, [keyword]);
 
   useEffect(() => {
+    if (selectedCategory !== "all" && categories.length === 0) {
+      return;
+    }
+
     if (selectedCategory !== "all" && !selectedCategoryId) {
-      if (!isLoadingCategories) {
-        setMenuItems([]);
-      }
+      setMenuItems([]);
       return;
     }
 
@@ -144,248 +151,159 @@ export default function MenuPage() {
     selectedCategory,
     selectedCategoryId,
     debouncedKeyword,
-    isLoadingCategories,
     loadMenuItems,
+    categories.length,
   ]);
 
-  const addToCart = (menuItemId: string) => {
-    const selectedMenuItem =
-      menuItems.find((item) => item.id === menuItemId) ??
-      cart.find((item) => item.menuItem.id === menuItemId)?.menuItem;
-
-    if (!selectedMenuItem) {
-      return;
-    }
-
-    setCart((prev) => {
-      const existingItem = prev.find((item) => item.menuItem.id === menuItemId);
-
-      if (existingItem) {
-        return prev.map((item) =>
-          item.menuItem.id === menuItemId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        );
-      }
-
-      return [...prev, { menuItem: selectedMenuItem, quantity: 1 }];
-    });
-  };
-
-  const removeFromCart = (menuItemId: string) => {
-    setCart((prev) => {
-      const existingItem = prev.find((item) => item.menuItem.id === menuItemId);
-
-      if (!existingItem) {
-        return prev;
-      }
-
-      if (existingItem.quantity === 1) {
-        return prev.filter((item) => item.menuItem.id !== menuItemId);
-      }
-
-      return prev.map((item) =>
-        item.menuItem.id === menuItemId
-          ? { ...item, quantity: item.quantity - 1 }
-          : item,
-      );
-    });
-  };
-
-  const getItemQuantity = (menuItemId: string): number => {
-    const item = cart.find((cartItem) => cartItem.menuItem.id === menuItemId);
-    return item?.quantity || 0;
-  };
-
-  const totalItems = useMemo(
-    () => cart.reduce((sum, item) => sum + item.quantity, 0),
-    [cart],
-  );
-  const totalPrice = useMemo(
-    () =>
-      cart.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0),
-    [cart],
-  );
-
   return (
-    <div className="min-h-screen bg-brand-white">
-      <PublicHeader cartItemsCount={totalItems} />
+    <div className="min-h-screen bg-gradient-to-br from-brand-beige/40 via-white to-brand-amber/10">
+      <PublicHeader />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl lg:text-4xl font-bold text-brand-brown mb-2">
-            Thực đơn
-          </h1>
-          <p className="text-lg text-brand-gray-600">
-            Chọn món và thưởng thức hương vị truyền thống
-          </p>
-        </div>
+      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <section className="mb-8 overflow-hidden rounded-[2rem] border border-brand-amber/20 bg-white shadow-sm">
+          <div className="relative bg-gradient-to-r from-brand-brown via-brand-coffee to-brand-amber px-6 py-8 text-white sm:px-8">
+            <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+            <div className="absolute bottom-0 right-16 h-20 w-20 rounded-full bg-white/10 blur-xl" />
 
-        {errorMessage && (
-          <div className="mb-6 rounded-xl border border-brand-danger/30 bg-brand-danger/10 px-4 py-3 text-sm text-brand-danger">
-            {errorMessage}
+            <div className="relative">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/75">
+                Menu
+              </p>
+              <h1 className="mt-3 text-3xl font-bold text-white sm:text-4xl">
+                Thực đơn
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-white/80 sm:text-base">
+                Chọn món và thưởng thức hương vị truyền thống tại Bún Đậu Làng
+                Mơ.
+              </p>
+            </div>
           </div>
-        )}
 
-        <div className="mb-6">
-          <Input
-            placeholder="Tìm theo tên món hoặc slug..."
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            leftIcon={<Search size={18} />}
-          />
-        </div>
-
-        <div className="mb-8 overflow-x-auto">
-          <div className="flex gap-3 pb-2">
-            <button
-              onClick={() => handleCategoryChange("all")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                selectedCategory === "all"
-                  ? "bg-brand-brown text-white shadow-sm"
-                  : "bg-white text-brand-gray-600 hover:bg-brand-gray-50"
-              }`}
-            >
-              Tất cả
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryChange(category.slug)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                  selectedCategory === category.slug
-                    ? "bg-brand-brown text-white shadow-sm"
-                    : "bg-white text-brand-gray-600 hover:bg-brand-gray-50"
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-            {isLoadingCategories && (
-              <span className="px-4 py-2 text-sm text-brand-gray-500">
-                Đang tải
-              </span>
-            )}
-          </div>
-        </div>
-
-        {isLoadingMenuItems ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-32">
-            {[...Array(6)].map((_, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-[var(--radius-card)] shadow-[var(--shadow-card)] overflow-hidden animate-pulse"
-              >
-                <div className="aspect-[4/3] bg-brand-gray-100" />
-                <div className="p-5 space-y-3">
-                  <div className="h-5 rounded bg-brand-gray-100" />
-                  <div className="h-4 rounded bg-brand-gray-100" />
-                  <div className="h-4 rounded bg-brand-gray-100 w-2/3" />
-                </div>
+          <div className="space-y-5 p-6 sm:p-8">
+            {errorMessage && (
+              <div className="rounded-2xl border border-brand-danger/30 bg-brand-danger/10 px-4 py-3 text-sm font-medium text-brand-danger">
+                {errorMessage}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-32">
-            {menuItems.map((item) => {
-              const quantity = getItemQuantity(item.id);
+            )}
 
-              return (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-[var(--radius-card)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] transition-all duration-300 overflow-hidden"
+            <div className="relative">
+              <Input
+                placeholder="Tìm theo tên món..."
+                value={keyword}
+                onChange={(event) => setKeyword(event.target.value)}
+                leftIcon={<Search size={18} />}
+              />
+            </div>
+
+            <div className="overflow-x-auto">
+              <div className="flex gap-3 pb-2">
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange("all")}
+                  className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-all ${selectedCategory === "all"
+                      ? "bg-brand-brown text-white shadow-sm"
+                      : "bg-brand-beige text-brand-brown hover:bg-brand-amber hover:text-white"
+                    }`}
                 >
-                  <div className="aspect-[4/3] bg-gradient-to-br from-brand-yellow/20 to-brand-amber/20 flex items-center justify-center relative overflow-hidden">
-                    {item.image ? (
-                      <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${item.image})` }}
-                      />
-                    ) : (
-                      <span className="text-6xl">🍽️</span>
-                    )}
-                  </div>
+                  Tất cả
+                </button>
 
-                  <div className="p-5">
-                    <h3 className="text-lg font-semibold text-brand-brown mb-2">
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-brand-gray-600 mb-4 line-clamp-2">
-                      {item.description}
-                    </p>
+                {categories.map((category) => (
+                  <button
+                    type="button"
+                    key={category.id}
+                    onClick={() => handleCategoryChange(category.slug)}
+                    className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-all ${selectedCategory === category.slug
+                        ? "bg-brand-brown text-white shadow-sm"
+                        : "bg-brand-beige text-brand-brown hover:bg-brand-amber hover:text-white"
+                      }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold text-brand-brown">
-                        {formatCurrency(item.price)}
-                      </span>
-
-                      {quantity === 0 ? (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => addToCart(item.id)}
-                          leftIcon={<Plus size={16} />}
-                        >
-                          Thêm
-                        </Button>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-gray-100 hover:bg-brand-gray-200 text-brand-brown transition-colors"
-                          >
-                            <Minus size={16} />
-                          </button>
-                          <span className="w-8 text-center font-semibold text-brand-brown">
-                            {quantity}
-                          </span>
-                          <button
-                            onClick={() => addToCart(item.id)}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-yellow hover:bg-brand-amber text-brand-brown transition-colors"
-                          >
-                            <Plus size={16} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {menuItems.length === 0 && (
-              <div className="sm:col-span-2 lg:col-span-3 rounded-[var(--radius-card)] border border-brand-gray-200 bg-white p-8 text-center text-brand-gray-600">
-                Không có món ăn phù hợp
-              </div>
-            )}
-          </div>
-        )}
-
-        {totalItems > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-brand-gray-200 shadow-[var(--shadow-wood)] z-40">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-yellow/20">
-                    <ShoppingCart className="text-brand-brown" size={20} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-brand-gray-600">
-                      {totalItems} món
-                    </p>
-                    <p className="text-lg font-bold text-brand-brown">
-                      {formatCurrency(totalPrice)}
-                    </p>
-                  </div>
-                </div>
-                <Button variant="primary" size="lg">
-                  Đặt hàng
-                </Button>
+                {isLoadingCategories && (
+                  <span className="whitespace-nowrap rounded-full bg-brand-beige px-4 py-2 text-sm text-brand-gray-500">
+                    Đang tải...
+                  </span>
+                )}
               </div>
             </div>
           </div>
+        </section>
+
+        {isLoadingMenuItems ? (
+          <section className="grid gap-6 pb-32 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm"
+              >
+                <div className="aspect-[4/3] animate-pulse bg-brand-gray-100" />
+                <div className="space-y-3 p-5">
+                  <div className="h-5 animate-pulse rounded bg-brand-gray-100" />
+                  <div className="h-4 animate-pulse rounded bg-brand-gray-100" />
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-brand-gray-100" />
+                </div>
+              </div>
+            ))}
+          </section>
+        ) : (
+          <section className="grid gap-6 pb-32 sm:grid-cols-2 lg:grid-cols-3">
+            {menuItems.map((item) => (
+              <article
+                key={item.id}
+                className="group overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-amber/40 hover:shadow-[var(--shadow-hover)]"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-yellow/20 to-brand-amber/20">
+                  {item.image ? (
+                    <div
+                      className="absolute inset-0 bg-cover bg-center transition duration-300 group-hover:scale-105"
+                      style={{ backgroundImage: `url(${item.image})` }}
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/80 shadow-sm">
+                        <Utensils className="h-8 w-8 text-brand-amber" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-brand-brown transition group-hover:text-brand-amber">
+                    {item.name}
+                  </h3>
+
+                  <p className="mt-2 line-clamp-2 min-h-[40px] text-sm leading-relaxed text-brand-gray-600">
+                    {item.description || "Món ăn truyền thống thơm ngon."}
+                  </p>
+
+                  <div className="mt-5 flex items-center justify-between">
+                    <span className="text-xl font-bold text-brand-amber">
+                      {formatCurrency(item.price)}
+                    </span>
+                  </div>
+                </div>
+              </article>
+            ))}
+
+            {menuItems.length === 0 && (
+              <div className="rounded-[2rem] border border-dashed border-gray-300 bg-white p-10 text-center sm:col-span-2 lg:col-span-3">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-beige">
+                  <Search className="h-7 w-7 text-brand-amber" />
+                </div>
+                <p className="text-lg font-bold text-brand-brown">
+                  Không có món ăn phù hợp
+                </p>
+                <p className="mt-1 text-sm text-brand-gray-600">
+                  Thử đổi từ khóa tìm kiếm hoặc chọn danh mục khác.
+                </p>
+              </div>
+            )}
+          </section>
         )}
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle,
   ChevronDown,
@@ -13,109 +13,47 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
+import { orderApi } from "@/services/api";
+import type { OrderApiModel, OrderStatus } from "@/types/api";
 
-type OrderStatus = "all" | "delivering" | "completed" | "cancelled";
-type RealOrderStatus = "pending" | "confirmed" | "preparing" | "delivering" | "completed" | "cancelled";
+type TabStatus = "all" | "pending" | "processing" | "delivering" | "completed" | "cancelled";
 
 const statusConfig: Record<
-  RealOrderStatus,
+  OrderStatus,
   {
     label: string;
     color: string;
     icon: typeof Clock;
   }
 > = {
-  pending: {
-    label: "Chờ xác nhận",
-    color: "bg-yellow-50 text-yellow-700 ring-yellow-200",
-    icon: Clock,
-  },
-  confirmed: {
-    label: "Đã xác nhận",
-    color: "bg-blue-50 text-blue-700 ring-blue-200",
-    icon: CheckCircle,
-  },
-  preparing: {
-    label: "Đang chuẩn bị",
-    color: "bg-purple-50 text-purple-700 ring-purple-200",
-    icon: Package,
-  },
-  delivering: {
-    label: "Đang giao",
-    color: "bg-orange-50 text-orange-700 ring-orange-200",
-    icon: Truck,
-  },
-  completed: {
-    label: "Hoàn thành",
-    color: "bg-green-50 text-green-700 ring-green-200",
-    icon: CheckCircle,
-  },
-  cancelled: {
-    label: "Đã hủy",
-    color: "bg-red-50 text-red-700 ring-red-200",
-    icon: XCircle,
-  },
+  DRAFT: { label: "Bản nháp", color: "bg-gray-50 text-gray-700 ring-gray-200", icon: Clock },
+  PLACED: { label: "Chờ xác nhận", color: "bg-yellow-50 text-yellow-700 ring-yellow-200", icon: Clock },
+  CONFIRMED: { label: "Đã xác nhận", color: "bg-blue-50 text-blue-700 ring-blue-200", icon: CheckCircle },
+  PREPARING: { label: "Đang chuẩn bị", color: "bg-purple-50 text-purple-700 ring-purple-200", icon: Package },
+  READY: { label: "Chờ giao/lấy", color: "bg-orange-50 text-orange-700 ring-orange-200", icon: Truck },
+  COMPLETED: { label: "Hoàn thành", color: "bg-green-50 text-green-700 ring-green-200", icon: CheckCircle },
+  CANCELED: { label: "Đã hủy", color: "bg-red-50 text-red-700 ring-red-200", icon: XCircle },
 };
 
-const mockOrders = [
-  {
-    id: "1",
-    orderNumber: "ORD-2024-001",
-    createdAt: "2024-04-20T10:30:00",
-    completedAt: "2024-04-20T11:15:00",
-    total: 145000,
-    status: "completed" as const,
-    orderType: "delivery" as const,
-    deliveryAddress: "123 Trần Đại Nghĩa, Hai Bà Trưng, Hà Nội",
-    items: [
-      { id: "1", name: "Bún đậu mắm tôm", quantity: 2, price: 65000 },
-      { id: "2", name: "Chả cốm", quantity: 1, price: 45000 },
-    ],
-  },
-  {
-    id: "2",
-    orderNumber: "ORD-2024-002",
-    createdAt: "2024-04-22T14:15:00",
-    total: 95000,
-    status: "delivering" as const,
-    orderType: "delivery" as const,
-    deliveryAddress: "123 Trần Đại Nghĩa, Hai Bà Trưng, Hà Nội",
-    items: [{ id: "3", name: "Nem chua rán", quantity: 2, price: 50000 }],
-  },
-  {
-    id: "3",
-    orderNumber: "ORD-2024-003",
-    createdAt: "2024-04-18T09:00:00",
-    completedAt: "2024-04-18T09:45:00",
-    total: 170000,
-    status: "completed" as const,
-    orderType: "delivery" as const,
-    deliveryAddress: "456 Giải Phóng, Hoàng Mai, Hà Nội",
-    items: [{ id: "4", name: "Bún đậu đặc biệt", quantity: 2, price: 85000 }],
-  },
-  {
-    id: "4",
-    orderNumber: "ORD-2024-004",
-    createdAt: "2024-04-15T18:30:00",
-    total: 120000,
-    status: "cancelled" as const,
-    orderType: "delivery" as const,
-    deliveryAddress: "123 Trần Đại Nghĩa, Hai Bà Trưng, Hà Nội",
-    items: [
-      { id: "5", name: "Bún đậu mắm tôm", quantity: 1, price: 65000 },
-      { id: "6", name: "Nem chua rán", quantity: 1, price: 50000 },
-    ],
-  },
-];
-
-const tabs: { id: OrderStatus; label: string }[] = [
+const tabs: { id: TabStatus; label: string }[] = [
   { id: "all", label: "Tất cả" },
+  { id: "pending", label: "Chờ xác nhận" },
+  { id: "processing", label: "Đang xử lý" },
   { id: "delivering", label: "Đang giao" },
   { id: "completed", label: "Đã hoàn thành" },
   { id: "cancelled", label: "Đã hủy" },
 ];
 
-function formatDateTime(value: string) {
+function getTabStatus(order: OrderApiModel): TabStatus {
+  if (order.status === "CANCELED") return "cancelled";
+  if (order.status === "COMPLETED") return "completed";
+  if (order.status === "DRAFT" || order.status === "PLACED") return "pending";
+  if (order.fulfillmentStatus === "SHIPPING" || order.fulfillmentStatus === "DELIVERED") return "delivering";
+  return "processing"; // CONFIRMED, PREPARING, READY
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) return "N/A";
   return new Date(value).toLocaleDateString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -130,23 +68,41 @@ function formatCurrency(value: number) {
 }
 
 export default function CustomerOrdersPage() {
-  const [activeTab, setActiveTab] = useState<OrderStatus>("all");
+  const [activeTab, setActiveTab] = useState<TabStatus>("all");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [orders, setOrders] = useState<OrderApiModel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const orderStats = useMemo(
-    () => ({
-      total: mockOrders.length,
-      delivering: mockOrders.filter((order) => order.status === "delivering").length,
-      completed: mockOrders.filter((order) => order.status === "completed").length,
-      cancelled: mockOrders.filter((order) => order.status === "cancelled").length,
-    }),
-    [],
-  );
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setIsLoading(true);
+        const res = await orderApi.list({ page: 1, limit: 100 }); // Or handle pagination properly
+        setOrders(res.items);
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
-  const filteredOrders = mockOrders.filter((order) => {
-    if (activeTab === "all") return true;
-    return order.status === activeTab;
-  });
+  const orderStats = useMemo(() => {
+    return {
+      total: orders.length,
+      delivering: orders.filter((o) => getTabStatus(o) === "delivering").length,
+      completed: orders.filter((o) => getTabStatus(o) === "completed").length,
+      cancelled: orders.filter((o) => getTabStatus(o) === "cancelled").length,
+    };
+  }, [orders]);
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      if (activeTab === "all") return true;
+      return getTabStatus(order) === activeTab;
+    });
+  }, [orders, activeTab]);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-brand-beige/40 via-white to-brand-amber/10 px-4 py-8 sm:px-6 lg:px-8">
@@ -206,7 +162,9 @@ export default function CustomerOrdersPage() {
           </div>
         </section>
 
-        {filteredOrders.length === 0 ? (
+        {isLoading ? (
+          <div className="py-12 text-center text-brand-brown">Đang tải danh sách đơn hàng...</div>
+        ) : filteredOrders.length === 0 ? (
           <section className="rounded-[2rem] border border-dashed border-gray-300 bg-white px-5 py-14 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-beige">
               <Package className="h-8 w-8 text-brand-amber" />
@@ -219,6 +177,7 @@ export default function CustomerOrdersPage() {
             {filteredOrders.map((order) => {
               const StatusIcon = statusConfig[order.status].icon;
               const isExpanded = selectedOrder === order.id;
+              const totalAmount = order.pricingSnapshot?.grandTotal || 0;
 
               return (
                 <article
@@ -234,7 +193,7 @@ export default function CustomerOrdersPage() {
                           </div>
 
                           <div>
-                            <h3 className="font-bold text-brand-brown">{order.orderNumber}</h3>
+                            <h3 className="font-bold text-brand-brown">{order.code}</h3>
                             <p className="text-xs text-gray-500">Đặt lúc: {formatDateTime(order.createdAt)}</p>
                           </div>
 
@@ -254,7 +213,7 @@ export default function CustomerOrdersPage() {
                               {order.items.length} món
                             </span>
                             <span>•</span>
-                            <span>{order.orderType === "delivery" ? "Giao hàng" : "Tại quán"}</span>
+                            <span>{order.channel === "ONLINE" ? "Giao hàng" : "Tại quán"}</span>
                             {order.completedAt && (
                               <>
                                 <span>•</span>
@@ -265,7 +224,7 @@ export default function CustomerOrdersPage() {
 
                           {!isExpanded && (
                             <p className="mt-2 line-clamp-1 text-sm text-gray-700">
-                              {order.items.map((item) => `${item.quantity}x ${item.name}`).join(", ")}
+                              {order.items.map((item) => `${item.quantity}x ${item.menuItemName}`).join(", ")}
                             </p>
                           )}
                         </div>
@@ -274,7 +233,7 @@ export default function CustomerOrdersPage() {
                       <div className="flex shrink-0 flex-row items-center justify-between gap-4 lg:flex-col lg:items-end">
                         <div className="text-left lg:text-right">
                           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Tổng tiền</p>
-                          <p className="mt-1 text-2xl font-bold text-brand-coffee">{formatCurrency(order.total)}</p>
+                          <p className="mt-1 text-2xl font-bold text-brand-coffee">{formatCurrency(totalAmount)}</p>
                         </div>
 
                         <button
@@ -302,12 +261,12 @@ export default function CustomerOrdersPage() {
                                 className="flex items-center justify-between gap-4 rounded-2xl bg-white p-4 shadow-sm"
                               >
                                 <div>
-                                  <p className="font-semibold text-gray-900">{item.name}</p>
+                                  <p className="font-semibold text-gray-900">{item.menuItemName}</p>
                                   <p className="mt-1 text-sm text-gray-500">Số lượng: {item.quantity}</p>
                                 </div>
 
                                 <div className="text-right">
-                                  <p className="font-bold text-brand-coffee">{formatCurrency(item.price)}</p>
+                                  <p className="font-bold text-brand-coffee">{formatCurrency(item.unitPrice)}</p>
                                   <p className="text-xs text-gray-400">/ món</p>
                                 </div>
                               </div>
@@ -315,17 +274,22 @@ export default function CustomerOrdersPage() {
                           </div>
                         </div>
 
-                        {order.deliveryAddress && (
+                        {order.shippingAddress && (
                           <div className="rounded-2xl bg-white p-4 shadow-sm">
                             <h4 className="mb-2 flex items-center gap-2 font-bold text-brand-brown">
                               <MapPin className="h-4 w-4 text-brand-amber" />
                               Địa chỉ giao hàng
                             </h4>
-                            <p className="text-sm leading-6 text-gray-700">{order.deliveryAddress}</p>
+                            <p className="text-sm leading-6 text-gray-700">
+                              {order.shippingAddress.receiverName} - {order.shippingAddress.receiverPhone}<br />
+                              {order.shippingAddress.street ? `${order.shippingAddress.street}, ` : ''}
+                              {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}
+                              {order.shippingAddress.detail ? ` (${order.shippingAddress.detail})` : ''}
+                            </p>
                           </div>
                         )}
 
-                        {order.status === "completed" && (
+                        {order.status === "COMPLETED" && (
                           <div className="pt-1">
                             <button className="w-full rounded-2xl bg-brand-amber py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-yellow hover:shadow-md">
                               Đánh giá đơn hàng

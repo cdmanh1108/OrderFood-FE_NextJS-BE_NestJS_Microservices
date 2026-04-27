@@ -65,13 +65,14 @@ export const ORDERING_PATTERNS = {
   // Checkout
   PREVIEW_CHECKOUT: 'ordering.checkout.preview',
   PLACE_ORDER: 'ordering.checkout.place_order',
-  CREATE_ORDER: 'ordering.checkout.place_order',
 
   // Order
+  CREATE_ORDER: 'ordering.order.create',
   GET_ORDER_DETAIL: 'ordering.order.get_detail',
   LIST_ORDERS: 'ordering.order.list',
   CANCEL_ORDER: 'ordering.order.cancel',
   UPDATE_ORDER_STATUS: 'ordering.order.update_status',
+  DELETE_ORDER: 'ordering.order.delete',
 } as const;
 
 // ======================

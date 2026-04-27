@@ -1,4 +1,4 @@
-﻿import {
+import {
   Body,
   Controller,
   Delete,
@@ -7,7 +7,9 @@
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard, Roles, RolesGuard } from '@app/auth';
 import { MenuItemCatalogGatewayService } from './menu-item-catalog-gateway.service';
 import { CreateMenuItemRequestDto } from './dto/request/create-menu-item.request.dto';
 import { GetMenuItemsRequestDto } from './dto/request/get-menu-items.request.dto';
@@ -22,6 +24,8 @@ export class MenuItemCatalogGatewayController {
   ) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'STAFF')
   create(@Body() dto: CreateMenuItemRequestDto) {
     return this.menuItemCatalogGatewayService.create(dto);
   }
@@ -47,16 +51,22 @@ export class MenuItemCatalogGatewayController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'STAFF')
   update(@Param('id') id: string, @Body() dto: UpdateMenuItemRequestDto) {
     return this.menuItemCatalogGatewayService.update(id, dto);
   }
 
   @Patch(':id/active')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'STAFF')
   setActive(@Param('id') id: string, @Body() dto: SetMenuItemActiveRequestDto) {
     return this.menuItemCatalogGatewayService.setActive(id, dto);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   remove(@Param('id') id: string) {
     return this.menuItemCatalogGatewayService.remove(id);
   }
