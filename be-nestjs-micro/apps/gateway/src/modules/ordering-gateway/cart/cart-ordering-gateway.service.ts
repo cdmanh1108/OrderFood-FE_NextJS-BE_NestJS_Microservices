@@ -31,9 +31,12 @@ export class CartOrderingGatewayService {
     private readonly orderingClient: ClientProxy,
   ) {}
 
-  async findActive(dto: GetActiveCartRequestDto): Promise<CartDetailResult> {
+  async findActive(
+    userId: string,
+    dto: GetActiveCartRequestDto,
+  ): Promise<CartDetailResult> {
     const query: GetActiveCartQuery = {
-      userId: dto.userId,
+      userId,
       channel: dto.channel,
       source: dto.source,
       tableId: dto.tableId,
@@ -55,8 +58,12 @@ export class CartOrderingGatewayService {
     );
   }
 
-  async addItem(dto: AddCartItemRequestDto): Promise<CartDetailResult> {
+  async addItem(
+    userId: string,
+    dto: AddCartItemRequestDto,
+  ): Promise<CartDetailResult> {
     const command: AddCartItemCommand = {
+      userId,
       cartId: dto.cartId,
       menuItemId: dto.menuItemId,
       menuItemName: dto.menuItemName,
@@ -80,8 +87,12 @@ export class CartOrderingGatewayService {
     );
   }
 
-  async updateItem(dto: UpdateCartItemRequestDto): Promise<CartDetailResult> {
+  async updateItem(
+    userId: string,
+    dto: UpdateCartItemRequestDto,
+  ): Promise<CartDetailResult> {
     const command: UpdateCartItemCommand = {
+      userId,
       cartId: dto.cartId,
       itemId: dto.itemId,
       quantity: dto.quantity,
@@ -103,9 +114,11 @@ export class CartOrderingGatewayService {
   }
 
   async removeItem(
+    userId: string,
     dto: RemoveCartItemRequestDto,
   ): Promise<RemoveCartItemResult> {
     const command: RemoveCartItemCommand = {
+      userId,
       cartId: dto.cartId,
       itemId: dto.itemId,
     };
@@ -125,9 +138,11 @@ export class CartOrderingGatewayService {
   }
 
   async setAddress(
+    userId: string,
     dto: SetCartAddressRequestDto,
   ): Promise<SetCartAddressResult> {
     const command: SetCartAddressCommand = {
+      userId,
       cartId: dto.cartId,
       addressId: dto.addressId,
     };
@@ -146,8 +161,12 @@ export class CartOrderingGatewayService {
     );
   }
 
-  async setNote(dto: SetCartNoteRequestDto): Promise<SetCartNoteResult> {
+  async setNote(
+    userId: string,
+    dto: SetCartNoteRequestDto,
+  ): Promise<SetCartNoteResult> {
     const command: SetCartNoteCommand = {
+      userId,
       cartId: dto.cartId,
       note: dto.note,
     };
@@ -166,8 +185,14 @@ export class CartOrderingGatewayService {
     );
   }
 
-  async clear(dto: ClearCartRequestDto): Promise<ClearCartResult> {
-    const command: ClearCartCommand = { cartId: dto.cartId };
+  async clear(
+    userId: string,
+    dto: ClearCartRequestDto,
+  ): Promise<ClearCartResult> {
+    const command: ClearCartCommand = {
+      userId,
+      cartId: dto.cartId,
+    };
 
     return firstValueFrom(
       this.orderingClient

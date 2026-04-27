@@ -1,3 +1,4 @@
+export * from "./address.type";
 export * from "./auth.type";
 export * from "./cart.type";
 export * from "./category.type";

@@ -15,10 +15,13 @@ import type { Cart, CartItem, MenuItem } from "../types";
 
 interface CartContextType {
   cart: Cart;
+  activeCartId: string | null;
+  activeAddressId: string | null;
   addItem: (item: MenuItem, quantity?: number, notes?: string) => Promise<void>;
   removeItem: (menuItemId: string) => Promise<void>;
   updateQuantity: (menuItemId: string, quantity: number) => Promise<void>;
   updateNotes: (menuItemId: string, notes: string) => Promise<void>;
+  setAddress: (addressId?: string) => Promise<void>;
   clearCart: () => Promise<void>;
   getItemCount: () => number;
 }
@@ -79,7 +82,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     const response = await cartApi.getActive({
-      userId: user.id,
       channel: "ONLINE",
       source: "WEB",
       createIfMissing: true,
@@ -211,6 +213,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await loadActiveCart();
   }, [ensureActiveCart, loadActiveCart]);
 
+  const setAddress = useCallback(
+    async (addressId?: string) => {
+      const currentCart = await ensureActiveCart();
+      await cartApi.setAddress({
+        cartId: currentCart.id,
+        addressId,
+      });
+      await loadActiveCart();
+    },
+    [ensureActiveCart, loadActiveCart],
+  );
+
   const cart = useMemo(() => mapCartApiToAppCart(activeCart), [activeCart]);
 
   const getItemCount = useCallback(() => {
@@ -221,10 +235,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider
       value={{
         cart,
+        activeCartId: activeCart?.id ?? null,
+        activeAddressId: activeCart?.addressId ?? null,
         addItem,
         removeItem,
         updateQuantity,
         updateNotes,
+        setAddress,
         clearCart,
         getItemCount,
       }}

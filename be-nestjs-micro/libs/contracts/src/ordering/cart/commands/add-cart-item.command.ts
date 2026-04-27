@@ -1,4 +1,5 @@
 export interface AddCartItemCommand {
+  userId: string;
   cartId: string;
   menuItemId: string;
   menuItemName: string;

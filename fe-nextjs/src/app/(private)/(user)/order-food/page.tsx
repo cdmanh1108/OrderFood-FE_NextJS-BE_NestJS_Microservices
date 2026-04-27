@@ -17,20 +17,27 @@ import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
 import { Modal } from "@/app/components/shared/Modal";
 import { useCart } from "@/contexts/cart-context";
-import { categoryApi, menuItemApi } from "@/services/api";
+import { addressApi, categoryApi, menuItemApi } from "@/services/api";
 import { useUIStore } from "@/stores/ui-store";
 import type { MenuItem } from "@/types";
 import type {
+  AddressApiModel,
+  CreateAddressRequest,
   MenuCategorySimpleApiModel,
   MenuItemSimpleApiModel,
+  UpdateAddressRequest,
 } from "@/types/api";
 import { formatCurrency, toSlug } from "@/utils/cn";
 
-type DeliveryAddress = {
-  recipientName: string;
-  recipientPhone: string;
-  fullAddress: string;
-  note: string;
+type AddressFormValues = {
+  receiverName: string;
+  receiverPhone: string;
+  province: string;
+  district: string;
+  ward: string;
+  street: string;
+  detail: string;
+  isDefault: boolean;
 };
 
 type PaymentMethod = "cash" | "momo" | "banking";
@@ -38,11 +45,15 @@ type PaymentMethod = "cash" | "momo" | "banking";
 const ALL_CATEGORY_ID = "all";
 const SHIPPING_FEE = 15000;
 
-const INITIAL_ADDRESS: DeliveryAddress = {
-  recipientName: "Nguyễn Văn A",
-  recipientPhone: "0912345678",
-  fullAddress: "123 Trần Đại Nghĩa, Hai Bà Trưng, Hà Nội",
-  note: "Gọi trước 5 phút khi giao",
+const INITIAL_ADDRESS_FORM: AddressFormValues = {
+  receiverName: "",
+  receiverPhone: "",
+  province: "",
+  district: "",
+  ward: "",
+  street: "",
+  detail: "",
+  isDefault: false,
 };
 
 const PAYMENT_METHODS: Array<{
@@ -92,13 +103,59 @@ function mapMenuCardToCartMenuItem(
   };
 }
 
+function mapAddressToFormValue(address: AddressApiModel): AddressFormValues {
+  return {
+    receiverName: address.receiverName,
+    receiverPhone: address.receiverPhone,
+    province: address.province,
+    district: address.district,
+    ward: address.ward,
+    street: address.street ?? "",
+    detail: address.detail ?? "",
+    isDefault: address.isDefault,
+  };
+}
+
+function formatAddressLine(address: AddressApiModel): string {
+  return [address.street, address.ward, address.district, address.province]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function toAddressCreatePayload(form: AddressFormValues): CreateAddressRequest {
+  return {
+    receiverName: form.receiverName.trim(),
+    receiverPhone: form.receiverPhone.trim(),
+    province: form.province.trim(),
+    district: form.district.trim(),
+    ward: form.ward.trim(),
+    street: form.street.trim() || undefined,
+    detail: form.detail.trim() || undefined,
+    isDefault: form.isDefault,
+  };
+}
+
+function toAddressUpdatePayload(form: AddressFormValues): UpdateAddressRequest {
+  return {
+    receiverName: form.receiverName.trim(),
+    receiverPhone: form.receiverPhone.trim(),
+    province: form.province.trim(),
+    district: form.district.trim(),
+    ward: form.ward.trim(),
+    street: form.street.trim() || undefined,
+    detail: form.detail.trim() || undefined,
+  };
+}
+
 export default function CustomerMenuPage() {
   const {
     cart,
+    activeAddressId,
     addItem,
     clearCart,
     getItemCount,
     removeItem,
+    setAddress,
     updateNotes,
     updateQuantity,
   } = useCart();
@@ -118,11 +175,19 @@ export default function CustomerMenuPage() {
   const [isMenuLoading, setIsMenuLoading] = useState(true);
 
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
-  const [isAddressEditing, setIsAddressEditing] = useState(false);
-  const [deliveryAddress, setDeliveryAddress] =
-    useState<DeliveryAddress>(INITIAL_ADDRESS);
-  const [addressDraft, setAddressDraft] =
-    useState<DeliveryAddress>(INITIAL_ADDRESS);
+  const [addresses, setAddresses] = useState<AddressApiModel[]>([]);
+  const [isAddressLoading, setIsAddressLoading] = useState(false);
+  const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [addressForm, setAddressForm] =
+    useState<AddressFormValues>(INITIAL_ADDRESS_FORM);
+  const [isAddressSubmitting, setIsAddressSubmitting] = useState(false);
+  const [selectingAddressId, setSelectingAddressId] = useState<string | null>(
+    null,
+  );
+  const [defaultingAddressId, setDefaultingAddressId] = useState<string | null>(
+    null,
+  );
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
@@ -144,6 +209,17 @@ export default function CustomerMenuPage() {
     () => cart.total + SHIPPING_FEE,
     [cart.total],
   );
+  const selectedAddress = useMemo(() => {
+    if (addresses.length === 0) {
+      return null;
+    }
+
+    return (
+      addresses.find((address) => address.id === activeAddressId) ??
+      addresses.find((address) => address.isDefault) ??
+      null
+    );
+  }, [activeAddressId, addresses]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -165,7 +241,7 @@ export default function CustomerMenuPage() {
       setErrorStatus(
         error instanceof Error
           ? error.message
-          : "Khong the tai danh sach danh muc",
+          : "Không thể tải danh sách danh mục",
       );
     } finally {
       setIsCategoryLoading(false);
@@ -202,6 +278,32 @@ export default function CustomerMenuPage() {
     void loadMenuItems();
   }, [loadMenuItems]);
 
+  const loadAddresses = useCallback(async () => {
+    setIsAddressLoading(true);
+
+    try {
+      const response = await addressApi.list({
+        page: 1,
+        limit: 20,
+      });
+      setAddresses(response.items ?? []);
+    } catch (error) {
+      setErrorStatus(
+        error instanceof Error ? error.message : "Không thể tải địa chỉ",
+      );
+    } finally {
+      setIsAddressLoading(false);
+    }
+  }, [setErrorStatus]);
+
+  useEffect(() => {
+    if (!isCartModalOpen) {
+      return;
+    }
+
+    void loadAddresses();
+  }, [isCartModalOpen, loadAddresses]);
+
   const getSelectedQuantity = (itemId: string): number => {
     return quantities[itemId] ?? 1;
   };
@@ -227,36 +329,157 @@ export default function CustomerMenuPage() {
       setErrorStatus(
         error instanceof Error
           ? error.message
-          : "Khong the them mon vao gio hang",
+          : "Không thể thêm món vào giỏ hàng",
       );
     }
   };
 
-  const handleStartEditAddress = () => {
-    setAddressDraft(deliveryAddress);
-    setIsAddressEditing(true);
+  const resetAddressForm = () => {
+    setAddressForm(INITIAL_ADDRESS_FORM);
+    setEditingAddressId(null);
   };
 
-  const handleSaveAddress = () => {
+  const handleStartCreateAddress = () => {
+    resetAddressForm();
+    setIsAddressFormOpen(true);
+  };
+
+  const handleStartEditAddress = (address: AddressApiModel) => {
+    setAddressForm(mapAddressToFormValue(address));
+    setEditingAddressId(address.id);
+    setIsAddressFormOpen(true);
+  };
+
+  const handleCancelAddressForm = () => {
+    resetAddressForm();
+    setIsAddressFormOpen(false);
+  };
+
+  const handleSubmitAddress = async () => {
     const hasRequiredAddress =
-      addressDraft.recipientName.trim() &&
-      addressDraft.recipientPhone.trim() &&
-      addressDraft.fullAddress.trim();
+      addressForm.receiverName.trim() &&
+      addressForm.receiverPhone.trim() &&
+      addressForm.province.trim() &&
+      addressForm.district.trim() &&
+      addressForm.ward.trim();
 
     if (!hasRequiredAddress) {
-      setErrorStatus("Vui lòng nhập đầy đủ thông tin giao hàng");
+      setErrorStatus("Vui lòng nhập đầy đủ thông tin địa chỉ");
       return;
     }
 
-    setDeliveryAddress(addressDraft);
-    setIsAddressEditing(false);
-    setSuccess("Đã cập nhật địa chỉ giao hàng (mock)");
+    setIsAddressSubmitting(true);
+
+    try {
+      if (editingAddressId) {
+        await addressApi.update(
+          editingAddressId,
+          toAddressUpdatePayload(addressForm),
+        );
+        if (addressForm.isDefault) {
+          await addressApi.setDefault(editingAddressId, { isDefault: true });
+        }
+        if (activeAddressId === editingAddressId || addressForm.isDefault) {
+          await setAddress(editingAddressId);
+        }
+      } else {
+        const createdAddress = await addressApi.create(
+          toAddressCreatePayload(addressForm),
+        );
+        await setAddress(createdAddress.id);
+      }
+
+      await loadAddresses();
+      setSuccess(
+        editingAddressId
+          ? "Cập nhật địa chỉ thành công"
+          : "Thêm địa chỉ thành công",
+      );
+      handleCancelAddressForm();
+    } catch (error) {
+      setErrorStatus(
+        error instanceof Error ? error.message : "Không thể lưu địa chỉ",
+      );
+    } finally {
+      setIsAddressSubmitting(false);
+    }
+  };
+
+  const handleSelectAddress = async (addressId: string) => {
+    if (activeAddressId === addressId) {
+      return;
+    }
+
+    setSelectingAddressId(addressId);
+
+    try {
+      await setAddress(addressId);
+      setSuccess("Đã cập nhật địa chỉ cho giỏ hàng");
+    } catch (error) {
+      setErrorStatus(
+        error instanceof Error
+          ? error.message
+          : "Không thể gán địa chỉ cho giỏ hàng",
+      );
+    } finally {
+      setSelectingAddressId(null);
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId: string) => {
+    setDefaultingAddressId(addressId);
+
+    try {
+      await addressApi.setDefault(addressId, { isDefault: true });
+      await setAddress(addressId);
+      await loadAddresses();
+      setSuccess("Da dat dia chi mac dinh");
+    } catch (error) {
+      setErrorStatus(
+        error instanceof Error ? error.message : "Khong the dat mac dinh",
+      );
+    } finally {
+      setDefaultingAddressId(null);
+    }
+  };
+
+  const handleClearCartAddress = async () => {
+    setSelectingAddressId("clear");
+
+    try {
+      await setAddress(undefined);
+      setSuccess("Đã bỏ địa chỉ khỏi giỏ hàng");
+    } catch (error) {
+      setErrorStatus(
+        error instanceof Error
+          ? error.message
+          : "Không thể bỏ địa chỉ khỏi giỏ hàng",
+      );
+    } finally {
+      setSelectingAddressId(null);
+    }
   };
 
   const handleMockCheckout = async () => {
     if (cart.items.length === 0) {
       setErrorStatus("Giỏ hàng đang trống");
       return;
+    }
+    if (!activeAddressId) {
+      if (!selectedAddress) {
+        setErrorStatus("Vui lòng chọn địa chỉ giao hàng");
+        return;
+      }
+      try {
+        await setAddress(selectedAddress.id);
+      } catch (error) {
+        setErrorStatus(
+          error instanceof Error
+            ? error.message
+            : "Không thể gán địa chỉ giao hàng",
+        );
+        return;
+      }
     }
 
     setIsPlacingOrder(true);
@@ -272,17 +495,22 @@ export default function CustomerMenuPage() {
   };
 
   return (
-    <div className="space-y-6 pb-20">
-      <section className="rounded-3xl border border-brand-amber/30 bg-gradient-to-br from-brand-yellow/20 via-white to-brand-amber/20 p-5 lg:p-7 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <main className="min-h-screen bg-gradient-to-br from-brand-beige/50 via-white to-brand-amber/10 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl space-y-8 pb-20">
+      <section className="overflow-hidden rounded-[2rem] border border-brand-amber/20 bg-white shadow-sm">
+        <div className="relative bg-gradient-to-r from-brand-brown via-brand-coffee to-brand-amber px-6 py-8 text-white sm:px-8 lg:px-10">
+          <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute bottom-0 right-24 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.14em] text-brand-gray-500">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/75">
               Đặt Món Trực Tuyến
             </p>
-            <h1 className="mt-2 text-2xl font-bold text-brand-brown lg:text-3xl">
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Chọn món bạn muốn ăn hôm nay
             </h1>
-            <p className="mt-2 text-sm text-brand-gray-600 lg:text-base">
+            <p className="mt-2 max-w-2xl text-sm text-white/80 lg:text-base">
               Gọi API menu theo từ khóa và danh mục, thêm món vào giỏ và thanh
               toán nhanh.
             </p>
@@ -291,20 +519,21 @@ export default function CustomerMenuPage() {
           <button
             type="button"
             onClick={() => setIsCartModalOpen(true)}
-            className="relative inline-flex items-center justify-center gap-2 rounded-xl bg-brand-brown px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-coffee"
+            className="relative inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-brand-brown shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
           >
             <ShoppingCart className="h-5 w-5" />
             Giỏ hàng
             {getItemCount() > 0 && (
-              <span className="absolute -right-2 -top-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-danger px-1 text-xs font-bold text-white">
+              <span className="absolute -right-2 -top-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-danger px-1 text-xs font-bold text-white ring-2 ring-white">
                 {getItemCount()}
               </span>
             )}
           </button>
+          </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-brand-gray-200 bg-white p-4 shadow-sm">
+      <section className="rounded-[2rem] border border-brand-gray-100 bg-white p-4 shadow-sm sm:p-5">
         <Input
           type="text"
           value={searchQuery}
@@ -313,7 +542,7 @@ export default function CustomerMenuPage() {
           leftIcon={<Search className="h-4 w-4" />}
         />
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
           {isCategoryLoading &&
             Array.from({ length: 6 }).map((_, index) => (
               <div
@@ -334,7 +563,7 @@ export default function CustomerMenuPage() {
                   className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
                     isActive
                       ? "bg-brand-brown text-white shadow-sm"
-                      : "border border-brand-gray-200 bg-white text-brand-gray-700 hover:border-brand-amber hover:text-brand-brown"
+                      : "border border-brand-gray-200 bg-white text-brand-gray-700 hover:border-brand-amber hover:bg-brand-beige/50 hover:text-brand-brown"
                   }`}
                 >
                   {category.name}
@@ -345,11 +574,11 @@ export default function CustomerMenuPage() {
       </section>
 
       {isMenuLoading ? (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
-              className="overflow-hidden rounded-2xl border border-brand-gray-200 bg-white"
+              className="overflow-hidden rounded-3xl border border-brand-gray-100 bg-white shadow-sm"
             >
               <div className="aspect-[4/3] animate-pulse bg-brand-gray-100" />
               <div className="space-y-3 p-4">
@@ -362,7 +591,7 @@ export default function CustomerMenuPage() {
           ))}
         </div>
       ) : menuItems.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-brand-gray-300 bg-white px-6 py-16 text-center">
+        <div className="rounded-[2rem] border border-dashed border-brand-gray-300 bg-white px-6 py-16 text-center shadow-sm">
           <p className="text-lg font-semibold text-brand-brown">
             Không tìm thấy món phù hợp
           </p>
@@ -371,21 +600,21 @@ export default function CustomerMenuPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {menuItems.map((item) => {
             const quantity = getSelectedQuantity(item.id);
 
             return (
               <article
                 key={item.id}
-                className="overflow-hidden rounded-2xl border border-brand-gray-200 bg-white transition hover:-translate-y-0.5 hover:shadow-lg"
+                className="group overflow-hidden rounded-3xl border border-brand-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-amber/40 hover:shadow-xl"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-brand-gray-100">
                   {item.image ? (
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="h-full w-full object-cover transition duration-500 hover:scale-105"
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-brand-beige text-sm font-medium text-brand-brown">
@@ -394,7 +623,7 @@ export default function CustomerMenuPage() {
                   )}
                 </div>
 
-                <div className="space-y-4 p-4">
+                <div className="space-y-4 p-5">
                   <div>
                     <h3 className="line-clamp-1 text-lg font-semibold text-brand-brown">
                       {item.name}
@@ -448,11 +677,11 @@ export default function CustomerMenuPage() {
       <button
         type="button"
         onClick={() => setIsCartModalOpen(true)}
-        className="fixed bottom-6 right-6 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-brown text-white shadow-lg transition hover:bg-brand-coffee lg:hidden"
+        className="fixed bottom-6 right-6 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-brown text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-brand-coffee lg:hidden"
       >
         <ShoppingCart className="h-6 w-6" />
         {getItemCount() > 0 && (
-          <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-danger px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-danger px-1 text-[10px] font-bold text-white ring-2 ring-white">
             {getItemCount()}
           </span>
         )}
@@ -462,7 +691,7 @@ export default function CustomerMenuPage() {
         isOpen={isCartModalOpen}
         onClose={() => {
           setIsCartModalOpen(false);
-          setIsAddressEditing(false);
+          handleCancelAddressForm();
         }}
         size="xl"
         title="Chi tiết giỏ hàng"
@@ -499,7 +728,7 @@ export default function CustomerMenuPage() {
           </div>
         ) : (
           <div className="space-y-5">
-            <section className="rounded-xl border border-brand-gray-200 bg-brand-gray-50 p-4">
+            <section className="rounded-2xl border border-brand-amber/20 bg-brand-beige/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-2">
                   <MapPin className="mt-0.5 h-4 w-4 text-brand-amber" />
@@ -507,87 +736,235 @@ export default function CustomerMenuPage() {
                     <p className="font-semibold text-brand-brown">
                       Địa chỉ giao hàng
                     </p>
-                    {!isAddressEditing ? (
+                    {selectedAddress ? (
                       <>
                         <p className="mt-1 text-sm text-brand-gray-700">
-                          {deliveryAddress.recipientName} -{" "}
-                          {deliveryAddress.recipientPhone}
+                          {selectedAddress.receiverName} -{" "}
+                          {selectedAddress.receiverPhone}
                         </p>
                         <p className="text-sm text-brand-gray-700">
-                          {deliveryAddress.fullAddress}
+                          {formatAddressLine(selectedAddress)}
                         </p>
-                        {deliveryAddress.note && (
+                        {selectedAddress.detail && (
                           <p className="text-xs text-brand-gray-500">
-                            Ghi chú: {deliveryAddress.note}
+                            Ghi chú: {selectedAddress.detail}
                           </p>
                         )}
                       </>
-                    ) : null}
+                    ) : (
+                      <p className="mt-1 text-sm text-brand-gray-500">
+                        Chưa có địa chỉ giao hàng. Hãy thêm địa chỉ mới.
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {!isAddressEditing && (
+                <div className="flex flex-wrap justify-end gap-2">
+                  {activeAddressId && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      isLoading={selectingAddressId === "clear"}
+                      onClick={() => void handleClearCartAddress()}
+                    >
+                      Bỏ địa chỉ
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
                     leftIcon={<ClipboardPen size={14} />}
-                    onClick={handleStartEditAddress}
+                    onClick={handleStartCreateAddress}
                   >
-                    Chỉnh địa chỉ
+                    Thêm địa chỉ
                   </Button>
-                )}
+                </div>
               </div>
 
-              {isAddressEditing && (
+              {isAddressLoading ? (
+                <div className="mt-4 rounded-xl border border-brand-gray-200 bg-white px-4 py-3 text-sm text-brand-gray-600">
+                  Đang tải địa chỉ...
+                </div>
+              ) : addresses.length > 0 ? (
+                <div className="mt-4 space-y-2">
+                  {addresses.map((address) => {
+                    const isSelected = activeAddressId === address.id;
+
+                    return (
+                      <div
+                        key={address.id}
+                        className={`rounded-lg border p-3 ${
+                          isSelected
+                            ? "border-brand-amber bg-white shadow-sm"
+                            : "border-brand-gray-200 bg-white hover:border-brand-amber/40"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-brand-brown">
+                              {address.receiverName} - {address.receiverPhone}
+                            </p>
+                            <p className="text-sm text-brand-gray-700">
+                              {formatAddressLine(address)}
+                            </p>
+                            {address.detail && (
+                              <p className="text-xs text-brand-gray-500">
+                                Ghi chú: {address.detail}
+                              </p>
+                            )}
+                            <div className="mt-1 flex items-center gap-2 text-xs">
+                              {address.isDefault && (
+                                <span className="rounded-full bg-brand-amber/20 px-2 py-0.5 font-medium text-brand-brown">
+                                  Mặc định
+                                </span>
+                              )}
+                              {isSelected && (
+                                <span className="rounded-full bg-brand-brown/10 px-2 py-0.5 font-medium text-brand-brown">
+                                  Đang dùng
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              isLoading={selectingAddressId === address.id}
+                              onClick={() =>
+                                void handleSelectAddress(address.id)
+                              }
+                              disabled={isSelected}
+                            >
+                              Chọn
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleStartEditAddress(address)}
+                            >
+                              Sửa
+                            </Button>
+                            {!address.isDefault && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                isLoading={defaultingAddressId === address.id}
+                                onClick={() =>
+                                  void handleSetDefaultAddress(address.id)
+                                }
+                              >
+                                Mặc định
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {isAddressFormOpen && (
                 <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                   <Input
                     label="Người nhận"
-                    value={addressDraft.recipientName}
+                    value={addressForm.receiverName}
                     onChange={(event) =>
-                      setAddressDraft((prev) => ({
+                      setAddressForm((prev) => ({
                         ...prev,
-                        recipientName: event.target.value,
+                        receiverName: event.target.value,
                       }))
                     }
                     placeholder="Tên người nhận"
                   />
                   <Input
                     label="Số điện thoại"
-                    value={addressDraft.recipientPhone}
+                    value={addressForm.receiverPhone}
                     onChange={(event) =>
-                      setAddressDraft((prev) => ({
+                      setAddressForm((prev) => ({
                         ...prev,
-                        recipientPhone: event.target.value,
+                        receiverPhone: event.target.value,
                       }))
                     }
                     placeholder="Số điện thoại"
                   />
+                  <Input
+                    label="Tỉnh/Thành phố"
+                    value={addressForm.province}
+                    onChange={(event) =>
+                      setAddressForm((prev) => ({
+                        ...prev,
+                        province: event.target.value,
+                      }))
+                    }
+                    placeholder="Ví dụ: Hà Nội"
+                  />
+                  <Input
+                    label="Quận/Huyện"
+                    value={addressForm.district}
+                    onChange={(event) =>
+                      setAddressForm((prev) => ({
+                        ...prev,
+                        district: event.target.value,
+                      }))
+                    }
+                    placeholder="Ví dụ: Hai Bà Trưng"
+                  />
+                  <Input
+                    label="Phường/Xã"
+                    value={addressForm.ward}
+                    onChange={(event) =>
+                      setAddressForm((prev) => ({
+                        ...prev,
+                        ward: event.target.value,
+                      }))
+                    }
+                    placeholder="Ví dụ: Bách Khoa"
+                  />
+                  <Input
+                    label="Đường"
+                    value={addressForm.street}
+                    onChange={(event) =>
+                      setAddressForm((prev) => ({
+                        ...prev,
+                        street: event.target.value,
+                      }))
+                    }
+                    placeholder="Ví dụ: Trần Đại Nghĩa"
+                  />
                   <div className="md:col-span-2">
                     <Input
-                      label="Địa chỉ"
-                      value={addressDraft.fullAddress}
+                      label="Chi tiết/Ghi chú"
+                      value={addressForm.detail}
                       onChange={(event) =>
-                        setAddressDraft((prev) => ({
+                        setAddressForm((prev) => ({
                           ...prev,
-                          fullAddress: event.target.value,
+                          detail: event.target.value,
                         }))
                       }
-                      placeholder="Địa chỉ giao hàng"
+                      placeholder="Số nhà, tòa nhà, hướng dẫn giao..."
                     />
                   </div>
+
                   <div className="md:col-span-2">
-                    <Input
-                      label="Ghi chú"
-                      value={addressDraft.note}
-                      onChange={(event) =>
-                        setAddressDraft((prev) => ({
-                          ...prev,
-                          note: event.target.value,
-                        }))
-                      }
-                      placeholder="Thêm ghi chú cho shipper"
-                    />
+                    <label className="inline-flex items-center gap-2 text-sm text-brand-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={addressForm.isDefault}
+                        onChange={(event) =>
+                          setAddressForm((prev) => ({
+                            ...prev,
+                            isDefault: event.target.checked,
+                          }))
+                        }
+                      />
+                      Đặt làm địa chỉ mặc định
+                    </label>
                   </div>
 
                   <div className="md:col-span-2 flex justify-end gap-2">
@@ -595,26 +972,39 @@ export default function CustomerMenuPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsAddressEditing(false)}
+                      onClick={handleCancelAddressForm}
                     >
                       Hủy
                     </Button>
-                    <Button type="button" size="sm" onClick={handleSaveAddress}>
-                      Lưu địa chỉ
+                    <Button
+                      type="button"
+                      size="sm"
+                      isLoading={isAddressSubmitting}
+                      onClick={() => void handleSubmitAddress()}
+                    >
+                      {editingAddressId ? "Lưu thay đổi" : "Lưu địa chỉ"}
                     </Button>
                   </div>
                 </div>
               )}
+
+              {!isAddressFormOpen &&
+                addresses.length === 0 &&
+                !isAddressLoading && (
+                  <div className="mt-4 rounded-lg border border-dashed border-brand-gray-300 px-4 py-3 text-sm text-brand-gray-600">
+                    Chưa có địa chỉ nào. Nhấn Thêm địa chi để bắt đầu.
+                  </div>
+                )}
             </section>
 
             <section className="space-y-3">
               {cart.items.map((item) => (
                 <div
                   key={item.menuItem.id}
-                  className="rounded-xl border border-brand-gray-200 bg-white p-3"
+                  className="rounded-2xl border border-brand-gray-100 bg-white p-3 shadow-sm"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-brand-gray-100">
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-brand-gray-100">
                       {item.menuItem.image ? (
                         <img
                           src={item.menuItem.image}
@@ -623,7 +1013,7 @@ export default function CustomerMenuPage() {
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center text-[10px] text-brand-gray-500">
-                          No image
+                          Không có hình ảnh
                         </div>
                       )}
                     </div>
@@ -668,7 +1058,7 @@ export default function CustomerMenuPage() {
                                 setErrorStatus(
                                   error instanceof Error
                                     ? error.message
-                                    : "Khong the cap nhat so luong mon",
+                                    : "Không thể cập nhật số lượng món",
                                 );
                               })
                             }
@@ -690,7 +1080,7 @@ export default function CustomerMenuPage() {
                                 setErrorStatus(
                                   error instanceof Error
                                     ? error.message
-                                    : "Khong the cap nhat so luong mon",
+                                    : "Không thể cập nhật số lượng món",
                                 );
                               })
                             }
@@ -716,7 +1106,7 @@ export default function CustomerMenuPage() {
                             setErrorStatus(
                               error instanceof Error
                                 ? error.message
-                                : "Khong the cap nhat ghi chu mon",
+                                : "Không thể cập nhật ghi chú món",
                             );
                           })
                         }
@@ -728,7 +1118,7 @@ export default function CustomerMenuPage() {
               ))}
             </section>
 
-            <section className="rounded-xl border border-brand-gray-200 bg-white p-4">
+            <section className="rounded-2xl border border-brand-gray-100 bg-white p-4 shadow-sm">
               <div className="mb-3 flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-brand-amber" />
                 <p className="font-semibold text-brand-brown">
@@ -740,7 +1130,7 @@ export default function CustomerMenuPage() {
                 {PAYMENT_METHODS.map((method) => (
                   <label
                     key={method.id}
-                    className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 transition ${
+                    className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-3 py-3 transition ${
                       paymentMethod === method.id
                         ? "border-brand-amber bg-brand-beige/40"
                         : "border-brand-gray-200"
@@ -766,7 +1156,7 @@ export default function CustomerMenuPage() {
               </div>
             </section>
 
-            <section className="rounded-xl border border-brand-gray-200 bg-brand-gray-50 p-4">
+            <section className="rounded-2xl border border-brand-amber/20 bg-brand-beige/30 p-4">
               <div className="flex items-center justify-between text-sm text-brand-gray-700">
                 <span>Tạm tính</span>
                 <span>{formatCurrency(cart.subtotal)}</span>
@@ -794,11 +1184,12 @@ export default function CustomerMenuPage() {
 
       {isPlacingOrder && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-          <div className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-medium text-brand-brown shadow-lg">
+          <div className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-medium text-brand-brown shadow-lg">
             <Loader2 className="h-4 w-4 animate-spin" /> Đang tạo đơn hàng...
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </main>
   );
 }

@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
-import type { JwtPayload } from '@app/auth/interfaces/jwt-payload.interface';
+import type { RequestWithUser } from '@app/auth';
 import { AuthGatewayService } from './auth-gateway.service';
 import { LoginRequestDto } from './dto/request/login.request.dto';
 import { RegisterRequestDto } from './dto/request/register.dto';
@@ -16,10 +16,6 @@ import { VerifyEmailRequestDto } from './dto/request/verify-email.request.dto';
 import type { Request } from 'express';
 import type { Response } from 'express';
 import { clearAuthCookies, setAuthCookies } from './auth-cookie.util';
-
-type RequestWithUser = Request & {
-  user?: JwtPayload;
-};
 
 @Controller('auth')
 export class AuthGatewayController {

@@ -1,23 +1,8 @@
+import type { AddressApiModel } from "./address.type";
+
 export type OrderChannel = "DINE_IN" | "ONLINE";
 export type OrderSource = "QR" | "WEB" | "MOBILE" | "POS";
 export type CartStatus = "ACTIVE" | "CHECKED_OUT" | "ABANDONED" | "EXPIRED";
-
-export interface AddressApiModel {
-  id: string;
-  userId: string;
-  receiverName: string;
-  receiverPhone: string;
-  province: string;
-  district: string;
-  ward: string;
-  street: string | null;
-  detail: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface CartItemApiModel {
   id: string;

@@ -133,7 +133,7 @@ export class CartService {
   }
 
   async addItem(command: AddCartItemCommand): Promise<CartDetailResult> {
-    const cart = await this.ensureCartExists(command.cartId);
+    const cart = await this.ensureCartOwned(command.cartId, command.userId);
 
     if (cart.status !== 'ACTIVE') {
       throw new AppRpcException({
@@ -177,7 +177,7 @@ export class CartService {
   }
 
   async updateItem(command: UpdateCartItemCommand): Promise<CartDetailResult> {
-    await this.ensureCartExists(command.cartId);
+    await this.ensureCartOwned(command.cartId, command.userId);
 
     const item = await this.prisma.cartItem.findFirst({
       where: {
@@ -219,7 +219,7 @@ export class CartService {
   async removeItem(
     command: RemoveCartItemCommand,
   ): Promise<RemoveCartItemResult> {
-    await this.ensureCartExists(command.cartId);
+    await this.ensureCartOwned(command.cartId, command.userId);
 
     const item = await this.prisma.cartItem.findFirst({
       where: {
@@ -254,7 +254,7 @@ export class CartService {
   async setAddress(
     command: SetCartAddressCommand,
   ): Promise<SetCartAddressResult> {
-    const cart = await this.ensureCartExists(command.cartId);
+    const cart = await this.ensureCartOwned(command.cartId, command.userId);
 
     if (!command.addressId) {
       await this.prisma.cart.update({
@@ -298,7 +298,7 @@ export class CartService {
   }
 
   async setNote(command: SetCartNoteCommand): Promise<SetCartNoteResult> {
-    await this.ensureCartExists(command.cartId);
+    await this.ensureCartOwned(command.cartId, command.userId);
 
     const updated = await this.prisma.cart.update({
       where: { id: command.cartId },
@@ -314,7 +314,7 @@ export class CartService {
   }
 
   async clear(command: ClearCartCommand): Promise<ClearCartResult> {
-    await this.ensureCartExists(command.cartId);
+    await this.ensureCartOwned(command.cartId, command.userId);
 
     await this.prisma.cartItem.deleteMany({
       where: { cartId: command.cartId },
@@ -367,6 +367,25 @@ export class CartService {
       throw new AppRpcException({
         code: ERRORS.NOT_FOUND.code,
         message: 'Không tìm thấy giỏ hàng',
+      });
+    }
+
+    return cart;
+  }
+
+  private async ensureCartOwned(
+    cartId: string,
+    userId: string,
+  ): Promise<{
+    id: string;
+    userId: string | null;
+    status: string;
+  }> {
+    const cart = await this.ensureCartExists(cartId);
+    if (!cart.userId || cart.userId !== userId) {
+      throw new AppRpcException({
+        code: ERRORS.FORBIDDEN.code,
+        message: 'Cart does not belong to current user',
       });
     }
 
