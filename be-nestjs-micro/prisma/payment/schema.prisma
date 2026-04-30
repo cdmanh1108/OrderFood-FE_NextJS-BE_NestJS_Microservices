@@ -1,0 +1,211 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../generated/payment"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum PaymentMethod {
+    CASH
+    COD
+    BANK_TRANSFER
+    PAYOS
+    MOMO
+    VNPAY
+    ZALOPAY
+    STRIPE
+}
+
+enum PaymentStatus {
+    PENDING
+    SUCCEEDED
+    FAILED
+    CANCELED
+    EXPIRED
+    REFUNDED
+    PARTIALLY_REFUNDED
+}
+
+enum PaymentTransactionType {
+    CREATE_PAYMENT
+    WEBHOOK
+    CONFIRM
+    CANCEL
+    EXPIRE
+    REFUND
+}
+
+enum PaymentTransactionStatus {
+    PENDING
+    SUCCEEDED
+    FAILED
+}
+
+enum RefundStatus {
+    PENDING
+    SUCCEEDED
+    FAILED
+    CANCELED
+}
+
+enum WebhookProcessStatus {
+    RECEIVED
+    PROCESSED
+    IGNORED
+    FAILED
+}
+
+model Payment {
+    id        String  @id @default(uuid()) @db.Uuid
+    orderId   String  @unique @db.Uuid
+    orderCode String? @db.VarChar(50)
+
+    method PaymentMethod
+    status PaymentStatus @default(PENDING)
+
+    amount   Decimal @db.Decimal(10, 0)
+    currency String  @default("VND") @db.VarChar(10)
+
+    gateway          String? @db.VarChar(50)
+    gatewayPaymentId String? @db.VarChar(120)
+    gatewayReference String? @db.VarChar(120)
+
+    paymentUrl  String? @db.VarChar(1000)
+    qrCodeUrl   String? @db.VarChar(1000)
+    checkoutUrl String? @db.VarChar(1000)
+
+    description String? @db.VarChar(255)
+    metadata    Json?
+
+    paidAt     DateTime?
+    failedAt   DateTime?
+    canceledAt DateTime?
+    expiredAt  DateTime?
+    refundedAt DateTime?
+
+    expiresAt DateTime?
+
+    transactions PaymentTransaction[]
+    refunds      Refund[]
+    webhookLogs  PaymentWebhookLog[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([orderId])
+    @@index([orderCode])
+    @@index([method])
+    @@index([status])
+    @@index([gateway])
+    @@index([gatewayPaymentId])
+    @@index([gatewayReference])
+    @@index([createdAt])
+    @@map("payments")
+}
+
+model PaymentTransaction {
+    id        String  @id @default(uuid()) @db.Uuid
+    paymentId String  @db.Uuid
+    payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    type   PaymentTransactionType
+    status PaymentTransactionStatus @default(PENDING)
+
+    amount   Decimal? @db.Decimal(10, 0)
+    currency String   @default("VND") @db.VarChar(10)
+
+    gateway              String? @db.VarChar(50)
+    gatewayTransactionId String? @db.VarChar(120)
+    gatewayReference     String? @db.VarChar(120)
+
+    requestPayload  Json?
+    responsePayload Json?
+    rawPayload      Json?
+
+    errorCode    String? @db.VarChar(100)
+    errorMessage String? @db.Text
+
+    processedAt DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([paymentId])
+    @@index([type])
+    @@index([status])
+    @@index([gateway])
+    @@index([gatewayTransactionId])
+    @@index([gatewayReference])
+    @@index([createdAt])
+    @@map("payment_transactions")
+}
+
+model Refund {
+    id        String  @id @default(uuid()) @db.Uuid
+    paymentId String  @db.Uuid
+    payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    amount   Decimal      @db.Decimal(10, 0)
+    currency String       @default("VND") @db.VarChar(10)
+    status   RefundStatus @default(PENDING)
+
+    reason String? @db.Text
+
+    gateway          String? @db.VarChar(50)
+    gatewayRefundId  String? @db.VarChar(120)
+    gatewayReference String? @db.VarChar(120)
+
+    requestPayload  Json?
+    responsePayload Json?
+
+    requestedBy String?   @db.VarChar(30)
+    refundedAt  DateTime?
+    failedAt    DateTime?
+
+    errorCode    String? @db.VarChar(100)
+    errorMessage String? @db.Text
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([paymentId])
+    @@index([status])
+    @@index([gateway])
+    @@index([gatewayRefundId])
+    @@index([gatewayReference])
+    @@index([requestedBy])
+    @@index([createdAt])
+    @@map("refunds")
+}
+
+model PaymentWebhookLog {
+    id        String   @id @default(uuid()) @db.Uuid
+    paymentId String?  @db.Uuid
+    payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+    gateway   String  @db.VarChar(50)
+    eventType String? @db.VarChar(120)
+    eventId   String? @db.VarChar(180)
+
+    status WebhookProcessStatus @default(RECEIVED)
+
+    headers   Json?
+    payload   Json
+    signature String? @db.VarChar(500)
+
+    processedAt  DateTime?
+    errorMessage String?   @db.Text
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([paymentId])
+    @@index([gateway])
+    @@index([eventType])
+    @@index([eventId])
+    @@index([status])
+    @@index([createdAt])
+    @@map("payment_webhook_logs")
+}

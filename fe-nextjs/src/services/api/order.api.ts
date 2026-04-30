@@ -40,7 +40,10 @@ export const orderApi = {
     );
   },
 
-  updateStatus(id: string, payload: UpdateOrderStatusRequest): Promise<OrderApiModel> {
+  updateStatus(
+    id: string,
+    payload: UpdateOrderStatusRequest,
+  ): Promise<OrderApiModel> {
     return httpService.patch<OrderApiModel, UpdateOrderStatusRequest>(
       `${ORDER_ENDPOINT}/${id}/status`,
       payload,

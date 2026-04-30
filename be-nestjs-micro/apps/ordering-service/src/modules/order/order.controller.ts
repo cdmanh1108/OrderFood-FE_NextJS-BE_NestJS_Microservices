@@ -1,5 +1,10 @@
 import { Controller } from '@nestjs/common';
-import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
+import {
+  Ctx,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
 import { ORDERING_PATTERNS } from '@app/messaging/constants/patterns.constant';
 import { handleRpcMessage } from '@app/messaging/rmq/rpc-message.helper';
 
@@ -21,7 +26,9 @@ export class OrderController {
     @Payload() command: CreateOrderCommand,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.orderService.createOrder(command));
+    return handleRpcMessage(context, () =>
+      this.orderService.createOrder(command),
+    );
   }
 
   @MessagePattern(ORDERING_PATTERNS.DELETE_ORDER)
@@ -29,7 +36,9 @@ export class OrderController {
     @Payload() command: DeleteOrderCommand,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.orderService.deleteOrder(command));
+    return handleRpcMessage(context, () =>
+      this.orderService.deleteOrder(command),
+    );
   }
 
   @MessagePattern(ORDERING_PATTERNS.GET_ORDER_DETAIL)
@@ -53,7 +62,9 @@ export class OrderController {
     @Payload() command: UpdateOrderStatusCommand,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.orderService.updateStatus(command));
+    return handleRpcMessage(context, () =>
+      this.orderService.updateStatus(command),
+    );
   }
 
   @MessagePattern(ORDERING_PATTERNS.CANCEL_ORDER)
@@ -61,6 +72,8 @@ export class OrderController {
     @Payload() command: CancelOrderCommand,
     @Ctx() context: RmqContext,
   ) {
-    return handleRpcMessage(context, () => this.orderService.cancelOrder(command));
+    return handleRpcMessage(context, () =>
+      this.orderService.cancelOrder(command),
+    );
   }
 }

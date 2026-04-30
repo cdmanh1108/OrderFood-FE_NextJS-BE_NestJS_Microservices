@@ -20,6 +20,10 @@ import { useCart } from "@/contexts/cart-context";
 import { addressApi, categoryApi, menuItemApi } from "@/services/api";
 import { checkoutApi } from "@/services/api/checkout.api";
 import { orderApi } from "@/services/api/order.api";
+import {
+  paymentApi,
+  type PaymentMethod as PaymentGatewayMethod,
+} from "@/services/api/payment.api";
 import type { CheckoutPricingResponse } from "@/services/api/checkout.api";
 import { useUI } from "@/contexts/ui-context";
 import type { MenuItem } from "@/types";
@@ -47,6 +51,7 @@ type PaymentMethod = "cash" | "momo" | "banking";
 
 const ALL_CATEGORY_ID = "all";
 const SHIPPING_FEE = 15000;
+const LOCAL_PAYMENT_RETURN_URL = "http://localhost:5000/order-food";
 
 const INITIAL_ADDRESS_FORM: AddressFormValues = {
   receiverName: "",
@@ -80,6 +85,20 @@ const PAYMENT_METHODS: Array<{
     description: "Thanh toán qua internet banking",
   },
 ];
+
+function resolveGatewayPaymentMethod(method: PaymentMethod): PaymentGatewayMethod {
+  return method === "cash" ? "COD" : "PAYOS";
+}
+
+function buildPayosOrderCode(orderCode: string): string {
+  const normalized = orderCode.replace(/\D/g, "").replace(/^0+/, "");
+
+  if (normalized.length > 0) {
+    return normalized.slice(-10);
+  }
+
+  return Date.now().toString().slice(-10);
+}
 
 function mapMenuCardToCartMenuItem(
   item: MenuItemSimpleApiModel,
@@ -514,12 +533,12 @@ export default function CustomerMenuPage() {
 
   const handlePlaceOrder = async () => {
     if (!pricing || !selectedAddress) return;
-    
+
     setIsPlacingOrder(true);
     try {
       const orderPayload = {
-        channel: 'ONLINE' as const,
-        source: 'WEB' as const,
+        channel: "ONLINE" as const,
+        source: "WEB" as const,
         items: cart.items.map((i) => ({
           menuItemId: i.menuItem.id,
           menuItemName: i.menuItem.name,
@@ -538,12 +557,45 @@ export default function CustomerMenuPage() {
         },
       };
 
-      await orderApi.create(orderPayload);
-      setSuccess("Đặt hàng thành công!");
+      const createdOrder = await orderApi.create(orderPayload);
+      const gatewayMethod = resolveGatewayPaymentMethod(paymentMethod);
+
+      const createdPayment = await paymentApi.create({
+        orderId: createdOrder.id,
+        orderCode:
+          gatewayMethod === "PAYOS"
+            ? buildPayosOrderCode(createdOrder.code)
+            : undefined,
+        method: gatewayMethod,
+        amount: pricing.grandTotal.toString(),
+        currency: pricing.currency,
+        description: `Thanh toan don ${createdOrder.code}`,
+        metadata: {
+          orderCode: createdOrder.code,
+          selectedMethod: paymentMethod,
+        },
+        returnUrl: LOCAL_PAYMENT_RETURN_URL,
+        cancelUrl: LOCAL_PAYMENT_RETURN_URL,
+      });
+
       await clearCart();
       setIsCartModalOpen(false);
       setIsCheckoutModalOpen(false);
       setPricing(null);
+
+      if (gatewayMethod === "PAYOS") {
+        const checkoutUrl =
+          createdPayment.checkoutUrl || createdPayment.paymentUrl;
+
+        if (!checkoutUrl) {
+          throw new Error("Khong nhan duoc link thanh toan tu PayOS");
+        }
+
+        window.location.href = checkoutUrl;
+        return;
+      }
+
+      setSuccess("Đặt hàng thành công!");
     } catch (error: any) {
       setErrorStatus(error.message || "Đặt hàng thất bại");
     } finally {

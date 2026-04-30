@@ -8,3 +8,4 @@ export * from "./menu-item.api";
 export * from "./staff-user.api";
 export * from "./order.api";
 export * from "./checkout.api";
+export * from "./payment.api";

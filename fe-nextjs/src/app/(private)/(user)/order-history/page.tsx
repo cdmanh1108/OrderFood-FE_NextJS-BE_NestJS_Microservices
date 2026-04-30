@@ -1,12 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle,
-  ChevronDown,
   Clock,
   Eye,
-  MapPin,
   Package,
   ReceiptText,
   ShoppingBag,
@@ -69,7 +68,6 @@ function formatCurrency(value: number) {
 
 export default function CustomerOrdersPage() {
   const [activeTab, setActiveTab] = useState<TabStatus>("all");
-  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderApiModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -176,7 +174,6 @@ export default function CustomerOrdersPage() {
           <section className="space-y-4">
             {filteredOrders.map((order) => {
               const StatusIcon = statusConfig[order.status].icon;
-              const isExpanded = selectedOrder === order.id;
               const totalAmount = order.pricingSnapshot?.grandTotal || 0;
 
               return (
@@ -222,11 +219,9 @@ export default function CustomerOrdersPage() {
                             )}
                           </div>
 
-                          {!isExpanded && (
-                            <p className="mt-2 line-clamp-1 text-sm text-gray-700">
-                              {order.items.map((item) => `${item.quantity}x ${item.menuItemName}`).join(", ")}
-                            </p>
-                          )}
+                          <p className="mt-2 line-clamp-1 text-sm text-gray-700">
+                            {order.items.map((item) => `${item.quantity}x ${item.menuItemName}`).join(", ")}
+                          </p>
                         </div>
                       </div>
 
@@ -236,69 +231,16 @@ export default function CustomerOrdersPage() {
                           <p className="mt-1 text-2xl font-bold text-brand-coffee">{formatCurrency(totalAmount)}</p>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => setSelectedOrder(isExpanded ? null : order.id)}
+                        <Link
+                          href={`/order-history/${order.id}`}
                           className="inline-flex items-center gap-2 rounded-full border border-brand-amber/30 px-4 py-2 text-sm font-semibold text-brand-amber transition hover:bg-brand-amber hover:text-white"
                         >
                           <Eye className="h-4 w-4" />
-                          {isExpanded ? "Thu gọn" : "Chi tiết"}
-                          <ChevronDown className={`h-4 w-4 transition ${isExpanded ? "rotate-180" : ""}`} />
-                        </button>
+                          Chi tiết
+                        </Link>
                       </div>
                     </div>
                   </div>
-
-                  {isExpanded && (
-                    <div className="border-t border-gray-100 bg-gray-50/80 p-5 sm:p-6">
-                      <div className="space-y-5">
-                        <div>
-                          <h4 className="mb-3 font-bold text-brand-brown">Chi tiết món ăn</h4>
-                          <div className="space-y-3">
-                            {order.items.map((item) => (
-                              <div
-                                key={item.id}
-                                className="flex items-center justify-between gap-4 rounded-2xl bg-white p-4 shadow-sm"
-                              >
-                                <div>
-                                  <p className="font-semibold text-gray-900">{item.menuItemName}</p>
-                                  <p className="mt-1 text-sm text-gray-500">Số lượng: {item.quantity}</p>
-                                </div>
-
-                                <div className="text-right">
-                                  <p className="font-bold text-brand-coffee">{formatCurrency(item.unitPrice)}</p>
-                                  <p className="text-xs text-gray-400">/ món</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {order.shippingAddress && (
-                          <div className="rounded-2xl bg-white p-4 shadow-sm">
-                            <h4 className="mb-2 flex items-center gap-2 font-bold text-brand-brown">
-                              <MapPin className="h-4 w-4 text-brand-amber" />
-                              Địa chỉ giao hàng
-                            </h4>
-                            <p className="text-sm leading-6 text-gray-700">
-                              {order.shippingAddress.receiverName} - {order.shippingAddress.receiverPhone}<br />
-                              {order.shippingAddress.street ? `${order.shippingAddress.street}, ` : ''}
-                              {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}
-                              {order.shippingAddress.detail ? ` (${order.shippingAddress.detail})` : ''}
-                            </p>
-                          </div>
-                        )}
-
-                        {order.status === "COMPLETED" && (
-                          <div className="pt-1">
-                            <button className="w-full rounded-2xl bg-brand-amber py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-yellow hover:shadow-md">
-                              Đánh giá đơn hàng
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </article>
               );
             })}

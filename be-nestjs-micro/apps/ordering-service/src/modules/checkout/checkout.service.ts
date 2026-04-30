@@ -7,7 +7,7 @@ import { CheckoutPricingResult } from '@app/contracts/ordering/checkout/results/
 export class CheckoutService {
   constructor(private readonly prisma: OrderingPrismaService) {}
 
-  async calculateCheckout(
+  calculateCheckout(
     command: CalculateCheckoutCommand,
   ): Promise<CheckoutPricingResult> {
     // 1. Calculate items subtotal

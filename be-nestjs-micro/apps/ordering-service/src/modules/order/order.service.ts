@@ -17,7 +17,6 @@ import type { CreateOrderCommand } from '@app/contracts/ordering/order/commands/
 import type { DeleteOrderCommand } from '@app/contracts/ordering/order/commands/delete-order.command';
 import type { CreateOrderResult } from '@app/contracts/ordering/order/results/create-order.result';
 import type { DeleteOrderResult } from '@app/contracts/ordering/order/results/delete-order.result';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class OrderService {

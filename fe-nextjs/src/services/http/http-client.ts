@@ -77,10 +77,7 @@ function isApiEnvelope<T>(payload: unknown): payload is ApiEnvelope<T> {
   );
 }
 
-function unwrapApiData<T>(
-  payload: ApiEnvelope<T> | T,
-  status?: number,
-): T {
+function unwrapApiData<T>(payload: ApiEnvelope<T> | T, status?: number): T {
   let currentPayload: unknown = payload;
   let depth = 0;
 

@@ -92,9 +92,27 @@ export const DINEIN_PATTERNS = {
 // PAYMENT SERVICE
 // ======================
 export const PAYMENT_PATTERNS = {
-  CREATE_PAYMENT: 'payment.create_payment',
-  VERIFY_PAYMENT: 'payment.verify_payment',
-  GET_PAYMENT_DETAIL: 'payment.get_payment_detail',
+  CREATE_PAYMENT: 'payment.create',
+  GET_PAYMENT_BY_ID: 'payment.get_by_id',
+  GET_PAYMENT_BY_ORDER_ID: 'payment.get_by_order_id',
+  LIST_PAYMENTS: 'payment.list',
+
+  CONFIRM_PAYMENT: 'payment.confirm',
+  MARK_PAYMENT_SUCCEEDED: 'payment.mark_succeeded',
+  MARK_PAYMENT_FAILED: 'payment.mark_failed',
+  CANCEL_PAYMENT: 'payment.cancel',
+  EXPIRE_PAYMENT: 'payment.expire',
+
+  CREATE_REFUND: 'payment.refund.create',
+  GET_REFUND_BY_ID: 'payment.refund.get_by_id',
+  GET_REFUNDS_BY_PAYMENT_ID: 'payment.refund.get_by_payment_id',
+  LIST_REFUNDS: 'payment.refund.list',
+
+  HANDLE_PAYMENT_WEBHOOK: 'payment.webhook.handle',
+  LIST_PAYMENT_WEBHOOK_LOGS: 'payment.webhook.list',
+  CONFIRM_WEBHOOK_URL: 'payment.webhook.confirm_url',
+
+  PROCESS_REFUND_WEBHOOK: 'payment.refund.process_webhook',
 } as const;
 
 // ======================
