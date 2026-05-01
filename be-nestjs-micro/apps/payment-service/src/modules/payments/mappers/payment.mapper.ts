@@ -1,10 +1,30 @@
-export function mapPaymentTransactionToResult(transaction: any) {
+import type { PaymentResult } from '@app/contracts/payment/results/payment.result';
+import type { PaymentTransactionResult } from '@app/contracts/payment/results/payment-transaction.result';
+import { Payment, PaymentTransaction, Prisma } from 'generated/payment';
+
+type PaymentWithTransactions = Payment & {
+  transactions?: PaymentTransaction[];
+};
+
+function jsonToRecord(
+  value: Prisma.JsonValue | null,
+): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+export function mapPaymentTransactionToResult(
+  transaction: PaymentTransaction,
+): PaymentTransactionResult {
   return {
     id: transaction.id,
     paymentId: transaction.paymentId,
 
-    type: transaction.type,
-    status: transaction.status,
+    type: transaction.type as PaymentTransactionResult['type'],
+    status: transaction.status as PaymentTransactionResult['status'],
 
     amount: transaction.amount?.toString() ?? null,
     currency: transaction.currency,
@@ -13,9 +33,9 @@ export function mapPaymentTransactionToResult(transaction: any) {
     gatewayTransactionId: transaction.gatewayTransactionId,
     gatewayReference: transaction.gatewayReference,
 
-    requestPayload: transaction.requestPayload,
-    responsePayload: transaction.responsePayload,
-    rawPayload: transaction.rawPayload,
+    requestPayload: jsonToRecord(transaction.requestPayload),
+    responsePayload: jsonToRecord(transaction.responsePayload),
+    rawPayload: jsonToRecord(transaction.rawPayload),
 
     errorCode: transaction.errorCode,
     errorMessage: transaction.errorMessage,
@@ -27,15 +47,15 @@ export function mapPaymentTransactionToResult(transaction: any) {
   };
 }
 
-export function mapPaymentToResult(payment: any) {
+export function mapPaymentToResult(payment: PaymentWithTransactions): PaymentResult {
   return {
     id: payment.id,
 
     orderId: payment.orderId,
     orderCode: payment.orderCode,
 
-    method: payment.method,
-    status: payment.status,
+    method: payment.method as PaymentResult['method'],
+    status: payment.status as PaymentResult['status'],
 
     amount: payment.amount.toString(),
     currency: payment.currency,
@@ -49,7 +69,7 @@ export function mapPaymentToResult(payment: any) {
     checkoutUrl: payment.checkoutUrl,
 
     description: payment.description,
-    metadata: payment.metadata,
+    metadata: jsonToRecord(payment.metadata),
 
     paidAt: payment.paidAt,
     failedAt: payment.failedAt,

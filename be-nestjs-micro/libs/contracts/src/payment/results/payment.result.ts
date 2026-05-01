@@ -1,4 +1,4 @@
-import { PaymentMethod } from '../enums/payment-method.enum';
+﻿import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentTransactionResult } from './payment-transaction.result';
 
@@ -23,7 +23,7 @@ export class PaymentResult {
   checkoutUrl?: string | null;
 
   description?: string | null;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
 
   paidAt?: Date | null;
   failedAt?: Date | null;
@@ -38,3 +38,4 @@ export class PaymentResult {
   createdAt: Date;
   updatedAt: Date;
 }
+

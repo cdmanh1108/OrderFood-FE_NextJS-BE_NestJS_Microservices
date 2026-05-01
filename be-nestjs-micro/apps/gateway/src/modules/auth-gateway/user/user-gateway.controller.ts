@@ -28,7 +28,6 @@ type RequestWithAuthUser = {
 export class UserGatewayController {
   constructor(private readonly userGatewayService: UserGatewayService) {}
 
-
   @Post('staff')
   @Roles('ADMIN')
   createStaff(

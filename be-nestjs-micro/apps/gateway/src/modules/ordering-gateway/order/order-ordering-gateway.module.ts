@@ -3,7 +3,6 @@ import { OrderOrderingGatewayController } from './order-ordering-gateway.control
 import { OrderOrderingGatewayService } from './order-ordering-gateway.service';
 import { OrderingRmqClientModule } from '../ordering-rmq-client.module';
 
-
 @Module({
   imports: [OrderingRmqClientModule],
   controllers: [OrderOrderingGatewayController],

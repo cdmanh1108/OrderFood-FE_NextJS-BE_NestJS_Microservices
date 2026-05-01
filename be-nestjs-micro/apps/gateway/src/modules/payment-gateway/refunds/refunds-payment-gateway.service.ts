@@ -24,27 +24,39 @@ export class RefundsPaymentGatewayService {
   async createRefund(dto: CreateRefundRequestDto): Promise<RefundResult> {
     const payload: CreateRefundCommand = dto;
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.CREATE_REFUND, payload).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.CREATE_REFUND, payload)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 
   async listRefunds(query: ListRefundsQueryDto): Promise<ListRefundsResult> {
     const payload: ListRefundsCommand = query;
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.LIST_REFUNDS, payload).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.LIST_REFUNDS, payload)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 
   async getRefundById(id: string): Promise<RefundResult> {
     const payload: GetRefundByIdCommand = { id };
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.GET_REFUND_BY_ID, payload).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.GET_REFUND_BY_ID, payload)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 }

@@ -1,5 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PaymentPrismaService } from '@app/database/payment-prisma.service';
+import { AppRpcException } from '@app/common/exceptions/app-rpc.exception';
+import { ERRORS } from '@app/common/constants/error-code.constant';
 import { CreateRefundCommand } from '@app/contracts/payment/commands/create-refund.command';
 import { GetRefundByIdCommand } from '@app/contracts/payment/commands/get-refund-by-id.command';
 import { ListRefundsCommand } from '@app/contracts/payment/commands/list-refunds.command';
@@ -17,20 +19,29 @@ export class RefundsService {
     });
 
     if (!payment) {
-      throw new NotFoundException('Không tìm thấy thanh toán');
+      throw new AppRpcException({
+        code: ERRORS.NOT_FOUND.code,
+        message: ERRORS.NOT_FOUND.message,
+      });
     }
 
     if (
       payment.status !== PaymentStatus.SUCCEEDED &&
       payment.status !== PaymentStatus.PARTIALLY_REFUNDED
     ) {
-      throw new BadRequestException('Chỉ có thể hoàn tiền cho thanh toán đã thành công');
+      throw new AppRpcException({
+        code: ERRORS.BAD_REQUEST.code,
+        message: ERRORS.BAD_REQUEST.message,
+      });
     }
 
     const amount = new Prisma.Decimal(command.amount);
 
     if (amount.lte(0)) {
-      throw new BadRequestException('Số tiền hoàn lại phải lớn hơn 0');
+      throw new AppRpcException({
+        code: ERRORS.BAD_REQUEST.code,
+        message: ERRORS.BAD_REQUEST.message,
+      });
     }
 
     const refundedTotal = payment.refunds
@@ -38,7 +49,10 @@ export class RefundsService {
       .reduce((sum, refund) => sum.add(refund.amount), new Prisma.Decimal(0));
 
     if (refundedTotal.add(amount).gt(payment.amount)) {
-      throw new BadRequestException('Số tiền hoàn lại vượt quá số tiền đã thanh toán');
+      throw new AppRpcException({
+        code: ERRORS.BAD_REQUEST.code,
+        message: ERRORS.BAD_REQUEST.message,
+      });
     }
 
     const refund = await this.prisma.refund.create({
@@ -50,7 +64,7 @@ export class RefundsService {
         reason: command.reason ?? null,
         gateway: payment.gateway,
         requestedBy: command.requestedBy ?? null,
-        requestPayload: command.metadata ?? undefined,
+        requestPayload: this.toInputJsonValue(command.metadata ?? undefined),
       },
     });
 
@@ -63,7 +77,10 @@ export class RefundsService {
     });
 
     if (!refund) {
-      throw new NotFoundException('Không tìm thấy yêu cầu hoàn tiền');
+      throw new AppRpcException({
+        code: ERRORS.NOT_FOUND.code,
+        message: ERRORS.NOT_FOUND.message,
+      });
     }
 
     return mapRefundToResult(refund);
@@ -106,5 +123,15 @@ export class RefundsService {
       limit,
       total,
     };
+  }
+
+  private toInputJsonValue(
+    value: Record<string, unknown> | null | undefined,
+  ): Prisma.InputJsonValue | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    return value as Prisma.InputJsonValue;
   }
 }

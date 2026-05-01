@@ -1,7 +1,8 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, firstValueFrom, throwError } from 'rxjs';
 import { ERRORS } from '@app/common/constants/error-code.constant';
+import { AppRpcException } from '@app/common/exceptions/app-rpc.exception';
 import { mapRpcErrorToHttpException } from '@app/common/utils/map-rpc-error-to-http.utils';
 import { RMQ_SERVICES } from '@app/messaging/constants/services.constants';
 import { ORDERING_PATTERNS } from '@app/messaging/constants/patterns.constant';
@@ -142,10 +143,12 @@ export class AddressOrderingGatewayService {
     dto: SetDefaultAddressRequestDto,
   ): Promise<SetDefaultAddressResult> {
     if (dto.isDefault === false) {
-      throw new BadRequestException({
-        code: ERRORS.BAD_REQUEST.code,
-        message: 'This endpoint only supports setting default address',
-      });
+      throw mapRpcErrorToHttpException(
+        new AppRpcException({
+          code: ERRORS.BAD_REQUEST.code,
+          message: 'Chi ho tro dat dia chi mac dinh',
+        }),
+      );
     }
 
     const command: SetDefaultAddressCommand = {

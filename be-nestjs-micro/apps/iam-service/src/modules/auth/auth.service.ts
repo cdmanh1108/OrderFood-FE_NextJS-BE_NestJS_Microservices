@@ -68,7 +68,7 @@ export class AuthService {
     if (!user.isEmailVerified) {
       throw new AppRpcException({
         code: ERRORS.AUTH_UNAUTHORIZED.code,
-        message: 'Tài khoản chưa được xác thực, hãy đăng ký lại và xác thực',
+        message: ERRORS.AUTH_UNAUTHORIZED.message,
       });
     }
 
@@ -203,7 +203,7 @@ export class AuthService {
     } catch {
       throw new AppRpcException({
         code: ERRORS.AUTH_UNAUTHORIZED.code,
-        message: 'Refresh token không hợp lệ',
+        message: 'Token lam moi khong hop le',
       });
     }
   }

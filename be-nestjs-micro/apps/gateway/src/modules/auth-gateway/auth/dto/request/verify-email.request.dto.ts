@@ -8,4 +8,3 @@ export class VerifyEmailRequestDto {
   @Length(6, 6)
   code!: string;
 }
-

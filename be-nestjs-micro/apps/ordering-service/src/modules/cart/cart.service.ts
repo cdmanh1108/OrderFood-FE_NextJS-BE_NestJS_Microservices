@@ -16,53 +16,20 @@ import { RemoveCartItemResult } from '@app/contracts/ordering/cart/results/remov
 import { SetCartAddressResult } from '@app/contracts/ordering/cart/results/set-cart-address.result';
 import { SetCartNoteResult } from '@app/contracts/ordering/cart/results/set-cart-note.result';
 import { AddressDetailResult } from '@app/contracts/ordering/address/results/address-detail.result';
+import { Address, Prisma } from 'generated/ordering';
 
-type DecimalLike = {
-  toNumber(): number;
-};
+const CART_DETAIL_INCLUDE = {
+  address: true,
+  items: {
+    orderBy: {
+      createdAt: 'asc',
+    },
+  },
+} satisfies Prisma.CartInclude;
 
-type NullableDecimalLike = DecimalLike | null;
-
-type CartWithRelations = {
-  id: string;
-  userId: string | null;
-  channel: CartDetailResult['channel'];
-  source: CartDetailResult['source'];
-  tableId: string | null;
-  tableSessionId: string | null;
-  addressId: string | null;
-  status: CartDetailResult['status'];
-  note: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  address: {
-    id: string;
-    userId: string;
-    receiverName: string;
-    receiverPhone: string;
-    province: string;
-    district: string;
-    ward: string;
-    street: string | null;
-    detail: string | null;
-    latitude: NullableDecimalLike;
-    longitude: NullableDecimalLike;
-    isDefault: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  } | null;
-  items: Array<{
-    id: string;
-    menuItemId: string;
-    menuItemName: string;
-    menuItemImageUrl: string | null;
-    unitPrice: DecimalLike;
-    quantity: number;
-    note: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }>;
-};
+type CartWithRelations = Prisma.CartGetPayload<{
+  include: typeof CART_DETAIL_INCLUDE;
+}>;
 
 @Injectable()
 export class CartService {
@@ -76,8 +43,7 @@ export class CartService {
     if (!hasIdentity && !query.createIfMissing) {
       throw new AppRpcException({
         code: ERRORS.BAD_REQUEST.code,
-        message:
-          'Cần userId hoặc tableId hoặc tableSessionId để tìm giỏ hàng đang hoạt động',
+        message: ERRORS.BAD_REQUEST.message,
       });
     }
 
@@ -92,14 +58,7 @@ export class CartService {
           ? { tableSessionId: query.tableSessionId }
           : {}),
       },
-      include: {
-        address: true,
-        items: {
-          orderBy: {
-            createdAt: 'asc',
-          },
-        },
-      },
+      include: CART_DETAIL_INCLUDE,
     });
 
     if (!cart && query.createIfMissing) {
@@ -111,25 +70,18 @@ export class CartService {
           tableId: query.tableId ?? null,
           tableSessionId: query.tableSessionId ?? null,
         },
-        include: {
-          address: true,
-          items: {
-            orderBy: {
-              createdAt: 'asc',
-            },
-          },
-        },
+        include: CART_DETAIL_INCLUDE,
       });
     }
 
     if (!cart) {
       throw new AppRpcException({
         code: ERRORS.NOT_FOUND.code,
-        message: 'Không tìm thấy giỏ hàng đang hoạt động',
+        message: ERRORS.NOT_FOUND.message,
       });
     }
 
-    return this.toCartDetailResult(cart as unknown as CartWithRelations);
+    return this.toCartDetailResult(cart);
   }
 
   async addItem(command: AddCartItemCommand): Promise<CartDetailResult> {
@@ -138,7 +90,7 @@ export class CartService {
     if (cart.status !== 'ACTIVE') {
       throw new AppRpcException({
         code: ERRORS.BAD_REQUEST.code,
-        message: 'Chỉ có thể thêm món vào giỏ hàng đang hoạt động',
+        message: ERRORS.BAD_REQUEST.message,
       });
     }
 
@@ -329,14 +281,7 @@ export class CartService {
   private async getCartDetail(cartId: string): Promise<CartDetailResult> {
     const cart = await this.prisma.cart.findUnique({
       where: { id: cartId },
-      include: {
-        address: true,
-        items: {
-          orderBy: {
-            createdAt: 'asc',
-          },
-        },
-      },
+      include: CART_DETAIL_INCLUDE,
     });
 
     if (!cart) {
@@ -346,7 +291,7 @@ export class CartService {
       });
     }
 
-    return this.toCartDetailResult(cart as unknown as CartWithRelations);
+    return this.toCartDetailResult(cart);
   }
 
   private async ensureCartExists(cartId: string): Promise<{
@@ -385,7 +330,7 @@ export class CartService {
     if (!cart.userId || cart.userId !== userId) {
       throw new AppRpcException({
         code: ERRORS.FORBIDDEN.code,
-        message: 'Cart does not belong to current user',
+        message: 'Gio hang khong thuoc ve nguoi dung hien tai',
       });
     }
 
@@ -400,13 +345,13 @@ export class CartService {
     return {
       id: cart.id,
       userId: cart.userId,
-      channel: cart.channel,
-      source: cart.source,
+      channel: cart.channel as CartDetailResult['channel'],
+      source: cart.source as CartDetailResult['source'],
       tableId: cart.tableId,
       tableSessionId: cart.tableSessionId,
       addressId: cart.addressId,
       address: cart.address ? this.toAddressDetailResult(cart.address) : null,
-      status: cart.status,
+      status: cart.status as CartDetailResult['status'],
       note: cart.note,
       items,
       itemsCount,
@@ -455,7 +400,7 @@ export class CartService {
     };
   }
 
-  private decimalToNumber(value: NullableDecimalLike): number | null {
+  private decimalToNumber(value: Address['latitude']): number | null {
     return value ? value.toNumber() : null;
   }
 }

@@ -1,4 +1,4 @@
-import { RefundStatus } from "@app/contracts/payment/enums/refund-status.enum";
+﻿import { RefundStatus } from '@app/contracts/payment/enums/refund-status.enum';
 
 export class RefundResponseDto {
   id: string;
@@ -14,8 +14,8 @@ export class RefundResponseDto {
   gatewayRefundId?: string | null;
   gatewayReference?: string | null;
 
-  requestPayload?: Record<string, any> | null;
-  responsePayload?: Record<string, any> | null;
+  requestPayload?: Record<string, unknown> | null;
+  responsePayload?: Record<string, unknown> | null;
 
   requestedBy?: string | null;
 
@@ -28,3 +28,4 @@ export class RefundResponseDto {
   createdAt: Date;
   updatedAt: Date;
 }
+

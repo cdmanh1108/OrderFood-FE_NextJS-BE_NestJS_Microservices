@@ -1,4 +1,4 @@
-import { WebhookProcessStatus } from '../enums/webhook-process-status.enum';
+﻿import { WebhookProcessStatus } from '../enums/webhook-process-status.enum';
 
 export class PaymentWebhookLogResult {
   id: string;
@@ -11,8 +11,8 @@ export class PaymentWebhookLogResult {
 
   status: WebhookProcessStatus;
 
-  headers?: Record<string, any> | null;
-  payload: Record<string, any>;
+  headers?: Record<string, unknown> | null;
+  payload: Record<string, unknown>;
   signature?: string | null;
 
   processedAt?: Date | null;
@@ -21,3 +21,4 @@ export class PaymentWebhookLogResult {
   createdAt: Date;
   updatedAt: Date;
 }
+

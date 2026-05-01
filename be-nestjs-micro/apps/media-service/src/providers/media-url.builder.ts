@@ -11,14 +11,14 @@ export class MediaUrlBuilder {
     if (!command.fileName?.trim()) {
       throw new AppRpcException({
         code: ERRORS.VALIDATION_ERROR.code,
-        message: 'Tên file là bắt buộc',
+        message: ERRORS.VALIDATION_ERROR.message,
       });
     }
 
     if (!command.contentType?.trim()) {
       throw new AppRpcException({
         code: ERRORS.VALIDATION_ERROR.code,
-        message: 'Content-Type là bắt buộc',
+        message: ERRORS.VALIDATION_ERROR.message,
       });
     }
 
@@ -27,8 +27,8 @@ export class MediaUrlBuilder {
       MEDIA_SUPPORTED_CONTENT_TYPES;
     if (!supportedContentTypes.includes(command.contentType)) {
       throw new AppRpcException({
-        code: ERRORS.VALIDATION_ERROR.code,
-        message: 'Loại file không được hỗ trợ',
+        code: ERRORS.MEDIA_FILE_TYPE_NOT_SUPPORTED.code,
+        message: ERRORS.MEDIA_FILE_TYPE_NOT_SUPPORTED.message,
       });
     }
   }

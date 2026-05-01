@@ -1,4 +1,4 @@
-import { IsObject, IsOptional, IsString } from 'class-validator';
+﻿import { IsObject, IsOptional, IsString } from 'class-validator';
 
 export class ConfirmPaymentRequestDto {
   @IsOptional()
@@ -11,5 +11,6 @@ export class ConfirmPaymentRequestDto {
 
   @IsOptional()
   @IsObject()
-  rawPayload?: Record<string, any>;
+  rawPayload?: Record<string, unknown>;
 }
+

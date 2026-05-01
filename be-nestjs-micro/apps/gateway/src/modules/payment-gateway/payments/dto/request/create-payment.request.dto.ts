@@ -1,4 +1,4 @@
-import { PaymentMethod } from '@app/contracts/payment/enums/payment-method.enum';
+﻿import { PaymentMethod } from '@app/contracts/payment/enums/payment-method.enum';
 import {
   IsEnum,
   IsISO8601,
@@ -36,7 +36,7 @@ export class CreatePaymentRequestDto {
 
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   @IsOptional()
   @IsString()
@@ -50,3 +50,4 @@ export class CreatePaymentRequestDto {
   @IsISO8601()
   expiresAt?: string;
 }
+

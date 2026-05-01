@@ -29,57 +29,101 @@ export class PaymentsPaymentGatewayService {
 
   async listPayments(query: ListPaymentsQueryDto): Promise<ListPaymentsResult> {
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.LIST_PAYMENTS, query as ListPaymentsCommand).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.LIST_PAYMENTS, query as ListPaymentsCommand)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 
   async createPayment(dto: CreatePaymentRequestDto): Promise<PaymentResult> {
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.CREATE_PAYMENT, dto as CreatePaymentCommand).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.CREATE_PAYMENT, dto as CreatePaymentCommand)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 
   async getPaymentById(id: string): Promise<PaymentResult> {
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.GET_PAYMENT_BY_ID, { id } as GetPaymentByIdCommand).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.GET_PAYMENT_BY_ID, {
+          id,
+        } as GetPaymentByIdCommand)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 
   async getPaymentByOrderId(orderId: string): Promise<PaymentResult> {
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.GET_PAYMENT_BY_ORDER_ID, { orderId } as GetPaymentByOrderIdCommand).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.GET_PAYMENT_BY_ORDER_ID, {
+          orderId,
+        } as GetPaymentByOrderIdCommand)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 
-  async confirmPayment(id: string, dto: ConfirmPaymentRequestDto): Promise<PaymentResult> {
+  async confirmPayment(
+    id: string,
+    dto: ConfirmPaymentRequestDto,
+  ): Promise<PaymentResult> {
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.CONFIRM_PAYMENT, { id, ...dto } as ConfirmPaymentCommand).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.CONFIRM_PAYMENT, {
+          id,
+          ...dto,
+        } as ConfirmPaymentCommand)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 
-  async cancelPayment(id: string, dto: CancelPaymentRequestDto): Promise<PaymentResult> {
+  async cancelPayment(
+    id: string,
+    dto: CancelPaymentRequestDto,
+  ): Promise<PaymentResult> {
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.CANCEL_PAYMENT, { id, ...dto } as CancelPaymentCommand).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.CANCEL_PAYMENT, {
+          id,
+          ...dto,
+        } as CancelPaymentCommand)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 
   async expirePayment(id: string): Promise<PaymentResult> {
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.EXPIRE_PAYMENT, { id } as ExpirePaymentCommand).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send(PAYMENT_PATTERNS.EXPIRE_PAYMENT, { id } as ExpirePaymentCommand)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 }

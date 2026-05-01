@@ -1,13 +1,16 @@
-import { FulfillmentStatus } from '@app/contracts/ordering/enums/fulfillment-status.enum';
 import { OrderStatus } from '@app/contracts/ordering/enums/order-status.enum';
-import { PaymentStatus } from '@app/contracts/ordering/enums/payment-status.enum';
+import { PaymentMethod } from '@app/contracts/payment/enums/payment-method.enum';
+import { PaymentStatus } from '@app/contracts/payment/enums/payment-status.enum';
 
 export class PlaceOrderResponseDto {
   orderId!: string;
   orderCode!: string;
-  status!: OrderStatus;
+  orderStatus!: OrderStatus;
+  paymentId!: string;
+  paymentMethod!: PaymentMethod;
   paymentStatus!: PaymentStatus;
-  fulfillmentStatus!: FulfillmentStatus;
-  grandTotal!: number;
+  checkoutUrl?: string | null;
+  amount!: number;
+  currency!: string;
   createdAt!: Date;
 }

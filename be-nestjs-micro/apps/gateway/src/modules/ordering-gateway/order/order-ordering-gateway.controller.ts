@@ -8,7 +8,6 @@ import {
   Post,
   Query,
   Req,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
@@ -18,7 +17,7 @@ import { ListOrdersRequestDto } from './dto/request/list-orders.request.dto';
 import { UpdateOrderStatusRequestDto } from './dto/request/update-order-status.request.dto';
 import { CreateOrderRequestDto } from './dto/request/create-order.request.dto';
 import { CancelOrderRequestDto } from './dto/request/cancel-order.request.dto';
-import { ERRORS } from '@app/common/constants/error-code.constant';
+import { getUserIdOrThrow } from '../../../common/utils/get-user-id.util';
 
 import { Roles } from '@app/auth';
 import { RolesGuard } from '@app/auth';
@@ -31,16 +30,14 @@ export class OrderOrderingGatewayController {
   @Post()
   async createOrder(
     @Req() request: RequestWithUser,
-    @Body() dto: CreateOrderRequestDto, 
+    @Body() dto: CreateOrderRequestDto,
   ) {
-    return this.orderService.createOrder(this.getUserId(request), dto);
+    return this.orderService.createOrder(getUserIdOrThrow(request), dto);
   }
 
   @Delete(':id')
   @Roles('ADMIN', 'STAFF')
-  async deleteOrder(
-    @Param('id') id: string,
-  ) {
+  async deleteOrder(@Param('id') id: string) {
     return this.orderService.deleteOrder(id);
   }
 
@@ -49,15 +46,13 @@ export class OrderOrderingGatewayController {
     @Req() request: RequestWithUser,
     @Query() dto: ListOrdersRequestDto,
   ) {
-    const userId = this.getUserId(request);
+    const userId = getUserIdOrThrow(request);
     return this.orderService.findAllUser(userId, dto);
   }
 
   @Get('admin')
   @Roles('ADMIN', 'STAFF')
-  async findAllAdmin(
-    @Query() dto: ListOrdersRequestDto,
-  ) {
+  async findAllAdmin(@Query() dto: ListOrdersRequestDto) {
     return this.orderService.findAllAdmin(dto);
   }
 
@@ -69,7 +64,7 @@ export class OrderOrderingGatewayController {
 
   @Get(':id')
   async findOneUser(@Req() request: RequestWithUser, @Param('id') id: string) {
-    const userId = this.getUserId(request);
+    const userId = getUserIdOrThrow(request);
     return this.orderService.findOneUser(userId, id);
   }
 
@@ -88,18 +83,6 @@ export class OrderOrderingGatewayController {
     @Param('id') id: string,
     @Body() dto: CancelOrderRequestDto,
   ) {
-    return this.orderService.cancelOrder(this.getUserId(request), id, dto);
-  }
-
-  private getUserId(request: RequestWithUser): string {
-    const userId = request.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException({
-        code: ERRORS.UNAUTHORIZED.code,
-        message: ERRORS.UNAUTHORIZED.message,
-      });
-    }
-
-    return userId;
+    return this.orderService.cancelOrder(getUserIdOrThrow(request), id, dto);
   }
 }

@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 import { PaymentMethod } from '@app/contracts/payment/enums/payment-method.enum';
 import { PaymentStatus } from '@app/contracts/payment/enums/payment-status.enum';
 

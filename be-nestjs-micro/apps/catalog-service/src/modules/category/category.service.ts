@@ -277,7 +277,7 @@ export class CategoryService {
     if (menuItemCount > 0) {
       throw new AppRpcException({
         code: ERRORS.CONFLICT.code,
-        message: 'Category has menu items, cannot delete',
+        message: 'Danh muc dang co mon an, khong the xoa',
       });
     }
 

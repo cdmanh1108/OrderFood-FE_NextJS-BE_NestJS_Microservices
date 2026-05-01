@@ -1,4 +1,10 @@
-import { IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+﻿import {
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateRefundRequestDto {
   @IsUUID()
@@ -18,5 +24,6 @@ export class CreateRefundRequestDto {
 
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
+

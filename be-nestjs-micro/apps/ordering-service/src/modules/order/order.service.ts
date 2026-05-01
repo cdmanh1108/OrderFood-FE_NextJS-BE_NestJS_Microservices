@@ -3,6 +3,18 @@ import { OrderingPrismaService } from '@app/database/ordering-prisma.service';
 import { ERRORS } from '@app/common/constants/error-code.constant';
 import { AppRpcException } from '@app/common/exceptions/app-rpc.exception';
 import { OrderStatus } from '@app/contracts/ordering/enums/order-status.enum';
+import { OrderChannel } from '@app/contracts/ordering/enums/order-channel.enum';
+import { OrderSource } from '@app/contracts/ordering/enums/order-source.enum';
+import { PaymentStatus } from '@app/contracts/ordering/enums/payment-status.enum';
+import { FulfillmentStatus } from '@app/contracts/ordering/enums/fulfillment-status.enum';
+import {
+  Prisma,
+  OrderChannel as PrismaOrderChannel,
+  OrderSource as PrismaOrderSource,
+  OrderStatus as PrismaOrderStatus,
+  PaymentStatus as PrismaPaymentStatus,
+  FulfillmentStatus as PrismaFulfillmentStatus,
+} from 'generated/ordering';
 
 import type { GetOrderDetailQuery } from '@app/contracts/ordering/order/commands/get-order-detail.query';
 import type { ListOrdersQuery } from '@app/contracts/ordering/order/commands/list-orders.query';
@@ -18,12 +30,22 @@ import type { DeleteOrderCommand } from '@app/contracts/ordering/order/commands/
 import type { CreateOrderResult } from '@app/contracts/ordering/order/results/create-order.result';
 import type { DeleteOrderResult } from '@app/contracts/ordering/order/results/delete-order.result';
 
+const ORDER_DETAIL_INCLUDE = {
+  items: true,
+  pricingSnapshot: true,
+  shippingAddress: true,
+} satisfies Prisma.OrderInclude;
+
+type OrderWithRelations = Prisma.OrderGetPayload<{
+  include: typeof ORDER_DETAIL_INCLUDE;
+}>;
+
 @Injectable()
 export class OrderService {
   constructor(private readonly prisma: OrderingPrismaService) {}
 
   async createOrder(command: CreateOrderCommand): Promise<CreateOrderResult> {
-    const code = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const code = this.generateNumericOrderCode();
     const itemsSubtotal = command.items.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
@@ -34,8 +56,8 @@ export class OrderService {
       data: {
         code,
         userId: command.userId,
-        channel: command.channel as any,
-        source: command.source as any,
+        channel: command.channel as PrismaOrderChannel,
+        source: command.source as PrismaOrderSource,
         tableId: command.tableId,
         tableSessionId: command.tableSessionId,
         note: command.note,
@@ -92,7 +114,7 @@ export class OrderService {
     if (!order) {
       throw new AppRpcException({
         code: ERRORS.NOT_FOUND.code,
-        message: 'Order not found',
+        message: ERRORS.NOT_FOUND.message,
       });
     }
 
@@ -109,17 +131,13 @@ export class OrderService {
         id: query.id,
         ...(query.userId ? { userId: query.userId } : {}),
       },
-      include: {
-        items: true,
-        pricingSnapshot: true,
-        shippingAddress: true,
-      },
+      include: ORDER_DETAIL_INCLUDE,
     });
 
     if (!order) {
       throw new AppRpcException({
         code: ERRORS.NOT_FOUND.code,
-        message: 'Order not found',
+        message: ERRORS.NOT_FOUND.message,
       });
     }
 
@@ -131,18 +149,19 @@ export class OrderService {
     const limit = query.limit && query.limit > 0 ? query.limit : 10;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Prisma.OrderWhereInput = {};
     if (query.userId) {
       where.userId = query.userId;
     }
     if (query.status) {
-      where.status = query.status;
+      where.status = query.status as PrismaOrderStatus;
     }
     if (query.paymentStatus) {
-      where.paymentStatus = query.paymentStatus;
+      where.paymentStatus = query.paymentStatus as PrismaPaymentStatus;
     }
     if (query.fulfillmentStatus) {
-      where.fulfillmentStatus = query.fulfillmentStatus;
+      where.fulfillmentStatus =
+        query.fulfillmentStatus as PrismaFulfillmentStatus;
     }
     if (query.keyword) {
       where.code = { contains: query.keyword, mode: 'insensitive' };
@@ -151,11 +170,7 @@ export class OrderService {
     const [items, total] = await Promise.all([
       this.prisma.order.findMany({
         where,
-        include: {
-          items: true,
-          pricingSnapshot: true,
-          shippingAddress: true,
-        },
+        include: ORDER_DETAIL_INCLUDE,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -182,38 +197,50 @@ export class OrderService {
     if (!order) {
       throw new AppRpcException({
         code: ERRORS.NOT_FOUND.code,
-        message: 'Order not found',
+        message: ERRORS.NOT_FOUND.message,
       });
     }
 
-    const data: any = { status: command.status };
-    if (command.status === OrderStatus.CONFIRMED) {
-      data.confirmedAt = new Date();
-    } else if (command.status === OrderStatus.COMPLETED) {
-      data.completedAt = new Date();
-    } else if (command.status === OrderStatus.CANCELED) {
-      data.canceledAt = new Date();
+    const data: Prisma.OrderUpdateInput = {};
+    if (command.status) {
+      data.status = command.status as PrismaOrderStatus;
+
+      if (command.status === OrderStatus.CONFIRMED) {
+        data.confirmedAt = new Date();
+      } else if (command.status === OrderStatus.COMPLETED) {
+        data.completedAt = new Date();
+      } else if (command.status === OrderStatus.CANCELED) {
+        data.canceledAt = new Date();
+      }
     }
 
     if (command.paymentStatus) {
-      data.paymentStatus = command.paymentStatus;
+      data.paymentStatus = command.paymentStatus as PrismaPaymentStatus;
     }
 
     if (command.fulfillmentStatus) {
-      data.fulfillmentStatus = command.fulfillmentStatus;
+      data.fulfillmentStatus =
+        command.fulfillmentStatus as PrismaFulfillmentStatus;
     }
 
-    await this.prisma.order.update({
+    if (Object.keys(data).length === 0) {
+      throw new AppRpcException({
+        code: ERRORS.BAD_REQUEST.code,
+        message: 'Thieu truong trang thai de cap nhat',
+      });
+    }
+
+    const updatedOrder = await this.prisma.order.update({
       where: { id: command.id },
       data,
     });
 
     return {
-      id: command.id,
-      status: command.status,
-      paymentStatus: command.paymentStatus,
-      fulfillmentStatus: command.fulfillmentStatus,
-      updatedAt: new Date(),
+      id: updatedOrder.id,
+      status: updatedOrder.status as OrderStatus,
+      paymentStatus: updatedOrder.paymentStatus as PaymentStatus,
+      fulfillmentStatus: updatedOrder.fulfillmentStatus as FulfillmentStatus,
+      updatedAt: updatedOrder.updatedAt,
     };
   }
 
@@ -228,7 +255,7 @@ export class OrderService {
     if (!order) {
       throw new AppRpcException({
         code: ERRORS.NOT_FOUND.code,
-        message: 'Order not found',
+        message: 'Khong tim thay don hang',
       });
     }
 
@@ -240,7 +267,7 @@ export class OrderService {
     ) {
       throw new AppRpcException({
         code: ERRORS.BAD_REQUEST.code,
-        message: 'Order cannot be canceled',
+        message: 'Don hang khong the huy',
       });
     }
 
@@ -260,30 +287,24 @@ export class OrderService {
     };
   }
 
-  private mapToResult(order: any): any {
+  private mapToResult(order: OrderWithRelations): OrderDetailResult {
     return {
       id: order.id,
       code: order.code,
       userId: order.userId,
-      channel: order.channel as any,
-      source: order.source as any,
+      channel: order.channel as OrderChannel,
+      source: order.source as OrderSource,
       tableId: order.tableId,
       tableSessionId: order.tableSessionId,
-      status: order.status as any,
-      paymentStatus: order.paymentStatus as any,
-      fulfillmentStatus: order.fulfillmentStatus as any,
+      status: order.status as OrderStatus,
+      paymentStatus: order.paymentStatus as PaymentStatus,
+      fulfillmentStatus: order.fulfillmentStatus as FulfillmentStatus,
       note: order.note,
-      items: (order.items || []).map((item: any) => ({
-        id: item.id,
-        menuItemId: item.menuItemId,
-        menuItemName: item.menuItemName,
-        menuItemImageUrl: item.menuItemImageUrl,
-        unitPrice: item.unitPrice ? item.unitPrice.toNumber() : 0,
-        quantity: item.quantity,
-        note: item.note,
-      })),
+      items: order.items.map((item) => this.mapOrderItem(item)),
       pricingSnapshot: order.pricingSnapshot
         ? {
+            id: order.pricingSnapshot.id,
+            orderId: order.pricingSnapshot.orderId,
             itemsSubtotal: order.pricingSnapshot.itemsSubtotal.toNumber(),
             modifiersTotal: order.pricingSnapshot.modifiersTotal.toNumber(),
             discountTotal: order.pricingSnapshot.discountTotal.toNumber(),
@@ -292,10 +313,13 @@ export class OrderService {
             taxTotal: order.pricingSnapshot.taxTotal.toNumber(),
             grandTotal: order.pricingSnapshot.grandTotal.toNumber(),
             currency: order.pricingSnapshot.currency,
+            createdAt: order.pricingSnapshot.createdAt,
           }
         : null,
       shippingAddress: order.shippingAddress
         ? {
+            id: order.shippingAddress.id,
+            orderId: order.shippingAddress.orderId,
             receiverName: order.shippingAddress.receiverName,
             receiverPhone: order.shippingAddress.receiverPhone,
             province: order.shippingAddress.province,
@@ -303,6 +327,13 @@ export class OrderService {
             ward: order.shippingAddress.ward,
             street: order.shippingAddress.street,
             detail: order.shippingAddress.detail,
+            latitude: order.shippingAddress.latitude
+              ? order.shippingAddress.latitude.toNumber()
+              : null,
+            longitude: order.shippingAddress.longitude
+              ? order.shippingAddress.longitude.toNumber()
+              : null,
+            createdAt: order.shippingAddress.createdAt,
           }
         : null,
       placedAt: order.placedAt,
@@ -312,5 +343,28 @@ export class OrderService {
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
     };
+  }
+
+  private mapOrderItem(
+    item: OrderWithRelations['items'][number],
+  ): OrderDetailResult['items'][number] {
+    const unitPrice = item.unitPrice ? item.unitPrice.toNumber() : 0;
+    return {
+      id: item.id,
+      menuItemId: item.menuItemId,
+      menuItemName: item.menuItemName,
+      menuItemImageUrl: item.menuItemImageUrl,
+      unitPrice,
+      quantity: item.quantity,
+      lineTotal: unitPrice * item.quantity,
+      note: item.note,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    };
+  }
+
+  private generateNumericOrderCode(): string {
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    return `${Date.now()}${randomSuffix}`;
   }
 }

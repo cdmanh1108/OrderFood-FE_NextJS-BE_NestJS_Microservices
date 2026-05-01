@@ -1,6 +1,5 @@
-import { PaymentTransactionStatus } from "@app/contracts/payment/enums/payment-transaction-status.enum";
-import { PaymentTransactionType } from "@app/contracts/payment/enums/payment-transaction-type.enum";
-
+﻿import { PaymentTransactionStatus } from '@app/contracts/payment/enums/payment-transaction-status.enum';
+import { PaymentTransactionType } from '@app/contracts/payment/enums/payment-transaction-type.enum';
 
 export class PaymentTransactionResponseDto {
   id: string;
@@ -16,9 +15,9 @@ export class PaymentTransactionResponseDto {
   gatewayTransactionId?: string | null;
   gatewayReference?: string | null;
 
-  requestPayload?: Record<string, any> | null;
-  responsePayload?: Record<string, any> | null;
-  rawPayload?: Record<string, any> | null;
+  requestPayload?: Record<string, unknown> | null;
+  responsePayload?: Record<string, unknown> | null;
+  rawPayload?: Record<string, unknown> | null;
 
   errorCode?: string | null;
   errorMessage?: string | null;
@@ -28,3 +27,4 @@ export class PaymentTransactionResponseDto {
   createdAt: Date;
   updatedAt: Date;
 }
+

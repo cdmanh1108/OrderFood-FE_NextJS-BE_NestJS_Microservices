@@ -205,6 +205,7 @@ model PaymentWebhookLog {
     @@index([gateway])
     @@index([eventType])
     @@index([eventId])
+    @@unique([gateway, eventId])
     @@index([status])
     @@index([createdAt])
     @@map("payment_webhook_logs")

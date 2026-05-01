@@ -279,15 +279,6 @@ export default function CustomerProfilePage() {
           </div>
 
           <div className="p-6 sm:p-8">
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-brand-brown">
-                Thông tin cơ bản
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Cập nhật họ tên, số điện thoại và email.
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <Input
                 label="Họ và tên"
@@ -520,10 +511,11 @@ export default function CustomerProfilePage() {
               {addresses.map((address) => (
                 <div
                   key={address.id}
-                  className={`rounded-3xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${address.isDefault
-                    ? "border-brand-amber bg-brand-beige/40"
-                    : "border-gray-100 bg-white hover:border-brand-amber/40"
-                    }`}
+                  className={`rounded-3xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                    address.isDefault
+                      ? "border-brand-amber bg-brand-beige/40"
+                      : "border-gray-100 bg-white hover:border-brand-amber/40"
+                  }`}
                 >
                   <div className="mb-3 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-3">

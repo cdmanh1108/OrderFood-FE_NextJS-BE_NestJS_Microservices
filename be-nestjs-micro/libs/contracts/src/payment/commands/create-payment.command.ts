@@ -1,4 +1,4 @@
-import { PaymentMethod } from '../enums/payment-method.enum';
+﻿import { PaymentMethod } from '../enums/payment-method.enum';
 
 export class CreatePaymentCommand {
   orderId: string;
@@ -10,10 +10,11 @@ export class CreatePaymentCommand {
   currency?: string;
 
   description?: string | null;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
 
   returnUrl?: string | null;
   cancelUrl?: string | null;
 
   expiresAt?: Date | string | null;
 }
+

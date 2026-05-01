@@ -1,4 +1,4 @@
-import { PaymentMethod } from '@app/contracts/payment/enums/payment-method.enum';
+﻿import { PaymentMethod } from '@app/contracts/payment/enums/payment-method.enum';
 import { PaymentTransactionResponseDto } from './payment-transaction.response.dto';
 import { PaymentStatus } from '@app/contracts/payment/enums/payment-status.enum';
 
@@ -23,7 +23,7 @@ export class PaymentResponseDto {
   checkoutUrl?: string | null;
 
   description?: string | null;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
 
   paidAt?: Date | null;
   failedAt?: Date | null;
@@ -38,3 +38,4 @@ export class PaymentResponseDto {
   createdAt: Date;
   updatedAt: Date;
 }
+

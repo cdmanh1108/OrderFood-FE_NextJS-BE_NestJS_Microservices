@@ -8,15 +8,15 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
 
 @Module({
   imports: [
-      ConfigModule.forRoot({
-        isGlobal: true,
-        envFilePath: '.env.payment-service',
-      }),
-      LoggerModule,
-      PaymentPrismaModule,
-      PaymentsModule,
-      RefundsModule,
-      WebhooksModule
-    ],
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env.payment-service',
+    }),
+    LoggerModule,
+    PaymentPrismaModule,
+    PaymentsModule,
+    RefundsModule,
+    WebhooksModule,
+  ],
 })
 export class PaymentServiceModule {}

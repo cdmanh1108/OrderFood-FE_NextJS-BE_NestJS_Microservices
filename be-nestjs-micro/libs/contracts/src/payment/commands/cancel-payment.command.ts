@@ -1,6 +1,7 @@
-export class CancelPaymentCommand {
+﻿export class CancelPaymentCommand {
   id: string;
 
   reason?: string | null;
-  rawPayload?: Record<string, any> | null;
+  rawPayload?: Record<string, unknown> | null;
 }
+

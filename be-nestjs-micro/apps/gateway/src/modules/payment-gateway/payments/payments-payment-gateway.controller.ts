@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard, RolesGuard, Roles } from '@app/auth';
 import { PaymentsPaymentGatewayService } from './payments-payment-gateway.service';
 
@@ -12,7 +20,9 @@ import { PaymentIdParamsDto } from './dto/request/payment-id.params.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('payments')
 export class PaymentsPaymentGatewayController {
-  constructor(private readonly paymentsService: PaymentsPaymentGatewayService) {}
+  constructor(
+    private readonly paymentsService: PaymentsPaymentGatewayService,
+  ) {}
 
   @Get()
   @Roles('ADMIN', 'STAFF')

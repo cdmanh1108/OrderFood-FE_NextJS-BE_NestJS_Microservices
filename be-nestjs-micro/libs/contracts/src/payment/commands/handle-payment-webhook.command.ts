@@ -1,6 +1,8 @@
-export class HandlePaymentWebhookCommand {
+﻿export class HandlePaymentWebhookCommand {
   gateway: string;
-  headers?: Record<string, any>;
-  payload: Record<string, any>;
+  headers?: Record<string, string | string[] | undefined>;
+  payload: Record<string, unknown>;
   signature?: string | null;
 }
+
+

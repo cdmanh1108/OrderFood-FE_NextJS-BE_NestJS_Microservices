@@ -1,16 +1,10 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Req,
-  UnauthorizedException,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@app/auth';
 import { CheckoutOrderingGatewayService } from './checkout-ordering-gateway.service';
 import { CalculateCheckoutRequestDto } from './dto/request/calculate-checkout.request.dto';
+import { PlaceOrderRequestDto } from './dto/request/place-order.request.dto';
 import type { RequestWithUser } from '@app/auth';
-import { ERRORS } from '@app/common/constants/error-code.constant';
+import { getUserIdOrThrow } from '../../../common/utils/get-user-id.util';
 
 @UseGuards(JwtAuthGuard)
 @Controller('ordering/checkout')
@@ -19,22 +13,19 @@ export class CheckoutOrderingGatewayController {
     private readonly checkoutService: CheckoutOrderingGatewayService,
   ) {}
 
-  private getUserId(request: RequestWithUser): string {
-    const userId = request.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException({
-        code: ERRORS.UNAUTHORIZED.code,
-        message: ERRORS.UNAUTHORIZED.message,
-      });
-    }
-    return userId;
-  }
-
   @Post('calculate')
   async calculate(
     @Req() request: RequestWithUser,
     @Body() dto: CalculateCheckoutRequestDto,
   ) {
-    return this.checkoutService.calculate(this.getUserId(request), dto);
+    return this.checkoutService.calculate(getUserIdOrThrow(request), dto);
+  }
+
+  @Post()
+  async checkout(
+    @Req() request: RequestWithUser,
+    @Body() dto: PlaceOrderRequestDto,
+  ) {
+    return this.checkoutService.checkout(getUserIdOrThrow(request), dto);
   }
 }

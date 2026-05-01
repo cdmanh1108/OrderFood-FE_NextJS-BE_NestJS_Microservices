@@ -1,4 +1,4 @@
-import { IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
+﻿import { IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CancelPaymentRequestDto {
   @IsOptional()
@@ -8,5 +8,6 @@ export class CancelPaymentRequestDto {
 
   @IsOptional()
   @IsObject()
-  rawPayload?: Record<string, any>;
+  rawPayload?: Record<string, unknown>;
 }
+

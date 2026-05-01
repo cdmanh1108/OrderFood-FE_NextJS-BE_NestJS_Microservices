@@ -9,10 +9,10 @@ import { RMQ_SERVICES } from '@app/messaging/constants/services.constants';
 
 @Module({
   imports: [
-    PaymentProvidersModule, 
+    PaymentProvidersModule,
     MessagingClientsModule.register([
       { name: RMQ_SERVICES.ORDERING, queue: RMQ_QUEUES.ORDERING },
-    ])
+    ]),
   ],
   controllers: [WebhooksController],
   providers: [WebhooksService],

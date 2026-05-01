@@ -7,12 +7,10 @@ import {
   Post,
   Query,
   Req,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import type { RequestWithUser } from '@app/auth';
 import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
-import { ERRORS } from '@app/common/constants/error-code.constant';
 import { CartOrderingGatewayService } from './cart-ordering-gateway.service';
 import { GetActiveCartRequestDto } from './dto/request/get-active-cart.request.dto';
 import { AddCartItemRequestDto } from './dto/request/add-cart-item.request.dto';
@@ -21,6 +19,7 @@ import { RemoveCartItemRequestDto } from './dto/request/remove-cart-item.request
 import { SetCartAddressRequestDto } from './dto/request/set-cart-address.request.dto';
 import { SetCartNoteRequestDto } from './dto/request/set-cart-note.request.dto';
 import { ClearCartRequestDto } from './dto/request/clear-cart.request.dto';
+import { getUserIdOrThrow } from '../../../common/utils/get-user-id.util';
 
 @Controller('carts')
 @UseGuards(JwtAuthGuard)
@@ -35,7 +34,7 @@ export class CartOrderingGatewayController {
     @Req() request: RequestWithUser,
   ) {
     return this.cartOrderingGatewayService.findActive(
-      this.getUserId(request),
+      getUserIdOrThrow(request),
       query,
     );
   }
@@ -43,7 +42,7 @@ export class CartOrderingGatewayController {
   @Post('items')
   addItem(@Body() dto: AddCartItemRequestDto, @Req() request: RequestWithUser) {
     return this.cartOrderingGatewayService.addItem(
-      this.getUserId(request),
+      getUserIdOrThrow(request),
       dto,
     );
   }
@@ -54,7 +53,7 @@ export class CartOrderingGatewayController {
     @Req() request: RequestWithUser,
   ) {
     return this.cartOrderingGatewayService.updateItem(
-      this.getUserId(request),
+      getUserIdOrThrow(request),
       dto,
     );
   }
@@ -65,7 +64,7 @@ export class CartOrderingGatewayController {
     @Req() request: RequestWithUser,
   ) {
     return this.cartOrderingGatewayService.removeItem(
-      this.getUserId(request),
+      getUserIdOrThrow(request),
       dto,
     );
   }
@@ -76,7 +75,7 @@ export class CartOrderingGatewayController {
     @Req() request: RequestWithUser,
   ) {
     return this.cartOrderingGatewayService.setAddress(
-      this.getUserId(request),
+      getUserIdOrThrow(request),
       dto,
     );
   }
@@ -84,25 +83,16 @@ export class CartOrderingGatewayController {
   @Patch('note')
   setNote(@Body() dto: SetCartNoteRequestDto, @Req() request: RequestWithUser) {
     return this.cartOrderingGatewayService.setNote(
-      this.getUserId(request),
+      getUserIdOrThrow(request),
       dto,
     );
   }
 
   @Post('clear')
   clear(@Body() dto: ClearCartRequestDto, @Req() request: RequestWithUser) {
-    return this.cartOrderingGatewayService.clear(this.getUserId(request), dto);
-  }
-
-  private getUserId(request: RequestWithUser): string {
-    const userId = request.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException({
-        code: ERRORS.UNAUTHORIZED.code,
-        message: ERRORS.UNAUTHORIZED.message,
-      });
-    }
-
-    return userId;
+    return this.cartOrderingGatewayService.clear(
+      getUserIdOrThrow(request),
+      dto,
+    );
   }
 }

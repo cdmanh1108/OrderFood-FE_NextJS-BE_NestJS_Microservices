@@ -8,10 +8,16 @@ import { PAYMENT_PATTERNS } from '@app/messaging/constants/patterns.constant';
 import { HandlePaymentWebhookCommand } from '@app/contracts/payment/commands/handle-payment-webhook.command';
 import { ConfirmWebhookUrlCommand } from '@app/contracts/payment/commands/confirm-webhook-url.command';
 import { HandlePaymentWebhookResult } from '@app/contracts/payment/results/handle-payment-webhook.result';
-import { ListPaymentWebhookLogsCommand } from '@app/contracts/payment/commands/list-payment-webhook-logs.command';
-import { ListPaymentWebhookLogsResult } from '@app/contracts/payment/results/list-payment-webhook-logs.result';
+// import { ListPaymentWebhookLogsCommand } from '@app/contracts/payment/commands/list-payment-webhook-logs.command';
+// import { ListPaymentWebhookLogsResult } from '@app/contracts/payment/results/list-payment-webhook-logs.result';
 
-import { ListPaymentWebhookLogsQueryDto } from './dto/request/list-payment-webhook-logs.query.dto';
+// import { ListPaymentWebhookLogsQueryDto } from './dto/request/list-payment-webhook-logs.query.dto';
+
+type ConfirmWebhookUrlResult = {
+  gateway: string;
+  success: boolean;
+  rawPayload?: Record<string, unknown>;
+};
 
 @Injectable()
 export class WebhooksPaymentGatewayService {
@@ -19,16 +25,27 @@ export class WebhooksPaymentGatewayService {
     @Inject(RMQ_SERVICES.PAYMENT) private readonly paymentClient: ClientProxy,
   ) {}
 
-  async listWebhookLogs(query: ListPaymentWebhookLogsQueryDto): Promise<ListPaymentWebhookLogsResult> {
-    const payload: ListPaymentWebhookLogsCommand = query;
-    return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.LIST_PAYMENT_WEBHOOK_LOGS, payload).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
-    );
-  }
+  // async listWebhookLogs(
+  //   query: ListPaymentWebhookLogsQueryDto,
+  // ): Promise<ListPaymentWebhookLogsResult> {
+  //   const payload: ListPaymentWebhookLogsCommand = query;
+  //   return firstValueFrom(
+  //     this.paymentClient
+  //       .send(PAYMENT_PATTERNS.LIST_PAYMENT_WEBHOOK_LOGS, payload)
+  //       .pipe(
+  //         catchError((error) =>
+  //           throwError(() => mapRpcErrorToHttpException(error)),
+  //         ),
+  //       ),
+  //   );
+  // }
 
-  async handleWebhook(gateway: string, headers: any, payload: any, signature?: string): Promise<HandlePaymentWebhookResult> {
+  async handleWebhook(
+    gateway: string,
+    headers: Record<string, string | string[] | undefined>,
+    payload: Record<string, unknown>,
+    signature?: string,
+  ): Promise<HandlePaymentWebhookResult> {
     const command: HandlePaymentWebhookCommand = {
       gateway,
       headers,
@@ -36,21 +53,38 @@ export class WebhooksPaymentGatewayService {
       signature,
     };
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.HANDLE_PAYMENT_WEBHOOK, command).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send<
+          HandlePaymentWebhookResult,
+          HandlePaymentWebhookCommand
+        >(PAYMENT_PATTERNS.HANDLE_PAYMENT_WEBHOOK, command)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 
-  async confirmWebhookUrl(gateway: string, webhookUrl: string) {
+  async confirmWebhookUrl(
+    gateway: string,
+    webhookUrl: string,
+  ): Promise<ConfirmWebhookUrlResult> {
     const command: ConfirmWebhookUrlCommand = {
       gateway,
       webhookUrl,
     };
     return firstValueFrom(
-      this.paymentClient.send(PAYMENT_PATTERNS.CONFIRM_WEBHOOK_URL, command).pipe(
-        catchError((error) => throwError(() => mapRpcErrorToHttpException(error))),
-      ),
+      this.paymentClient
+        .send<
+          ConfirmWebhookUrlResult,
+          ConfirmWebhookUrlCommand
+        >(PAYMENT_PATTERNS.CONFIRM_WEBHOOK_URL, command)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
     );
   }
 }

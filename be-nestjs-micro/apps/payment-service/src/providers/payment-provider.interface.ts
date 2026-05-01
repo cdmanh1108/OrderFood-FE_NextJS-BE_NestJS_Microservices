@@ -1,4 +1,4 @@
-import { PaymentMethod } from "@app/contracts/payment/enums/payment-method.enum";
+import { PaymentMethod } from '@app/contracts/payment/enums/payment-method.enum';
 
 // export type PaymentGateway = 'PAYOS' | 'VNPAY' | 'MOMO' | 'STRIPE' | 'MANUAL';
 
@@ -27,11 +27,11 @@ export interface CreateProviderPaymentResult {
   gateway: PaymentMethod;
   gatewayPaymentId: string;
   paymentUrl?: string | null;
-  rawPayload?: Record<string, any>;
+  rawPayload?: Record<string, unknown>;
 }
 
 export interface VerifyProviderWebhookInput {
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   headers?: Record<string, string | string[] | undefined>;
   signature?: string;
 }
@@ -48,7 +48,7 @@ export interface VerifiedProviderWebhook {
   eventType?: string;
   eventId?: string;
 
-  rawPayload: Record<string, any>;
+  rawPayload: Record<string, unknown>;
 }
 
 export interface ConfirmWebhookUrlInput {
@@ -58,7 +58,7 @@ export interface ConfirmWebhookUrlInput {
 export interface ConfirmWebhookUrlResult {
   gateway: PaymentMethod;
   success: boolean;
-  rawPayload?: Record<string, any>;
+  rawPayload?: Record<string, unknown>;
 }
 
 export interface PaymentProvider {

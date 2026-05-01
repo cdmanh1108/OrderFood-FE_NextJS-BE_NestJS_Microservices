@@ -1,8 +1,9 @@
-export class ConfirmPaymentCommand {
+﻿export class ConfirmPaymentCommand {
   id: string;
 
   gatewayTransactionId?: string | null;
   gatewayReference?: string | null;
 
-  rawPayload?: Record<string, any> | null;
+  rawPayload?: Record<string, unknown> | null;
 }
+

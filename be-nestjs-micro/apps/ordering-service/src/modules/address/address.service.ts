@@ -12,29 +12,7 @@ import type { AddressDetailResult } from '@app/contracts/ordering/address/result
 import type { PaginatedAddressesResult } from '@app/contracts/ordering/address/results/paginated-addresses.result';
 import type { SetDefaultAddressResult } from '@app/contracts/ordering/address/results/set-default-address.result';
 import type { DeleteAddressResult } from '@app/contracts/ordering/address/results/delete-address.result';
-
-type DecimalLike = {
-  toNumber(): number;
-};
-
-type NullableDecimalLike = DecimalLike | null;
-
-type AddressEntity = {
-  id: string;
-  userId: string;
-  receiverName: string;
-  receiverPhone: string;
-  province: string;
-  district: string;
-  ward: string;
-  street: string | null;
-  detail: string | null;
-  latitude: NullableDecimalLike;
-  longitude: NullableDecimalLike;
-  isDefault: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import { Address } from 'generated/ordering';
 
 @Injectable()
 export class AddressService {
@@ -72,9 +50,7 @@ export class AddressService {
       });
     });
 
-    return this.toAddressDetailResult(
-      createdAddress as unknown as AddressEntity,
-    );
+    return this.toAddressDetailResult(createdAddress);
   }
 
   async update(command: UpdateAddressCommand): Promise<AddressDetailResult> {
@@ -120,7 +96,7 @@ export class AddressService {
     }
 
     if (Object.keys(data).length === 0) {
-      return this.toAddressDetailResult(address as unknown as AddressEntity);
+      return this.toAddressDetailResult(address);
     }
 
     const updated = await this.prisma.address.update({
@@ -128,12 +104,12 @@ export class AddressService {
       data,
     });
 
-    return this.toAddressDetailResult(updated as unknown as AddressEntity);
+    return this.toAddressDetailResult(updated);
   }
 
   async findOne(query: GetAddressDetailQuery): Promise<AddressDetailResult> {
     const address = await this.findAddress(query.id, query.userId);
-    return this.toAddressDetailResult(address as unknown as AddressEntity);
+    return this.toAddressDetailResult(address);
   }
 
   async findAll(query: ListAddressesQuery): Promise<PaginatedAddressesResult> {
@@ -154,9 +130,7 @@ export class AddressService {
     ]);
 
     return {
-      items: items.map((item) =>
-        this.toAddressDetailResult(item as unknown as AddressEntity),
-      ),
+      items: items.map((item) => this.toAddressDetailResult(item)),
       total,
       page,
       limit,
@@ -232,14 +206,14 @@ export class AddressService {
     if (!address) {
       throw new AppRpcException({
         code: ERRORS.NOT_FOUND.code,
-        message: 'Address not found',
+        message: 'Khong tim thay dia chi',
       });
     }
 
     return address;
   }
 
-  private toAddressDetailResult(address: AddressEntity): AddressDetailResult {
+  private toAddressDetailResult(address: Address): AddressDetailResult {
     return {
       id: address.id,
       userId: address.userId,
@@ -258,7 +232,7 @@ export class AddressService {
     };
   }
 
-  private decimalToNumber(value: NullableDecimalLike): number | null {
+  private decimalToNumber(value: Address['latitude']): number | null {
     return value ? value.toNumber() : null;
   }
 }
