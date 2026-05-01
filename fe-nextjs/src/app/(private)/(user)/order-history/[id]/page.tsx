@@ -29,8 +29,6 @@ const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   DRAFT: "Nháp",
   PLACED: "Đã đặt",
   CONFIRMED: "Đã xác nhận",
-  PREPARING: "Đang chuẩn bị",
-  READY: "Sẵn sàng",
   COMPLETED: "Hoàn thành",
   CANCELED: "Đã hủy",
 };
@@ -39,8 +37,6 @@ const ORDER_STATUS_CLASS: Record<OrderStatus, string> = {
   DRAFT: "bg-gray-100 text-gray-700",
   PLACED: "bg-blue-50 text-blue-700",
   CONFIRMED: "bg-amber-50 text-amber-700",
-  PREPARING: "bg-orange-50 text-orange-700",
-  READY: "bg-purple-50 text-purple-700",
   COMPLETED: "bg-green-50 text-green-700",
   CANCELED: "bg-red-50 text-red-700",
 };
@@ -680,3 +676,4 @@ export default function CustomerOrderDetailPage() {
     </div>
   );
 }
+

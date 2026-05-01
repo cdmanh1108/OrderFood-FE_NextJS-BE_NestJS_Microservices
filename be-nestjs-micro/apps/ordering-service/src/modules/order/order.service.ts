@@ -154,7 +154,17 @@ export class OrderService {
       where.userId = query.userId;
     }
     if (query.status) {
-      where.status = query.status as PrismaOrderStatus;
+      if (query.status === OrderStatus.CONFIRMED) {
+        where.status = {
+          in: [
+            PrismaOrderStatus.CONFIRMED,
+            PrismaOrderStatus.PREPARING,
+            PrismaOrderStatus.READY,
+          ],
+        };
+      } else {
+        where.status = query.status as PrismaOrderStatus;
+      }
     }
     if (query.paymentStatus) {
       where.paymentStatus = query.paymentStatus as PrismaPaymentStatus;
@@ -203,6 +213,14 @@ export class OrderService {
 
     const data: Prisma.OrderUpdateInput = {};
     if (command.status) {
+      if (!this.isSupportedOrderStatus(command.status)) {
+        throw new AppRpcException({
+          code: ERRORS.BAD_REQUEST.code,
+          message:
+            'Trang thai don hang khong hop le. Dung fulfillmentStatus cho trang thai chuan bi/giao hang.',
+        });
+      }
+
       data.status = command.status as PrismaOrderStatus;
 
       if (command.status === OrderStatus.CONFIRMED) {
@@ -237,9 +255,12 @@ export class OrderService {
 
     return {
       id: updatedOrder.id,
-      status: updatedOrder.status as OrderStatus,
+      status: this.mapOrderStatusToContract(updatedOrder.status),
       paymentStatus: updatedOrder.paymentStatus as PaymentStatus,
-      fulfillmentStatus: updatedOrder.fulfillmentStatus as FulfillmentStatus,
+      fulfillmentStatus: this.mapFulfillmentStatusToContract(
+        updatedOrder.fulfillmentStatus,
+        updatedOrder.status,
+      ),
       updatedAt: updatedOrder.updatedAt,
     };
   }
@@ -259,11 +280,19 @@ export class OrderService {
       });
     }
 
+    const normalizedStatus = this.mapOrderStatusToContract(order.status);
+    const normalizedFulfillment = this.mapFulfillmentStatusToContract(
+      order.fulfillmentStatus,
+      order.status,
+    );
+
     if (
-      order.status === 'COMPLETED' ||
-      order.status === 'CANCELED' ||
-      order.status === 'READY' ||
-      order.status === 'PREPARING'
+      normalizedStatus === OrderStatus.COMPLETED ||
+      normalizedStatus === OrderStatus.CANCELED ||
+      normalizedFulfillment === FulfillmentStatus.PREPARING ||
+      normalizedFulfillment === FulfillmentStatus.READY_FOR_PICKUP ||
+      normalizedFulfillment === FulfillmentStatus.SHIPPING ||
+      normalizedFulfillment === FulfillmentStatus.DELIVERED
     ) {
       throw new AppRpcException({
         code: ERRORS.BAD_REQUEST.code,
@@ -296,9 +325,12 @@ export class OrderService {
       source: order.source as OrderSource,
       tableId: order.tableId,
       tableSessionId: order.tableSessionId,
-      status: order.status as OrderStatus,
+      status: this.mapOrderStatusToContract(order.status),
       paymentStatus: order.paymentStatus as PaymentStatus,
-      fulfillmentStatus: order.fulfillmentStatus as FulfillmentStatus,
+      fulfillmentStatus: this.mapFulfillmentStatusToContract(
+        order.fulfillmentStatus,
+        order.status,
+      ),
       note: order.note,
       items: order.items.map((item) => this.mapOrderItem(item)),
       pricingSnapshot: order.pricingSnapshot
@@ -361,6 +393,46 @@ export class OrderService {
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     };
+  }
+
+  private isSupportedOrderStatus(status: OrderStatus): boolean {
+    return (
+      status === OrderStatus.DRAFT ||
+      status === OrderStatus.PLACED ||
+      status === OrderStatus.CONFIRMED ||
+      status === OrderStatus.COMPLETED ||
+      status === OrderStatus.CANCELED
+    );
+  }
+
+  private mapOrderStatusToContract(status: PrismaOrderStatus): OrderStatus {
+    if (
+      status === PrismaOrderStatus.PREPARING ||
+      status === PrismaOrderStatus.READY
+    ) {
+      return OrderStatus.CONFIRMED;
+    }
+
+    return status as OrderStatus;
+  }
+
+  private mapFulfillmentStatusToContract(
+    fulfillmentStatus: PrismaFulfillmentStatus,
+    orderStatus: PrismaOrderStatus,
+  ): FulfillmentStatus {
+    if (fulfillmentStatus !== PrismaFulfillmentStatus.NONE) {
+      return fulfillmentStatus as FulfillmentStatus;
+    }
+
+    if (orderStatus === PrismaOrderStatus.PREPARING) {
+      return FulfillmentStatus.PREPARING;
+    }
+
+    if (orderStatus === PrismaOrderStatus.READY) {
+      return FulfillmentStatus.READY_FOR_PICKUP;
+    }
+
+    return fulfillmentStatus as FulfillmentStatus;
   }
 
   private generateNumericOrderCode(): string {

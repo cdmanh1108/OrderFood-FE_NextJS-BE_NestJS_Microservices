@@ -9,7 +9,6 @@ import {
   Package,
   ReceiptText,
   ShoppingBag,
-  Truck,
   XCircle,
 } from "lucide-react";
 import { orderApi } from "@/services/api";
@@ -28,8 +27,6 @@ const statusConfig: Record<
   DRAFT: { label: "Bản nháp", color: "bg-gray-50 text-gray-700 ring-gray-200", icon: Clock },
   PLACED: { label: "Chờ xác nhận", color: "bg-yellow-50 text-yellow-700 ring-yellow-200", icon: Clock },
   CONFIRMED: { label: "Đã xác nhận", color: "bg-blue-50 text-blue-700 ring-blue-200", icon: CheckCircle },
-  PREPARING: { label: "Đang chuẩn bị", color: "bg-purple-50 text-purple-700 ring-purple-200", icon: Package },
-  READY: { label: "Chờ giao/lấy", color: "bg-orange-50 text-orange-700 ring-orange-200", icon: Truck },
   COMPLETED: { label: "Hoàn thành", color: "bg-green-50 text-green-700 ring-green-200", icon: CheckCircle },
   CANCELED: { label: "Đã hủy", color: "bg-red-50 text-red-700 ring-red-200", icon: XCircle },
 };
@@ -48,7 +45,7 @@ function getTabStatus(order: OrderApiModel): TabStatus {
   if (order.status === "COMPLETED") return "completed";
   if (order.status === "DRAFT" || order.status === "PLACED") return "pending";
   if (order.fulfillmentStatus === "SHIPPING" || order.fulfillmentStatus === "DELIVERED") return "delivering";
-  return "processing"; // CONFIRMED, PREPARING, READY
+  return "processing"; // CONFIRMED + fulfillment flow
 }
 
 function formatDateTime(value: string | null) {
@@ -250,3 +247,4 @@ export default function CustomerOrdersPage() {
     </main>
   );
 }
+

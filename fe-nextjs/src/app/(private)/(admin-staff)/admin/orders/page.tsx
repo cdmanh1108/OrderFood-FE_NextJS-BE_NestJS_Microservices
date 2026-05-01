@@ -10,7 +10,12 @@ import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
 import { useUI } from "@/contexts/ui-context";
 import { formatCurrency } from "@/utils/cn";
 import { orderApi } from "@/services/api";
-import type { OrderApiModel, OrderStatus, PaymentStatus } from "@/types/api";
+import type {
+  FulfillmentStatus,
+  OrderApiModel,
+  OrderStatus,
+  PaymentStatus,
+} from "@/types/api";
 
 function formatDateTime(value: string | null) {
   if (!value) return "N/A";
@@ -23,6 +28,14 @@ function formatDateTime(value: string | null) {
   });
 }
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return "Cập nhật trạng thái thất bại";
+}
+
 export default function OrdersPage() {
   const { setSuccess, setError: setErrorStatus } = useUI();
   const [orders, setOrders] = useState<OrderApiModel[]>([]);
@@ -31,7 +44,8 @@ export default function OrdersPage() {
   const [statusModal, setStatusModal] = useState<{
     isOpen: boolean;
     orderId: string;
-    newStatus: OrderStatus;
+    field: "status" | "fulfillmentStatus";
+    newValue: OrderStatus | FulfillmentStatus;
   } | null>(null);
 
   const fetchOrders = React.useCallback(async () => {
@@ -47,48 +61,91 @@ export default function OrdersPage() {
   }, []);
 
   useEffect(() => {
-    fetchOrders();
+    void fetchOrders();
   }, [fetchOrders]);
 
   const handleUpdateStatus = async () => {
     if (!statusModal) return;
+
     try {
-      await orderApi.updateStatus(statusModal.orderId, { status: statusModal.newStatus });
-      setSuccess("Cập nhật trạng thái đơn hàng thành công");
+      if (statusModal.field === "status") {
+        await orderApi.updateStatus(statusModal.orderId, {
+          status: statusModal.newValue as OrderStatus,
+        });
+      } else {
+        await orderApi.updateStatus(statusModal.orderId, {
+          fulfillmentStatus: statusModal.newValue as FulfillmentStatus,
+        });
+      }
+
+      setSuccess("Cập nhật trạng thái thành công");
       setStatusModal(null);
       await fetchOrders();
-    } catch (error: any) {
-      setErrorStatus(error.message || "Cập nhật trạng thái thất bại");
+    } catch (error) {
+      setErrorStatus(getErrorMessage(error));
     }
   };
 
   const filteredOrders = orders.filter(
     (order) =>
       order.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.shippingAddress?.receiverName?.toLowerCase().includes(searchQuery.toLowerCase()),
+      order.shippingAddress?.receiverName
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()),
   );
 
   const getOrderStatusBadge = (status: OrderStatus) => {
-    const config: Record<OrderStatus, { variant: "warning" | "info" | "success" | "danger" | "default"; label: string }> = {
+    const config: Record<
+      OrderStatus,
+      {
+        variant: "warning" | "info" | "success" | "danger" | "default";
+        label: string;
+      }
+    > = {
       DRAFT: { variant: "default", label: "Bản nháp" },
       PLACED: { variant: "warning", label: "Chờ xác nhận" },
       CONFIRMED: { variant: "info", label: "Đã xác nhận" },
-      PREPARING: { variant: "warning", label: "Đang chuẩn bị" },
-      READY: { variant: "success", label: "Sẵn sàng" },
       COMPLETED: { variant: "success", label: "Hoàn thành" },
       CANCELED: { variant: "danger", label: "Đã hủy" },
     };
+
+    return config[status] || { variant: "default", label: status };
+  };
+
+  const getFulfillmentStatusBadge = (status: FulfillmentStatus) => {
+    const config: Record<
+      FulfillmentStatus,
+      {
+        variant: "warning" | "info" | "success" | "danger" | "default";
+        label: string;
+      }
+    > = {
+      NONE: { variant: "default", label: "Chưa xử lý" },
+      PREPARING: { variant: "warning", label: "Đang chuẩn bị" },
+      READY_FOR_PICKUP: { variant: "info", label: "Sẵn sàng giao/lấy" },
+      SHIPPING: { variant: "info", label: "Đang giao" },
+      DELIVERED: { variant: "success", label: "Đã giao" },
+      FAILED: { variant: "danger", label: "Thất bại" },
+    };
+
     return config[status] || { variant: "default", label: status };
   };
 
   const getPaymentStatusBadge = (status: PaymentStatus) => {
-    const config: Record<PaymentStatus, { variant: "warning" | "info" | "success" | "danger" | "default"; label: string }> = {
+    const config: Record<
+      PaymentStatus,
+      {
+        variant: "warning" | "info" | "success" | "danger" | "default";
+        label: string;
+      }
+    > = {
       UNPAID: { variant: "warning", label: "Chưa thanh toán" },
       PENDING: { variant: "info", label: "Đang xử lý" },
       PAID: { variant: "success", label: "Đã thanh toán" },
       FAILED: { variant: "danger", label: "Thất bại" },
       REFUNDED: { variant: "danger", label: "Đã hoàn tiền" },
     };
+
     return config[status] || { variant: "default", label: status };
   };
 
@@ -96,10 +153,17 @@ export default function OrdersPage() {
     { value: "DRAFT", label: "Bản nháp" },
     { value: "PLACED", label: "Chờ xác nhận" },
     { value: "CONFIRMED", label: "Đã xác nhận" },
-    { value: "PREPARING", label: "Đang chuẩn bị" },
-    { value: "READY", label: "Sẵn sàng" },
     { value: "COMPLETED", label: "Hoàn thành" },
     { value: "CANCELED", label: "Đã hủy" },
+  ];
+
+  const fulfillmentStatuses: { value: FulfillmentStatus; label: string }[] = [
+    { value: "NONE", label: "Chưa xử lý" },
+    { value: "PREPARING", label: "Đang chuẩn bị" },
+    { value: "READY_FOR_PICKUP", label: "Sẵn sàng giao/lấy" },
+    { value: "SHIPPING", label: "Đang giao" },
+    { value: "DELIVERED", label: "Đã giao" },
+    { value: "FAILED", label: "Thất bại" },
   ];
 
   const columns: Column<OrderApiModel>[] = [
@@ -107,9 +171,7 @@ export default function OrdersPage() {
       key: "code",
       label: "Mã Đơn",
       render: (order) => (
-        <span className="font-semibold text-brand-brown">
-          {order.code}
-        </span>
+        <span className="font-semibold text-brand-brown">{order.code}</span>
       ),
     },
     {
@@ -121,9 +183,7 @@ export default function OrdersPage() {
             {order.shippingAddress?.receiverName || "Khách lẻ"}
           </p>
           {order.tableId && (
-            <p className="text-xs text-brand-gray-500">
-              Bàn: {order.tableId}
-            </p>
+            <p className="text-xs text-brand-gray-500">Bàn: {order.tableId}</p>
           )}
         </div>
       ),
@@ -144,27 +204,67 @@ export default function OrdersPage() {
     },
     {
       key: "status",
-      label: "Trạng Thái",
+      label: "Trạng Thái Đơn",
       render: (order) => {
+        const badge = getOrderStatusBadge(order.status);
         return (
-          <select
-            className="text-sm border border-brand-gray-200 rounded-lg px-2 py-1 focus:ring-brand-amber focus:border-brand-amber outline-none"
-            value={order.status}
-            onChange={(e) => {
-              const newStatus = e.target.value as OrderStatus;
-              setStatusModal({
-                isOpen: true,
-                orderId: order.id,
-                newStatus,
-              });
-            }}
-          >
-            {orderStatuses.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <Badge variant={badge.variant} size="sm">
+              {badge.label}
+            </Badge>
+            <select
+              className="text-sm border border-brand-gray-200 rounded-lg px-2 py-1 focus:ring-brand-amber focus:border-brand-amber outline-none"
+              value={order.status}
+              onChange={(e) => {
+                const newValue = e.target.value as OrderStatus;
+                setStatusModal({
+                  isOpen: true,
+                  orderId: order.id,
+                  field: "status",
+                  newValue,
+                });
+              }}
+            >
+              {orderStatuses.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      },
+    },
+    {
+      key: "fulfillmentStatus",
+      label: "Xử Lý/Giao",
+      render: (order) => {
+        const badge = getFulfillmentStatusBadge(order.fulfillmentStatus);
+        return (
+          <div className="flex items-center gap-2">
+            <Badge variant={badge.variant} size="sm">
+              {badge.label}
+            </Badge>
+            <select
+              className="text-sm border border-brand-gray-200 rounded-lg px-2 py-1 focus:ring-brand-amber focus:border-brand-amber outline-none"
+              value={order.fulfillmentStatus}
+              onChange={(e) => {
+                const newValue = e.target.value as FulfillmentStatus;
+                setStatusModal({
+                  isOpen: true,
+                  orderId: order.id,
+                  field: "fulfillmentStatus",
+                  newValue,
+                });
+              }}
+            >
+              {fulfillmentStatuses.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
         );
       },
     },
@@ -187,6 +287,12 @@ export default function OrdersPage() {
     },
   ];
 
+  const selectedLabel =
+    statusModal?.field === "status"
+      ? orderStatuses.find((s) => s.value === statusModal.newValue)?.label
+      : fulfillmentStatuses.find((s) => s.value === statusModal?.newValue)
+          ?.label;
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       <div>
@@ -206,12 +312,14 @@ export default function OrdersPage() {
       </div>
 
       {isLoading ? (
-        <div className="py-8 text-center text-brand-brown">Đang tải danh sách đơn hàng...</div>
+        <div className="py-8 text-center text-brand-brown">
+          Đang tải danh sách đơn hàng...
+        </div>
       ) : (
         <DataTable
           columns={columns}
           data={filteredOrders}
-          actions={(order) => (
+          actions={() => (
             <Button variant="ghost" size="sm" leftIcon={<Eye size={16} />}>
               Xem
             </Button>
@@ -227,7 +335,7 @@ export default function OrdersPage() {
         <ConfirmDialog
           isOpen={statusModal.isOpen}
           title="Xác nhận cập nhật trạng thái"
-          message={`Bạn có chắc chắn muốn chuyển đơn hàng sang trạng thái "${orderStatuses.find(s => s.value === statusModal.newStatus)?.label}"?`}
+          message={`Bạn có chắc chắn muốn chuyển sang trạng thái \"${selectedLabel || statusModal.newValue}\"?`}
           confirmText="Cập nhật"
           cancelText="Hủy"
           onConfirm={handleUpdateStatus}

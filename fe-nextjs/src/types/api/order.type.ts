@@ -5,8 +5,6 @@ export type OrderStatus =
   | "DRAFT"
   | "PLACED"
   | "CONFIRMED"
-  | "PREPARING"
-  | "READY"
   | "COMPLETED"
   | "CANCELED";
 
@@ -126,7 +124,9 @@ export interface CreateOrderRequest {
 }
 
 export interface UpdateOrderStatusRequest {
-  status: OrderStatus;
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  fulfillmentStatus?: FulfillmentStatus;
 }
 
 export interface CancelOrderRequest {
