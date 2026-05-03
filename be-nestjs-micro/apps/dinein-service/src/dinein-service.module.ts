@@ -1,10 +1,22 @@
 import { Module } from '@nestjs/common';
-import { DineinServiceController } from './dinein-service.controller';
-import { DineinServiceService } from './dinein-service.service';
+import { ConfigModule } from '@nestjs/config';
+import { DineinPrismaModule } from '@app/database/dinein-prisma.module';
+import { LoggerModule } from '@app/logger';
+import { TableModule } from './modules/table/table.module';
+import { ReservationModule } from './modules/reservation/reservation.module';
+import { TableSessionModule } from './modules/session/table-session.module';
 
 @Module({
-  imports: [],
-  controllers: [DineinServiceController],
-  providers: [DineinServiceService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env.dinein-service',
+    }),
+    LoggerModule,
+    DineinPrismaModule,
+    TableModule,
+    ReservationModule,
+    TableSessionModule,
+  ],
 })
 export class DineinServiceModule {}

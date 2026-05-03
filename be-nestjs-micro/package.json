@@ -15,7 +15,7 @@
     "start:notification-service": "nest start notification-service --watch",
     "start:review-service": "nest start review-service --watch",
     "start:media-service": "nest start media-service --watch",
-    "start:all": "concurrently -n gateway,iam,catalog,ordering,payment,notification,media -c auto \"npm run start:gateway\" \"npm run start:iam-service\" \"npm run start:catalog-service\" \"npm run start:ordering-service\" \"npm run start:payment-service\" \"npm run start:notification-service\" \"npm run start:media-service\"",
+    "start:all": "concurrently -n gateway,iam,catalog,dinein,ordering,payment,notification,media -c auto \"npm run start:gateway\" \"npm run start:iam-service\" \"npm run start:catalog-service\" \"npm run start:dinein-service\" \"npm run start:ordering-service\" \"npm run start:payment-service\" \"npm run start:notification-service\" \"npm run start:media-service\"",
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",

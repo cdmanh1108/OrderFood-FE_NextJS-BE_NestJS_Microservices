@@ -4,6 +4,7 @@ import { PaymentStatus } from '../../enums/payment-status.enum';
 
 export interface ListOrdersQuery {
   userId?: string;
+  tableSessionId?: string;
   keyword?: string;
   status?: OrderStatus;
   paymentStatus?: PaymentStatus;

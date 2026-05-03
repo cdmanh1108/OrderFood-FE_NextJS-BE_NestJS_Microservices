@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   LayoutDashboard,
@@ -8,6 +8,7 @@ import {
   Table,
   ShoppingBag,
   Settings,
+  CalendarCheck,
 } from "lucide-react";
 import { PrivateShellLayout, type SidebarItem } from "./PrivateShellLayout";
 
@@ -36,6 +37,11 @@ const adminSidebarItems: SidebarItem[] = [
     label: "Bàn ăn",
     path: "/admin/tables",
     icon: Table,
+  },
+  {
+    label: "Đặt bàn",
+    path: "/admin/reservations",
+    icon: CalendarCheck,
   },
   {
     label: "Đơn hàng",

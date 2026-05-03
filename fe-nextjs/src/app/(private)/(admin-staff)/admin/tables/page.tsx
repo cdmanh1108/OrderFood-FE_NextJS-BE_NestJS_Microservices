@@ -1,64 +1,117 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { Plus, Edit, Trash2, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
 import { Modal } from "@/app/components/shared/Modal";
 import { Badge } from "@/app/components/shared/Badge";
 import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
-import { mockTables } from "@/services/mock-data";
-import type { Table } from "@/types";
-import { TableStatus } from "@/types";
+import { tableApi } from "@/services/api";
+import type { TableApiModel, UpdateTableRequest } from "@/types/api";
+import { TableStatusApi } from "@/types/api";
 
 export default function TablesPage() {
-  const [tables, setTables] = useState<Table[]>(mockTables);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingTable, setEditingTable] = useState<Table | null>(null);
-  const [deletingTable, setDeletingTable] = useState<Table | null>(null);
-  const [formData, setFormData] = useState({ number: "", seats: 4 });
+  const [tables, setTables] = useState<TableApiModel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const getStatusBadge = (status: TableStatus) => {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingTable, setEditingTable] = useState<TableApiModel | null>(null);
+  const [deletingTable, setDeletingTable] = useState<TableApiModel | null>(
+    null,
+  );
+  const [formData, setFormData] = useState({ number: "", seats: 4, note: "" });
+
+  const fetchTables = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const result = await tableApi.list({ limit: 200 });
+      setTables(result.items);
+    } catch {
+      setError("Không thể tải danh sách bàn. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTables();
+  }, [fetchTables]);
+
+  const getStatusBadge = (status: TableStatusApi) => {
     const config = {
-      [TableStatus.AVAILABLE]: {
+      [TableStatusApi.AVAILABLE]: {
         variant: "success" as const,
         label: "Còn trống",
       },
-      [TableStatus.OCCUPIED]: {
+      [TableStatusApi.OCCUPIED]: {
         variant: "danger" as const,
         label: "Đang sử dụng",
       },
-      [TableStatus.RESERVED]: { variant: "warning" as const, label: "Đã đặt" },
-      [TableStatus.CLEANING]: { variant: "info" as const, label: "Đang dọn" },
+      [TableStatusApi.RESERVED]: {
+        variant: "warning" as const,
+        label: "Đã đặt",
+      },
+      [TableStatusApi.CLEANING]: {
+        variant: "info" as const,
+        label: "Đang dọn",
+      },
     };
     return config[status];
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.number) return;
-
-    if (editingTable) {
-      setTables(
-        tables.map((table) =>
-          table.id === editingTable.id
-            ? { ...table, ...formData, updatedAt: new Date().toISOString() }
-            : table,
-        ),
-      );
-      setEditingTable(null);
-    } else {
-      const newTable: Table = {
-        id: `table-${Date.now()}`,
-        ...formData,
-        status: TableStatus.AVAILABLE,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setTables([...tables, newTable]);
-      setIsCreateModalOpen(false);
+    setIsSubmitting(true);
+    try {
+      if (editingTable) {
+        const payload: UpdateTableRequest = {
+          number: formData.number,
+          seats: formData.seats,
+          note: formData.note || undefined,
+        };
+        const updated = await tableApi.update(editingTable.id, payload);
+        setTables((prev) =>
+          prev.map((t) => (t.id === editingTable.id ? updated : t)),
+        );
+        setEditingTable(null);
+      } else {
+        const created = await tableApi.create({
+          number: formData.number,
+          seats: formData.seats,
+          note: formData.note || undefined,
+        });
+        setTables((prev) => [...prev, created]);
+        setIsCreateModalOpen(false);
+      }
+      setFormData({ number: "", seats: 4, note: "" });
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Đã có lỗi xảy ra. Thử lại.";
+      setError(msg);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    setFormData({ number: "", seats: 4 });
+  const handleDelete = async () => {
+    if (!deletingTable) return;
+    setIsSubmitting(true);
+    try {
+      await tableApi.delete(deletingTable.id);
+      setTables((prev) => prev.filter((t) => t.id !== deletingTable.id));
+      setDeletingTable(null);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Không thể xóa bàn. Thử lại.";
+      setError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -73,63 +126,132 @@ export default function TablesPage() {
               Quản lý trạng thái và thông tin bàn ăn
             </p>
           </div>
-          <Button
-            variant="primary"
-            leftIcon={<Plus size={20} />}
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            Thêm Bàn
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              leftIcon={<RefreshCw size={16} />}
+              onClick={fetchTables}
+              disabled={isLoading}
+            >
+              Làm mới
+            </Button>
+            <Button
+              variant="primary"
+              leftIcon={<Plus size={20} />}
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Thêm Bàn
+            </Button>
+          </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {tables.map((table) => {
-            const badge = getStatusBadge(table.status);
-            return (
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+            {error}
+            <button
+              onClick={() => setError(null)}
+              className="ml-2 underline"
+            >
+              Đóng
+            </button>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div
-                key={table.id}
-                className="bg-white rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-6 hover:shadow-[var(--shadow-hover)] transition-all"
+                key={i}
+                className="bg-white rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-6 animate-pulse"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-2xl font-bold text-brand-brown mb-1">
-                      {table.number}
-                    </h3>
-                    <p className="text-sm text-brand-gray-600">
-                      {table.seats} chỗ ngồi
-                    </p>
-                  </div>
-                  <Badge variant={badge.variant} size="sm">
-                    {badge.label}
-                  </Badge>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => {
-                      setEditingTable(table);
-                      setFormData({ number: table.number, seats: table.seats });
-                    }}
-                    leftIcon={<Edit size={14} />}
-                  >
-                    Sửa
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeletingTable(table)}
-                    className="text-brand-danger"
-                  >
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
+                <div className="h-8 bg-gray-200 rounded mb-2 w-16" />
+                <div className="h-4 bg-gray-100 rounded mb-4 w-24" />
+                <div className="h-8 bg-gray-100 rounded" />
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : tables.length === 0 ? (
+          <div className="text-center py-16 text-brand-gray-600">
+            <p className="text-lg">Chưa có bàn nào được tạo.</p>
+            <Button
+              variant="primary"
+              className="mt-4"
+              leftIcon={<Plus size={16} />}
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Thêm bàn đầu tiên
+            </Button>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {tables.map((table) => {
+              const badge = getStatusBadge(table.status);
+              return (
+                <div
+                  key={table.id}
+                  className="bg-white rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-6 hover:shadow-[var(--shadow-hover)] transition-all"
+                >
+                  <Link
+                    href={`/admin/tables/${table.id}`}
+                    className="mb-4 block"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="text-2xl font-bold text-brand-brown mb-1">
+                          {table.number}
+                        </h3>
+                        <p className="text-sm text-brand-gray-600">
+                          {table.seats} chỗ ngồi
+                        </p>
+                        {table.note && (
+                          <p className="text-xs text-brand-gray-500 italic mt-0.5">
+                            📍 {table.note}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <Badge variant={badge.variant} size="sm">
+                          {badge.label}
+                        </Badge>
+                        <span className="flex items-center gap-0.5 text-xs text-brand-amber">
+                          <ExternalLink size={11} />
+                          Chi tiết
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        setEditingTable(table);
+                        setFormData({
+                          number: table.number,
+                          seats: table.seats,
+                          note: table.note ?? "",
+                        });
+                      }}
+                      leftIcon={<Edit size={14} />}
+                    >
+                      Sửa
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeletingTable(table)}
+                      className="text-brand-danger"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <Modal
@@ -137,7 +259,7 @@ export default function TablesPage() {
         onClose={() => {
           setIsCreateModalOpen(false);
           setEditingTable(null);
-          setFormData({ number: "", seats: 4 });
+          setFormData({ number: "", seats: 4, note: "" });
         }}
         title={editingTable ? "Sửa Bàn Ăn" : "Thêm Bàn Ăn Mới"}
         footer={
@@ -148,15 +270,20 @@ export default function TablesPage() {
                 setIsCreateModalOpen(false);
                 setEditingTable(null);
               }}
+              disabled={isSubmitting}
             >
               Hủy
             </Button>
             <Button
               variant="primary"
               onClick={handleSave}
-              disabled={!formData.number}
+              disabled={!formData.number || isSubmitting}
             >
-              {editingTable ? "Cập Nhật" : "Tạo Mới"}
+              {isSubmitting
+                ? "Đang lưu..."
+                : editingTable
+                  ? "Cập Nhật"
+                  : "Tạo Mới"}
             </Button>
           </>
         }
@@ -177,9 +304,20 @@ export default function TablesPage() {
             min="1"
             value={formData.seats.toString()}
             onChange={(e) =>
-              setFormData({ ...formData, seats: parseInt(e.target.value) || 1 })
+              setFormData({
+                ...formData,
+                seats: parseInt(e.target.value) || 1,
+              })
             }
             required
+          />
+          <Input
+            label="Ghi chú vị trí"
+            placeholder="VD: Tầng 1, góc cửa sổ"
+            value={formData.note}
+            onChange={(e) =>
+              setFormData({ ...formData, note: e.target.value })
+            }
           />
         </div>
       </Modal>
@@ -187,15 +325,10 @@ export default function TablesPage() {
       <ConfirmDialog
         isOpen={deletingTable !== null}
         onClose={() => setDeletingTable(null)}
-        onConfirm={() => {
-          if (deletingTable) {
-            setTables(tables.filter((t) => t.id !== deletingTable.id));
-            setDeletingTable(null);
-          }
-        }}
+        onConfirm={handleDelete}
         title="Xóa Bàn Ăn"
         message={`Bạn có chắc chắn muốn xóa bàn "${deletingTable?.number}"?`}
-        confirmText="Xóa"
+        confirmText={isSubmitting ? "Đang xóa..." : "Xóa"}
         variant="danger"
       />
     </>

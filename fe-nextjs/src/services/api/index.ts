@@ -9,3 +9,7 @@ export * from "./staff-user.api";
 export * from "./order.api";
 export * from "./checkout.api";
 export * from "./payment.api";
+export * from "./table.api";
+export * from "./reservation.api";
+export * from "./session.api";
+

@@ -1,8 +1,24 @@
 import { NestFactory } from '@nestjs/core';
 import { DineinServiceModule } from './dinein-service.module';
+import { MicroserviceOptions } from '@nestjs/microservices';
+import { GlobalRpcExceptionFilter } from '@app/common/filters/global-rpc-exception.filter';
+import { createRmqServerOptions } from '@app/messaging/config/rmq.config';
+import { RMQ_QUEUES } from '@app/messaging/constants/queues.constant';
+import { AppLoggerService } from '@app/logger/logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(DineinServiceModule);
-  await app.listen(process.env.port ?? 3000);
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    DineinServiceModule,
+    createRmqServerOptions(RMQ_QUEUES.DINEIN),
+  );
+  const logger = app.get(AppLoggerService);
+
+  app.useGlobalFilters(new GlobalRpcExceptionFilter());
+
+  await app.listen();
+
+  logger.logWithContext('Dinein service started', 'Bootstrap', {
+    queue: 'dinein_queue',
+  });
 }
-bootstrap();
+void bootstrap();

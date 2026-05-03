@@ -14,6 +14,7 @@ import type { UpdateOrderStatusCommand } from '@app/contracts/ordering/order/com
 import type { CancelOrderCommand } from '@app/contracts/ordering/order/commands/cancel-order.command';
 import type { CreateOrderCommand } from '@app/contracts/ordering/order/commands/create-order.command';
 import type { DeleteOrderCommand } from '@app/contracts/ordering/order/commands/delete-order.command';
+import type { MarkSessionOrdersPaidCommand } from '@app/contracts/ordering/order/commands/mark-session-orders-paid.command';
 
 import { OrderService } from './order.service';
 
@@ -74,6 +75,16 @@ export class OrderController {
   ) {
     return handleRpcMessage(context, () =>
       this.orderService.cancelOrder(command),
+    );
+  }
+
+  @MessagePattern(ORDERING_PATTERNS.MARK_SESSION_ORDERS_PAID)
+  async markSessionOrdersPaid(
+    @Payload() command: MarkSessionOrdersPaidCommand,
+    @Ctx() context: RmqContext,
+  ) {
+    return handleRpcMessage(context, () =>
+      this.orderService.markSessionOrdersPaid(command),
     );
   }
 }

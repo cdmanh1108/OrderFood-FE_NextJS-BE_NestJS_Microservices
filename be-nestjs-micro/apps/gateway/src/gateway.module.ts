@@ -8,6 +8,7 @@ import { LoggerModule } from '@app/logger';
 import { UserGatewayModule } from './modules/auth-gateway/user/user-gateway.module';
 import { OrderingGatewayModule } from './modules/ordering-gateway/ordering-gateway.module';
 import { PaymentGatewayModule } from './modules/payment-gateway/payment-gateway.module';
+import { DineinGatewayModule } from './modules/dinein-gateway/dinein-gateway.module';
 import { AuthModule } from '@app/auth';
 
 @Module({
@@ -23,6 +24,7 @@ import { AuthModule } from '@app/auth';
     MediaGatewayModule,
     OrderingGatewayModule,
     PaymentGatewayModule,
+    DineinGatewayModule,
   ],
   controllers: [GatewayController],
 })

@@ -1,9 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, firstValueFrom, throwError } from 'rxjs';
 import { mapRpcErrorToHttpException } from '@app/common/utils/map-rpc-error-to-http.utils';
 import { RMQ_SERVICES } from '@app/messaging/constants/services.constants';
-import { ORDERING_PATTERNS } from '@app/messaging/constants/patterns.constant';
+import { ORDERING_PATTERNS, DINEIN_PATTERNS } from '@app/messaging/constants/patterns.constant';
+import { TableSessionStatus } from '@app/contracts/dinein/enums/table-session-status.enum';
+import type { TableSessionDetailResult } from '@app/contracts/dinein/session/results/table-session-detail.result';
 
 import type { GetOrderDetailQuery } from '@app/contracts/ordering/order/commands/get-order-detail.query';
 import type { ListOrdersQuery } from '@app/contracts/ordering/order/commands/list-orders.query';
@@ -29,23 +31,41 @@ export class OrderOrderingGatewayService {
   constructor(
     @Inject(RMQ_SERVICES.ORDERING)
     private readonly orderingClient: ClientProxy,
+    @Inject(RMQ_SERVICES.DINEIN)
+    private readonly dineinClient: ClientProxy,
   ) {}
 
   async createOrder(
     userId: string,
     dto: CreateOrderRequestDto,
   ): Promise<CreateOrderResult> {
-    const command: CreateOrderCommand = {
-      userId,
-      ...dto,
-    };
+    // Validate dine-in session is still ACTIVE
+    if (dto.tableSessionId) {
+      const session = await firstValueFrom(
+        this.dineinClient
+          .send<TableSessionDetailResult | null, { id: string }>(
+            DINEIN_PATTERNS.GET_SESSION,
+            { id: dto.tableSessionId },
+          )
+          .pipe(catchError(() => throwError(() => null))),
+      ).catch(() => null);
+
+      if (!session || session.status !== TableSessionStatus.ACTIVE) {
+        throw new HttpException(
+          'Phiên bàn đã kết thúc, không thể đặt thêm món.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
+    const command: CreateOrderCommand = { userId, ...dto };
 
     return firstValueFrom(
       this.orderingClient
-        .send<
-          CreateOrderResult,
-          CreateOrderCommand
-        >(ORDERING_PATTERNS.CREATE_ORDER, command)
+        .send<CreateOrderResult, CreateOrderCommand>(
+          ORDERING_PATTERNS.CREATE_ORDER,
+          command,
+        )
         .pipe(
           catchError((error) =>
             throwError(() => mapRpcErrorToHttpException(error)),
@@ -128,6 +148,7 @@ export class OrderOrderingGatewayService {
       status: dto.status,
       paymentStatus: dto.paymentStatus,
       fulfillmentStatus: dto.fulfillmentStatus,
+      tableSessionId: dto.tableSessionId,
     };
 
     return firstValueFrom(

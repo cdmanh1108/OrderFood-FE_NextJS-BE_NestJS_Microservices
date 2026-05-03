@@ -7,6 +7,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   Max,
   Min,
@@ -33,6 +34,10 @@ export class ListOrdersRequestDto {
   @IsOptional()
   @IsEnum(FulfillmentStatus, { message: 'fulfillmentStatus is invalid' })
   fulfillmentStatus?: FulfillmentStatus;
+
+  @IsOptional()
+  @IsUUID('4', { message: 'tableSessionId must be a valid UUID' })
+  tableSessionId?: string;
 
   @IsOptional()
   @Transform(({ value }) => Number(value))

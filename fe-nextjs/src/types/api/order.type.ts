@@ -26,6 +26,7 @@ export type FulfillmentStatus =
 export interface OrderItemApiModel {
   id: string;
   menuItemId: string;
+  name?: string;
   menuItemName: string;
   menuItemImageUrl: string | null;
   unitPrice: number;
@@ -82,6 +83,8 @@ export interface ListOrdersRequest extends PaginationParams {
   status?: OrderStatus;
   paymentStatus?: PaymentStatus;
   fulfillmentStatus?: FulfillmentStatus;
+  tableSessionId?: string;
+  tableId?: string;
 }
 
 export interface PaginatedOrdersResponse {

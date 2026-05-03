@@ -29,6 +29,7 @@ import type { CreateOrderCommand } from '@app/contracts/ordering/order/commands/
 import type { DeleteOrderCommand } from '@app/contracts/ordering/order/commands/delete-order.command';
 import type { CreateOrderResult } from '@app/contracts/ordering/order/results/create-order.result';
 import type { DeleteOrderResult } from '@app/contracts/ordering/order/results/delete-order.result';
+import type { MarkSessionOrdersPaidCommand } from '@app/contracts/ordering/order/commands/mark-session-orders-paid.command';
 
 const ORDER_DETAIL_INCLUDE = {
   items: true,
@@ -125,6 +126,22 @@ export class OrderService {
     return { success: true };
   }
 
+  async markSessionOrdersPaid(
+    command: MarkSessionOrdersPaidCommand,
+  ): Promise<{ updatedCount: number }> {
+    const result = await this.prisma.order.updateMany({
+      where: {
+        tableSessionId: command.tableSessionId,
+        paymentStatus: PrismaPaymentStatus.PENDING,
+      },
+      data: {
+        paymentStatus: PrismaPaymentStatus.PAID,
+      },
+    });
+
+    return { updatedCount: result.count };
+  }
+
   async findOne(query: GetOrderDetailQuery): Promise<OrderDetailResult> {
     const order = await this.prisma.order.findFirst({
       where: {
@@ -175,6 +192,9 @@ export class OrderService {
     }
     if (query.keyword) {
       where.code = { contains: query.keyword, mode: 'insensitive' };
+    }
+    if (query.tableSessionId) {
+      where.tableSessionId = query.tableSessionId;
     }
 
     const [items, total] = await Promise.all([

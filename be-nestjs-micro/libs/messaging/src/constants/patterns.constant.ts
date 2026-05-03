@@ -73,6 +73,7 @@ export const ORDERING_PATTERNS = {
   CANCEL_ORDER: 'ordering.order.cancel',
   UPDATE_ORDER_STATUS: 'ordering.order.update_status',
   DELETE_ORDER: 'ordering.order.delete',
+  MARK_SESSION_ORDERS_PAID: 'ordering.order.mark_session_paid',
 } as const;
 
 // ======================
@@ -81,11 +82,19 @@ export const ORDERING_PATTERNS = {
 export const DINEIN_PATTERNS = {
   CREATE_TABLE: 'dinein.create_table',
   UPDATE_TABLE: 'dinein.update_table',
+  DELETE_TABLE: 'dinein.delete_table',
   GET_TABLE_DETAIL: 'dinein.get_table_detail',
   LIST_TABLES: 'dinein.list_tables',
 
+  JOIN_OR_CREATE_SESSION: 'dinein.join_or_create_session',
+  GET_SESSION: 'dinein.get_session',
+  GET_ACTIVE_SESSION_BY_TABLE: 'dinein.get_active_session_by_table',
+  CLOSE_SESSION: 'dinein.close_session',
+
   CREATE_RESERVATION: 'dinein.create_reservation',
+  GET_RESERVATION_DETAIL: 'dinein.get_reservation_detail',
   LIST_RESERVATIONS: 'dinein.list_reservations',
+  UPDATE_RESERVATION_STATUS: 'dinein.update_reservation_status',
 } as const;
 
 // ======================
