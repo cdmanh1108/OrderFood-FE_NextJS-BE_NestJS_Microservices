@@ -28,6 +28,7 @@ export default function CheckoutPage() {
     }
     
     calculatePricing();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, addressId]);
 
   const calculatePricing = async () => {
@@ -43,7 +44,7 @@ export default function CheckoutPage() {
       };
       const result = await checkoutApi.calculate(payload);
       setPricing(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrorStatus('Lỗi tính toán hóa đơn');
       console.error(error);
     } finally {
@@ -81,7 +82,7 @@ export default function CheckoutPage() {
       setSuccess('Đặt hàng thành công!');
       clearCart();
       router.push('/order-history');
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrorStatus('Đặt hàng thất bại');
       console.error(error);
     } finally {

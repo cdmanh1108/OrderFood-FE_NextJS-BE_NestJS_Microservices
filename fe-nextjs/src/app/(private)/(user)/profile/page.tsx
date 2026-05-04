@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Loader2, MapPin, Plus, Trash2, User } from "lucide-react";
+import { Check, Loader2, MapPin, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
 import { useAuth } from "@/contexts/auth-context";
@@ -244,8 +244,6 @@ export default function CustomerProfilePage() {
     setIsEditingProfile(false);
     setSuccess("Thông tin cá nhân chưa kết nối API");
   };
-
-  const displayName = user?.name || "Người dùng";
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-brand-beige/40 via-white to-brand-amber/10 px-4 py-8 sm:px-6 lg:px-8">

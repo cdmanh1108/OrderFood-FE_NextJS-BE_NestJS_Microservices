@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Star, Image as ImageIcon, X } from "lucide-react";
+import Image from "next/image";
 
 const mockReviews = [
   {
@@ -195,10 +196,12 @@ export default function CustomerReviewsPage() {
               {review.images && review.images.length > 0 && (
                 <div className="flex gap-2 overflow-x-auto">
                   {review.images.map((img, idx) => (
-                    <img
+                    <Image
                       key={idx}
                       src={img}
                       alt={`Review ${idx + 1}`}
+                      width={96}
+                      height={96}
                       className="w-24 h-24 rounded-lg object-cover"
                     />
                   ))}

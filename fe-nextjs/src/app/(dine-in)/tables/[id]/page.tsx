@@ -74,8 +74,6 @@ export default function QREntryPage() {
     }
   };
 
-  const isNewSession = !hasActiveSession;
-
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-brand-beige/70 via-white to-brand-yellow/20 p-4">
       {/* Decorative blobs */}

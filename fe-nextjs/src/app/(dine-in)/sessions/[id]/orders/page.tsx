@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   ClipboardList,
@@ -219,9 +220,11 @@ export default function DineInOrdersPage() {
                             {/* Thumbnail */}
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-beige">
                               {displayImage ? (
-                                <img
+                                <Image
                                   src={displayImage}
                                   alt={displayName}
+                                  width={56}
+                                  height={56}
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
@@ -311,7 +314,9 @@ export default function DineInOrdersPage() {
                 </div>
 
                 <Link href={`/sessions/${sessionId}/menu`} className="mt-6 block">
-                  <Button variant="primary" fullWidth>
+                  <Button variant="primary"
+                  // fullWidth
+                  >
                     <span className="inline-flex items-center gap-2">
                       <Plus className="h-4 w-4" />
                       Gọi thêm món

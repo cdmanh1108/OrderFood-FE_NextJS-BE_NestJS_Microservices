@@ -270,7 +270,7 @@ export default function AdminTableDetailPage() {
                                                         <div key={item.id ?? idx} className="flex items-center gap-3 rounded-2xl bg-brand-gray-50 p-3">
                                                             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-beige">
                                                                 {item.menuItemImageUrl
-                                                                    ? <img src={item.menuItemImageUrl} alt={item.menuItemName} className="h-full w-full object-cover" />
+                                                                    ? <Image src={item.menuItemImageUrl} alt={item.menuItemName} width={48} height={48} className="h-full w-full object-cover" />
                                                                     : <span className="text-xl">🍽️</span>}
                                                             </div>
                                                             <div className="min-w-0 flex-1">

@@ -1,5 +1,4 @@
 import React from 'react';
-import { MoreVertical } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { EmptyState } from './EmptyState';
 

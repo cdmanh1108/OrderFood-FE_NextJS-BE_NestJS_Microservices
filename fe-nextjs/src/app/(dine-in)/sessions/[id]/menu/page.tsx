@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  ArrowRight,
   Minus,
   Plus,
   Receipt,
@@ -208,9 +208,11 @@ export default function DineInMenuPage() {
                 >
                   <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-brand-yellow/20 to-brand-amber/20">
                     {item.image ? (
-                      <img
+                      <Image
                         src={item.image}
                         alt={item.name}
+                        width={200}
+                        height={200}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     ) : (

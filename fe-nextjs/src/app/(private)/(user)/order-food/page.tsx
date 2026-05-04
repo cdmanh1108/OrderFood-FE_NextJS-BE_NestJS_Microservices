@@ -34,6 +34,7 @@ import type {
   UpdateAddressRequest,
 } from "@/types/api";
 import { formatCurrency, toSlug } from "@/utils/cn";
+import Image from "next/image";
 
 type AddressFormValues = {
   receiverName: string;
@@ -67,22 +68,22 @@ const PAYMENT_METHODS: Array<{
   title: string;
   description: string;
 }> = [
-  {
-    id: "cash",
-    title: "Tiền mặt",
-    description: "Thanh toán khi nhận hàng",
-  },
-  {
-    id: "momo",
-    title: "Ví MoMo",
-    description: "Thanh toán qua ví điện tử",
-  },
-  {
-    id: "banking",
-    title: "Chuyển khoản",
-    description: "Thanh toán qua internet banking",
-  },
-];
+    {
+      id: "cash",
+      title: "Tiền mặt",
+      description: "Thanh toán khi nhận hàng",
+    },
+    {
+      id: "momo",
+      title: "Ví MoMo",
+      description: "Thanh toán qua ví điện tử",
+    },
+    {
+      id: "banking",
+      title: "Chuyển khoản",
+      description: "Thanh toán qua internet banking",
+    },
+  ];
 
 function resolveGatewayPaymentMethod(
   method: PaymentMethod,
@@ -615,11 +616,10 @@ export default function CustomerMenuPage() {
       const gatewayMethod = resolveGatewayPaymentMethod(paymentMethod);
       const payosReturnUrl =
         gatewayMethod === "PAYOS"
-          ? `${
-              typeof window !== "undefined"
-                ? window.location.origin
-                : LOCAL_PAYMENT_RETURN_URL
-            }/order-food`
+          ? `${typeof window !== "undefined"
+            ? window.location.origin
+            : LOCAL_PAYMENT_RETURN_URL
+          }/order-food`
           : undefined;
 
       const checkoutResult = await checkoutApi.checkout({
@@ -720,11 +720,10 @@ export default function CustomerMenuPage() {
                     key={category.id}
                     type="button"
                     onClick={() => setSelectedCategory(category.id)}
-                    className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
-                      isActive
+                    className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${isActive
                         ? "bg-brand-brown text-white shadow-sm"
                         : "border border-brand-gray-200 bg-white text-brand-gray-700 hover:border-brand-amber hover:bg-brand-beige/50 hover:text-brand-brown"
-                    }`}
+                      }`}
                   >
                     {category.name}
                   </button>
@@ -771,9 +770,10 @@ export default function CustomerMenuPage() {
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-brand-gray-100">
                     {item.image ? (
-                      <img
+                      <Image
                         src={item.image}
                         alt={item.name}
+                        fill
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (
@@ -958,11 +958,10 @@ export default function CustomerMenuPage() {
                       return (
                         <div
                           key={address.id}
-                          className={`rounded-lg border p-3 ${
-                            isSelected
+                          className={`rounded-lg border p-3 ${isSelected
                               ? "border-brand-amber bg-white shadow-sm"
                               : "border-brand-gray-200 bg-white hover:border-brand-amber/40"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div>
@@ -1169,9 +1168,11 @@ export default function CustomerMenuPage() {
                     <div className="flex items-start gap-3">
                       <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-brand-gray-100">
                         {item.menuItem.image ? (
-                          <img
+                          <Image
                             src={item.menuItem.image}
                             alt={item.menuItem.name}
+                            width={64}
+                            height={64}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -1371,11 +1372,10 @@ export default function CustomerMenuPage() {
                   {PAYMENT_METHODS.map((method) => (
                     <label
                       key={method.id}
-                      className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-3 py-3 transition ${
-                        paymentMethod === method.id
+                      className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-3 py-3 transition ${paymentMethod === method.id
                           ? "border-brand-amber bg-brand-beige/40"
                           : "border-brand-gray-200"
-                      }`}
+                        }`}
                     >
                       <input
                         type="radio"

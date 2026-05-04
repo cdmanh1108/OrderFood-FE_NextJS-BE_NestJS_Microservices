@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   ChefHat,
@@ -190,9 +191,11 @@ export default function DineInCartPage() {
                   <div className="flex gap-4">
                     <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-brand-beige">
                       {item.menuItem.image ? (
-                        <img
+                        <Image
                           src={item.menuItem.image}
                           alt={item.menuItem.name}
+                          width={80}
+                          height={80}
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -344,7 +347,7 @@ export default function DineInCartPage() {
                 {/* Primary action */}
                 <Button
                   variant="primary"
-                  fullWidth
+                  // fullWidth
                   onClick={handleSubmitOrder}
                   isLoading={isSubmitting}
                   disabled={isSubmitting || sessionCart.items.length === 0}
@@ -355,7 +358,9 @@ export default function DineInCartPage() {
 
                 {/* Secondary action */}
                 <Link href={`/sessions/${sessionId}/menu`} className="block">
-                  <Button variant="outline" fullWidth>
+                  <Button variant="outline"
+                  // fullWidth
+                  >
                     Chọn thêm món
                   </Button>
                 </Link>

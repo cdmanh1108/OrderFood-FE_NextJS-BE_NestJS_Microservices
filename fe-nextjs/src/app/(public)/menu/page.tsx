@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, {
   useCallback,
@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  Suspense,
 } from "react";
 import { Search, Utensils } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -20,7 +21,7 @@ import type {
 
 type CategoryFilter = "all" | string;
 
-export default function MenuPage() {
+function MenuPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -305,5 +306,19 @@ export default function MenuPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function MenuPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-beige/40 via-white to-brand-amber/10 text-brand-brown">
+          Đang tải...
+        </div>
+      }
+    >
+      <MenuPageContent />
+    </Suspense>
   );
 }
