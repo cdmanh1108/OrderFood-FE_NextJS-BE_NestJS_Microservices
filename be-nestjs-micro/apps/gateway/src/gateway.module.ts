@@ -9,6 +9,7 @@ import { UserGatewayModule } from './modules/auth-gateway/user/user-gateway.modu
 import { OrderingGatewayModule } from './modules/ordering-gateway/ordering-gateway.module';
 import { PaymentGatewayModule } from './modules/payment-gateway/payment-gateway.module';
 import { DineinGatewayModule } from './modules/dinein-gateway/dinein-gateway.module';
+import { DeliveryGatewayModule } from './modules/delivery-gateway/delivery-gateway.module';
 import { AuthModule } from '@app/auth';
 
 @Module({
@@ -25,6 +26,7 @@ import { AuthModule } from '@app/auth';
     OrderingGatewayModule,
     PaymentGatewayModule,
     DineinGatewayModule,
+    DeliveryGatewayModule,
   ],
   controllers: [GatewayController],
 })

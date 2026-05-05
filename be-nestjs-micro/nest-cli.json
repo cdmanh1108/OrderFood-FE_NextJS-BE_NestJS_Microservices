@@ -162,6 +162,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/review-service/tsconfig.app.json"
       }
+    },
+    "delivery-service": {
+      "type": "application",
+      "root": "apps/delivery-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/delivery-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/delivery-service/tsconfig.app.json"
+      }
     }
   }
 }

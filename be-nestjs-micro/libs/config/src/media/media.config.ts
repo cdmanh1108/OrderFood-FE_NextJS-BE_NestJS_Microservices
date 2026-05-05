@@ -14,8 +14,8 @@ export type MediaSupportedContentType =
 
 export interface MediaConfig {
   region: string;
-  accessKeyId: string;
-  secretAccessKey: string;
+  // accessKeyId: string;
+  // secretAccessKey: string;
   bucket: string;
   publicBaseUrl: string;
   presignedExpiresIn: number;
@@ -23,10 +23,10 @@ export interface MediaConfig {
 
 export function getMediaConfig(configService: ConfigService): MediaConfig {
   const region = configService.getOrThrow<string>('AWS_REGION');
-  const accessKeyId = configService.getOrThrow<string>('AWS_ACCESS_KEY_ID');
-  const secretAccessKey = configService.getOrThrow<string>(
-    'AWS_SECRET_ACCESS_KEY',
-  );
+  // const accessKeyId = configService.getOrThrow<string>('AWS_ACCESS_KEY_ID');
+  // const secretAccessKey = configService.getOrThrow<string>(
+  //   'AWS_SECRET_ACCESS_KEY',
+  // );
   const bucket = configService.getOrThrow<string>('AWS_S3_BUCKET').trim();
   const publicBaseUrl = configService
     .getOrThrow<string>('AWS_S3_PUBLIC_BASE_URL')
@@ -40,8 +40,8 @@ export function getMediaConfig(configService: ConfigService): MediaConfig {
 
   return {
     region,
-    accessKeyId,
-    secretAccessKey,
+    // accessKeyId,
+    // secretAccessKey,
     bucket,
     publicBaseUrl,
     presignedExpiresIn:

@@ -6,8 +6,7 @@ import { Pool } from 'pg';
 @Injectable()
 export class OrderingPrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   private readonly pool: Pool;
 
   constructor() {
@@ -17,7 +16,12 @@ export class OrderingPrismaService
       throw new Error('ORDERING_DATABASE_URL is not defined');
     }
 
-    const pool = new Pool({ connectionString });
+    const pool = new Pool({
+      connectionString,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    });
 
     super({
       adapter: new PrismaPg(pool),

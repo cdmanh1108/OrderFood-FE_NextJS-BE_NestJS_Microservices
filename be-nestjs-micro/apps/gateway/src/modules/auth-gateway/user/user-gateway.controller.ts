@@ -26,7 +26,7 @@ type RequestWithAuthUser = {
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UserGatewayController {
-  constructor(private readonly userGatewayService: UserGatewayService) {}
+  constructor(private readonly userGatewayService: UserGatewayService) { }
 
   @Post('staff')
   @Roles('ADMIN')

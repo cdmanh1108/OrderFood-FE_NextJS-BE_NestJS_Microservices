@@ -5,12 +5,14 @@ generator client {
 
 datasource db {
     provider = "postgresql"
+    // url      = env("IAM_DATABASE_URL")
 }
 
 enum UserRole {
     ADMIN
     USER
     STAFF
+    SHIPPER
 }
 
 model User {

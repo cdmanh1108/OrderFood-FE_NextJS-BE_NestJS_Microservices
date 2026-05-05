@@ -16,6 +16,7 @@ const databaseUrls: Record<string, string | undefined> = {
   notification: process.env.NOTIFICATION_DATABASE_URL,
   review: process.env.REVIEW_DATABASE_URL,
   media: process.env.MEDIA_DATABASE_URL,
+  delivery: process.env.DELIVERY_DATABASE_URL,
 };
 
 const url = databaseUrls[service];
@@ -26,6 +27,9 @@ if (!url) {
 
 export default defineConfig({
   schema: `prisma/${service}/schema.prisma`,
+  migrations: {
+    seed: 'tsx prisma/seed.ts',
+  },
   datasource: {
     url,
   },

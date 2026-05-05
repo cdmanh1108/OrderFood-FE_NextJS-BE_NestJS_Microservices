@@ -1,0 +1,133 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../generated/delivery"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum DeliveryTaskStatus {
+    PENDING     // Chờ gán shipper
+    ASSIGNED    // Đã gán, chờ shipper nhận
+    PICKED_UP   // Shipper đã lấy hàng
+    IN_TRANSIT  // Đang trên đường giao
+    DELIVERED   // Giao thành công
+    FAILED      // Giao thất bại
+    CANCELLED   // Đã hủy
+}
+
+enum VehicleType {
+    MOTORBIKE
+    BICYCLE
+    CAR
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+/// Hồ sơ nghiệp vụ của shipper (userId tham chiếu sang IAM service)
+model Shipper {
+    id          String  @id @default(uuid()) @db.Uuid
+    userId      String  @unique @db.VarChar(30) // cuid từ IAM
+    fullName    String  @db.VarChar(120)
+    phoneNumber String  @db.VarChar(20)
+    vehicleType VehicleType
+    licensePlate String @db.VarChar(20)
+    isActive    Boolean @default(true)
+    avatarUrl   String? @db.VarChar(500)
+
+    tasks              DeliveryTask[]
+    locationHistories  ShipperLocationHistory[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([isActive])
+    @@map("shippers")
+}
+
+/// Nhiệm vụ giao hàng — 1 order → 1 task
+model DeliveryTask {
+    id      String @id @default(uuid()) @db.Uuid
+    orderId String @unique @db.VarChar(36) // orderId từ ordering-service
+
+    shipperId String? @db.Uuid
+    shipper   Shipper? @relation(fields: [shipperId], references: [id], onDelete: SetNull)
+
+    status DeliveryTaskStatus @default(PENDING)
+
+    // Thông tin giao hàng (snapshot từ order lúc tạo task)
+    recipientName    String  @db.VarChar(120)
+    recipientPhone   String  @db.VarChar(20)
+    deliveryAddress  String  @db.Text
+    deliveryLat      Decimal? @db.Decimal(10, 7)
+    deliveryLng      Decimal? @db.Decimal(10, 7)
+    note             String?  @db.Text
+
+    assignedAt   DateTime?
+    pickedUpAt   DateTime?
+    deliveredAt  DateTime?
+    failedAt     DateTime?
+    cancelledAt  DateTime?
+
+    statusHistories DeliveryTaskStatusHistory[]
+    proof           DeliveryProof?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([shipperId, status])
+    @@index([status])
+    @@index([orderId])
+    @@map("delivery_tasks")
+}
+
+/// Lịch sử thay đổi trạng thái task
+model DeliveryTaskStatusHistory {
+    id     String @id @default(uuid()) @db.Uuid
+    taskId String @db.Uuid
+    task   DeliveryTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+    fromStatus DeliveryTaskStatus?
+    toStatus   DeliveryTaskStatus
+    note       String?             @db.VarChar(500)
+    changedBy  String?             @db.VarChar(30) // userId who made the change
+
+    createdAt DateTime @default(now())
+
+    @@index([taskId])
+    @@map("delivery_task_status_histories")
+}
+
+/// Vị trí GPS của shipper theo thời gian thực
+model ShipperLocationHistory {
+    id        String  @id @default(uuid()) @db.Uuid
+    shipperId String  @db.Uuid
+    shipper   Shipper @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+
+    lat        Decimal  @db.Decimal(10, 7)
+    lng        Decimal  @db.Decimal(10, 7)
+    accuracy   Float?   // GPS accuracy in meters
+    recordedAt DateTime @default(now())
+
+    @@index([shipperId, recordedAt(sort: Desc)])
+    @@map("shipper_location_histories")
+}
+
+/// Ảnh xác nhận giao hàng (1 task = 1 proof)
+model DeliveryProof {
+    id          String      @id @default(uuid()) @db.Uuid
+    taskId      String      @unique @db.Uuid
+    task        DeliveryTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+    mediaFileId String  @db.VarChar(36) // ID từ media-service
+    imageUrl    String  @db.VarChar(500)
+    note        String? @db.VarChar(500)
+
+    submittedAt DateTime @default(now())
+
+    @@map("delivery_proofs")
+}

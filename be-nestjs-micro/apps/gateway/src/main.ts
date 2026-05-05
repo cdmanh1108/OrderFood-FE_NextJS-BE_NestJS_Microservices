@@ -26,8 +26,23 @@ async function bootstrap() {
     new ResponseInterceptor(),
   );
 
+  const appOrigin = process.env.APP_ORIGIN ?? "http://localhost:3000";
+
   app.enableCors({
-    origin: true,
+    origin(origin, callback) {
+      // Cho phép request không có Origin như Postman, health check, server-to-server
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (origin === appOrigin) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
   });
 

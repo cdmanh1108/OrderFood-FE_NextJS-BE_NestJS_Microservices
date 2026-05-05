@@ -74,6 +74,7 @@ export const ORDERING_PATTERNS = {
   UPDATE_ORDER_STATUS: 'ordering.order.update_status',
   DELETE_ORDER: 'ordering.order.delete',
   MARK_SESSION_ORDERS_PAID: 'ordering.order.mark_session_paid',
+  ORDER_READY_FOR_DELIVERY: 'ordering.order.ready_for_delivery',
 } as const;
 
 // ======================
@@ -150,4 +151,35 @@ export const REVIEW_PATTERNS = {
 export const MEDIA_PATTERNS = {
   CREATE_UPLOAD_URL: 'media.create_upload_url',
   ATTACH_FILE: 'media.attach_file',
+} as const;
+
+// ======================
+// DELIVERY SERVICE
+// ======================
+export const DELIVERY_PATTERNS = {
+  // Shipper management
+  CREATE_SHIPPER: 'delivery.shipper.create',
+  UPDATE_SHIPPER: 'delivery.shipper.update',
+  GET_SHIPPER_DETAIL: 'delivery.shipper.get_detail',
+  LIST_SHIPPERS: 'delivery.shipper.list',
+  DEACTIVATE_SHIPPER: 'delivery.shipper.deactivate',
+  GET_SHIPPER_BY_USER_ID: 'delivery.shipper.get_by_user_id',
+
+  // Task management
+  CREATE_TASK: 'delivery.task.create',
+  ASSIGN_TASK: 'delivery.task.assign',
+  UPDATE_TASK_STATUS: 'delivery.task.update_status',
+  GET_TASK_DETAIL: 'delivery.task.get_detail',
+  LIST_TASKS: 'delivery.task.list',
+  GET_MY_TASKS: 'delivery.task.get_my_tasks',
+  CANCEL_TASK: 'delivery.task.cancel',
+
+  // Location tracking
+  RECORD_LOCATION: 'delivery.location.record',
+  GET_CURRENT_LOCATION: 'delivery.location.get_current',
+  GET_LOCATION_HISTORY: 'delivery.location.get_history',
+
+  // Delivery proof
+  SUBMIT_PROOF: 'delivery.proof.submit',
+  GET_TASK_PROOF: 'delivery.proof.get_by_task',
 } as const;

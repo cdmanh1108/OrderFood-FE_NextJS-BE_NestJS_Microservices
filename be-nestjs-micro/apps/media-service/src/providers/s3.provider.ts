@@ -26,10 +26,10 @@ export class S3Provider {
 
     this.client = new S3Client({
       region: this.region,
-      credentials: {
-        accessKeyId: config.accessKeyId,
-        secretAccessKey: config.secretAccessKey,
-      },
+      // credentials: {
+      //   accessKeyId: config.accessKeyId,
+      //   secretAccessKey: config.secretAccessKey,
+      // },
     });
   }
 

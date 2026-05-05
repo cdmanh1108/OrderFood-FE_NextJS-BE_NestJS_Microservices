@@ -7,4 +7,5 @@ export const RMQ_QUEUES = {
   NOTIFICATION: 'notification_queue',
   REVIEW: 'review_queue',
   MEDIA: 'media_queue',
+  DELIVERY: 'delivery_queue',
 };

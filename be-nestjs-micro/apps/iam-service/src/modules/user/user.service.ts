@@ -16,7 +16,7 @@ import { DeleteStaffUserResult } from '@app/contracts/iam/user/results/delete-st
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: IamPrismaService) {}
+  constructor(private readonly prisma: IamPrismaService) { }
 
   private ensureAdmin(actorRole: UserRole): void {
     if (actorRole !== UserRole.ADMIN) {
@@ -116,15 +116,15 @@ export class UserService {
 
     const where = keyword
       ? {
-          role: PrismaUserRole.STAFF,
-          OR: [
-            { email: { contains: keyword, mode: 'insensitive' as const } },
-            { fullName: { contains: keyword, mode: 'insensitive' as const } },
-            {
-              phoneNumber: { contains: keyword, mode: 'insensitive' as const },
-            },
-          ],
-        }
+        role: PrismaUserRole.STAFF,
+        OR: [
+          { email: { contains: keyword, mode: 'insensitive' as const } },
+          { fullName: { contains: keyword, mode: 'insensitive' as const } },
+          {
+            phoneNumber: { contains: keyword, mode: 'insensitive' as const },
+          },
+        ],
+      }
       : { role: PrismaUserRole.STAFF };
 
     const [items, total] = await this.prisma.$transaction([

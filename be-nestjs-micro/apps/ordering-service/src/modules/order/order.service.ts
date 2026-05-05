@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { OrderingPrismaService } from '@app/database/ordering-prisma.service';
 import { ERRORS } from '@app/common/constants/error-code.constant';
 import { AppRpcException } from '@app/common/exceptions/app-rpc.exception';
+import { ClientProxy } from '@nestjs/microservices';
+import { RMQ_SERVICES } from '@app/messaging/constants/services.constants';
+import { ORDERING_PATTERNS } from '@app/messaging/constants/patterns.constant';
 import { OrderStatus } from '@app/contracts/ordering/enums/order-status.enum';
 import { OrderChannel } from '@app/contracts/ordering/enums/order-channel.enum';
 import { OrderSource } from '@app/contracts/ordering/enums/order-source.enum';
@@ -43,7 +46,10 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
 
 @Injectable()
 export class OrderService {
-  constructor(private readonly prisma: OrderingPrismaService) {}
+  constructor(
+    private readonly prisma: OrderingPrismaService,
+    @Inject(RMQ_SERVICES.DELIVERY) private readonly deliveryClient: ClientProxy,
+  ) {}
 
   async createOrder(command: CreateOrderCommand): Promise<CreateOrderResult> {
     const code = this.generateNumericOrderCode();
@@ -222,6 +228,7 @@ export class OrderService {
   ): Promise<UpdateOrderStatusResult> {
     const order = await this.prisma.order.findUnique({
       where: { id: command.id },
+      include: { shippingAddress: true },
     });
 
     if (!order) {
@@ -232,6 +239,7 @@ export class OrderService {
     }
 
     const data: Prisma.OrderUpdateInput = {};
+    // ... (logic for status, paymentStatus, fulfillmentStatus)
     if (command.status) {
       if (!this.isSupportedOrderStatus(command.status)) {
         throw new AppRpcException({
@@ -271,7 +279,35 @@ export class OrderService {
     const updatedOrder = await this.prisma.order.update({
       where: { id: command.id },
       data,
+      include: { shippingAddress: true },
     });
+
+    // Emit event if ready for delivery
+    if (
+      updatedOrder.fulfillmentStatus === PrismaFulfillmentStatus.READY_FOR_PICKUP &&
+      updatedOrder.channel === PrismaOrderChannel.ONLINE &&
+      updatedOrder.shippingAddress
+    ) {
+      const address = updatedOrder.shippingAddress;
+      const fullAddress = [
+        address.street,
+        address.ward,
+        address.district,
+        address.province,
+      ]
+        .filter(Boolean)
+        .join(', ');
+
+      this.deliveryClient.emit(ORDERING_PATTERNS.ORDER_READY_FOR_DELIVERY, {
+        orderId: updatedOrder.id,
+        recipientName: address.receiverName,
+        recipientPhone: address.receiverPhone,
+        deliveryAddress: address.detail ? `${address.detail}, ${fullAddress}` : fullAddress,
+        deliveryLat: address.latitude ? Number(address.latitude) : undefined,
+        deliveryLng: address.longitude ? Number(address.longitude) : undefined,
+        note: updatedOrder.note,
+      });
+    }
 
     return {
       id: updatedOrder.id,

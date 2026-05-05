@@ -42,9 +42,20 @@ export class RedisService {
   }
 
   async delByPattern(pattern: string): Promise<void> {
-    const keys = await this.redis.keys(pattern);
-    if (keys.length === 0) return;
-
-    await this.redis.del(...keys);
+    let cursor = '0';
+    do {
+      const [nextCursor, keys] = await this.redis.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        100,
+      );
+      cursor = nextCursor;
+      if (keys.length > 0) {
+        // Delete individually to avoid CROSSSLOT error in Redis Cluster
+        await Promise.all(keys.map((key) => this.redis.del(key)));
+      }
+    } while (cursor !== '0');
   }
 }

@@ -1,0 +1,15 @@
+export enum DeliveryTaskStatus {
+  PENDING = 'PENDING',
+  ASSIGNED = 'ASSIGNED',
+  PICKED_UP = 'PICKED_UP',
+  IN_TRANSIT = 'IN_TRANSIT',
+  DELIVERED = 'DELIVERED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum VehicleType {
+  MOTORBIKE = 'MOTORBIKE',
+  BICYCLE = 'BICYCLE',
+  CAR = 'CAR',
+}
