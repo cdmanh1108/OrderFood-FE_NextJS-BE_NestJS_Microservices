@@ -74,3 +74,8 @@ export interface ListTasksQuery {
   page?: number;
   limit?: number;
 }
+
+export interface SubmitProofRequest {
+  mediaFileId: string;
+  note?: string;
+}

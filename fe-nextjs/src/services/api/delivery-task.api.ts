@@ -4,6 +4,7 @@ import type {
   ListTasksQuery,
   PaginatedDeliveryTasksResponse,
   UpdateTaskStatusRequest,
+  SubmitProofRequest,
 } from "@/types/api";
 import { httpService } from "../http/http-client";
 
@@ -51,8 +52,8 @@ export const deliveryTaskApi = {
     );
   },
 
-  submitProof(id: string, payload: { mediaFileId: string; note?: string }): Promise<any> {
-    return httpService.post<any, any>(
+  submitProof(id: string, payload: SubmitProofRequest): Promise<DeliveryTaskDetailApiModel> {
+    return httpService.post<DeliveryTaskDetailApiModel, SubmitProofRequest>(
       `${TASKS_ENDPOINT}/${id}/proof`,
       payload
     );

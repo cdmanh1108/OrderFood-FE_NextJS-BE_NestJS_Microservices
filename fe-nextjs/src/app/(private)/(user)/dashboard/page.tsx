@@ -8,10 +8,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Clock,
-  Headphones,
-  MapPin,
   Package,
-  Sparkles,
   Star,
   Wallet,
 } from "lucide-react";
@@ -23,13 +20,13 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   COMPLETED: { label: "Hoàn thành", color: "bg-green-100 text-green-800" },
   CANCELED: { label: "Đã hủy", color: "bg-red-100 text-red-800" },
 };
-  pending: { label: "Chờ xác nhận", color: "bg-yellow-100 text-yellow-800" },
-  confirmed: { label: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
-  preparing: { label: "Đang chuẩn bị", color: "bg-purple-100 text-purple-800" },
-  delivering: { label: "Đang giao", color: "bg-orange-100 text-orange-800" },
-  completed: { label: "Hoàn thành", color: "bg-green-100 text-green-800" },
-  cancelled: { label: "Đã hủy", color: "bg-red-100 text-red-800" },
-};
+// pending: { label: "Chờ xác nhận", color: "bg-yellow-100 text-yellow-800" },
+// confirmed: { label: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
+// preparing: { label: "Đang chuẩn bị", color: "bg-purple-100 text-purple-800" },
+// delivering: { label: "Đang giao", color: "bg-orange-100 text-orange-800" },
+// completed: { label: "Hoàn thành", color: "bg-green-100 text-green-800" },
+// cancelled: { label: "Đã hủy", color: "bg-red-100 text-red-800" },
+// };
 
 export default function CustomerOverviewPage() {
   const { user } = useAuth();
@@ -80,7 +77,7 @@ export default function CustomerOverviewPage() {
                 </p>
               </div>
 
-              <Link 
+              <Link
                 href="/menu"
                 className="inline-flex w-fit items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-brand-brown shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
@@ -150,7 +147,7 @@ export default function CustomerOverviewPage() {
               </p>
             </div>
 
-            <Link 
+            <Link
               href="/orders"
               className="inline-flex items-center gap-1 text-sm font-semibold text-brand-amber transition hover:text-brand-yellow"
             >
@@ -189,9 +186,8 @@ export default function CustomerOverviewPage() {
                     </div>
 
                     <span
-                      className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-                        statusConfig[order.status]?.color || "bg-gray-100 text-gray-800"
-                      }`}
+                      className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusConfig[order.status]?.color || "bg-gray-100 text-gray-800"
+                        }`}
                     >
                       {statusConfig[order.status]?.label || order.status}
                     </span>

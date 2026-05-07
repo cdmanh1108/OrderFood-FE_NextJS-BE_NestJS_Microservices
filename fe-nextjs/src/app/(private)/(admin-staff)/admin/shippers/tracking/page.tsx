@@ -9,10 +9,8 @@ import {
   Car,
   MapPin,
   Navigation,
-  Package,
   Phone,
   Radar,
-  Star,
 } from "lucide-react";
 import { deliveryShipperApi } from "@/services/api";
 import { ShipperDetailApiModel, ShipperLocationApiModel, VehicleType } from "@/types/api";
@@ -40,6 +38,7 @@ export default function ShipperTrackingMapPage() {
             const location = await deliveryShipperApi.getLocation(shipper.id);
             return { ...shipper, currentLocation: location };
           } catch (err) {
+            console.log(err);
             // Location not found or error, return without location
             return { ...shipper };
           }
@@ -193,8 +192,8 @@ export default function ShipperTrackingMapPage() {
                   type="button"
                   onClick={() => setSelectedShipper(shipper)}
                   className={`absolute flex h-12 w-12 items-center justify-center rounded-full text-xl shadow-lg transition-all hover:scale-110 ${isSelected
-                      ? "bg-brand-amber text-white ring-4 ring-brand-amber/30 z-10"
-                      : "bg-brand-brown text-white z-0"
+                    ? "bg-brand-amber text-white ring-4 ring-brand-amber/30 z-10"
+                    : "bg-brand-brown text-white z-0"
                     }`}
                   style={{
                     top: `${top}%`,
@@ -230,8 +229,8 @@ export default function ShipperTrackingMapPage() {
                       key={shipper.id}
                       onClick={() => setSelectedShipper(shipper)}
                       className={`w-full rounded-2xl border p-4 text-left transition-all ${isSelected
-                          ? "border-brand-amber bg-brand-beige/60 shadow-sm"
-                          : "border-transparent bg-brand-gray-50 hover:border-brand-amber/30 hover:bg-white"
+                        ? "border-brand-amber bg-brand-beige/60 shadow-sm"
+                        : "border-transparent bg-brand-gray-50 hover:border-brand-amber/30 hover:bg-white"
                         }`}
                     >
                       <div className="mb-3 flex items-start justify-between gap-3">

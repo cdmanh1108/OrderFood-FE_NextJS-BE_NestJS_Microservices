@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Mail, Lock } from "lucide-react";
 import Image from "next/image";
 import { Input } from "../../components/shared/Input";
@@ -14,7 +13,6 @@ import { authApi } from "@/services/api";
 import { useUI } from "../../../contexts/ui-context";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { login } = useAuth();
   const {
     startLoading,
@@ -151,12 +149,12 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <div 
+            <div
               className="space-y-5"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  void handleSubmit(e as any);
+                  void handleSubmit(e);
                 }
               }}
             >
@@ -190,7 +188,7 @@ export default function LoginPage() {
                 disabled={isVerifying}
                 onClick={(e) => {
                   e.preventDefault();
-                  void handleSubmit(e as any);
+                  void handleSubmit(e);
                 }}
               >
                 {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}

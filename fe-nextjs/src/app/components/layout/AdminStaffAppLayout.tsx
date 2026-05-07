@@ -8,7 +8,6 @@ import {
   Table,
   ShoppingBag,
   Settings,
-  CalendarCheck,
   Bike,
 } from "lucide-react";
 import { PrivateShellLayout, type SidebarItem } from "./PrivateShellLayout";

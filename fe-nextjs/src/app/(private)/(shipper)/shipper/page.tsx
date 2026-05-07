@@ -8,13 +8,11 @@ import {
   Truck,
   CheckCircle2,
   Navigation,
-  Clock,
-  Radar,
   LogOut,
   UploadCloud,
   Camera
 } from "lucide-react";
-import { deliveryTaskApi, deliveryShipperApi, mediaApi, authApi } from "@/services/api";
+import { deliveryTaskApi, deliveryShipperApi, mediaApi } from "@/services/api";
 import { DeliveryTaskDetailApiModel, DeliveryTaskStatus, ShipperDetailApiModel, ImageContentType } from "@/types/api";
 import { useUI } from "@/contexts/ui-context";
 import { Button } from "@/app/components/shared/Button";
@@ -107,7 +105,7 @@ export default function ShipperDashboardPage() {
       logout();
       router.push("/login");
     } catch (err) {
-      // console.log(err);
+      console.log(err);
       setError("Đăng xuất thất bại");
     }
   };
@@ -121,7 +119,7 @@ export default function ShipperDashboardPage() {
     setIsUploading(true);
     try {
       // 1. Get pre-signed URL
-      const { uploadUrl, key, publicUrl } = await mediaApi.createUploadUrl({
+      const { uploadUrl, key } = await mediaApi.createUploadUrl({
         fileName: proofFile.name,
         contentType: proofFile.type as ImageContentType,
         folder: "delivery-proofs",
@@ -249,7 +247,7 @@ export default function ShipperDashboardPage() {
               <div className="flex justify-between items-start mb-3">
                 <Badge variant={
                   task.status === DeliveryTaskStatus.ASSIGNED ? "warning" :
-                    task.status === DeliveryTaskStatus.PICKED_UP ? "info" : "primary"
+                    task.status === DeliveryTaskStatus.PICKED_UP ? "info" : "success"
                 }>
                   {task.status === DeliveryTaskStatus.ASSIGNED && "Đơn mới"}
                   {task.status === DeliveryTaskStatus.PICKED_UP && "Đã lấy hàng"}

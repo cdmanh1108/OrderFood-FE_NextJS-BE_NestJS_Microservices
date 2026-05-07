@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
   Bike,
   Car,
   MapPin,
-  Navigation,
   Package,
   Phone,
   Radar,
@@ -18,7 +17,6 @@ import {
   Truck,
   AlertCircle,
 } from "lucide-react";
-import { Badge } from "@/app/components/shared/Badge";
 import { deliveryTaskApi, deliveryShipperApi, orderApi } from "@/services/api";
 import { DeliveryTaskDetailApiModel, ShipperLocationApiModel, VehicleType, DeliveryTaskStatus, OrderApiModel } from "@/types/api";
 import { useUI } from "@/contexts/ui-context";
@@ -50,11 +48,12 @@ export default function OrderTrackingPage() {
             setLocation(locRes);
           } catch (err) {
             // Location might not be available yet
-            console.log("No location available for shipper yet");
+            console.log("No location available for shipper yet", err);
           }
         }
       }
     } catch (err) {
+      console.log(err);
       setError("Không thể tải thông tin đơn hàng.");
     } finally {
       setIsLoading(false);

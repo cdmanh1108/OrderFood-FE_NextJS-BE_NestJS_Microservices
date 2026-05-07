@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Plus, Edit, Trash2, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
@@ -356,7 +357,7 @@ export default function TablesPage() {
           </p>
           {createdQrCode && (
             <div className="bg-white p-4 border border-brand-beige rounded-2xl shadow-sm">
-              <img src={createdQrCode} alt="QR Code" className="w-64 h-64 object-contain" />
+              <Image src={createdQrCode} alt="QR Code" width={256} height={256} className="object-contain" unoptimized />
             </div>
           )}
           <p className="text-sm text-brand-gray-500">

@@ -7,8 +7,6 @@ import {
     Car,
     Map,
     Plus,
-    Star,
-    Trash2,
     UserRound,
     Users,
     Package,
@@ -234,7 +232,7 @@ export default function ShippersManagementPage() {
                 key: "isActive",
                 label: "Trạng thái",
                 render: (shipper) => (
-                    <Badge variant={shipper.isActive ? "success" : "error"}>
+                    <Badge variant={shipper.isActive ? "success" : "danger"}>
                         {shipper.isActive ? "Đang hoạt động" : "Vô hiệu hóa"}
                     </Badge>
                 ),
@@ -351,14 +349,14 @@ export default function ShippersManagementPage() {
                                         Vô hiệu hóa
                                     </Button>
                                 ) : (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-brand-green hover:text-brand-green"
-                                    onClick={() => void handleReactivate(shipper)}
-                                >
-                                    Kích hoạt lại
-                                </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-brand-green hover:text-brand-green"
+                                        onClick={() => void handleReactivate(shipper)}
+                                    >
+                                        Kích hoạt lại
+                                    </Button>
                                 )}
                             </>
                         )}

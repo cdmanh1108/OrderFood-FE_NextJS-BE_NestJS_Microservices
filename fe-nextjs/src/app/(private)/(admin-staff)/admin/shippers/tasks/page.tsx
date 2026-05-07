@@ -4,12 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Package,
   Bike,
-  CheckCircle,
-  XCircle,
   Clock,
-  User,
   MapPin,
 } from "lucide-react";
 import { Button } from "@/app/components/shared/Button";
@@ -102,7 +98,7 @@ export default function DeliveryTasksManagementPage() {
         return <Badge variant="success">Hoàn thành</Badge>;
       case DeliveryTaskStatus.FAILED:
       case DeliveryTaskStatus.CANCELLED:
-        return <Badge variant="error">Thất bại/Đã hủy</Badge>;
+        return <Badge variant="danger">Thất bại/Đã hủy</Badge>;
       default:
         return <Badge variant="info">{status}</Badge>;
     }
@@ -230,7 +226,7 @@ export default function DeliveryTasksManagementPage() {
               <label className="text-sm font-semibold text-brand-gray-600">Lọc trạng thái:</label>
               <select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
+                onChange={(e) => setFilterStatus(e.target.value as DeliveryTaskStatus)}
                 className="rounded-xl border border-brand-gray-200 px-4 py-2 text-sm outline-none transition focus:border-brand-yellow focus:ring-2 focus:ring-brand-yellow/20 bg-brand-gray-50"
               >
                 <option value="ALL">Tất cả</option>
@@ -266,7 +262,7 @@ export default function DeliveryTasksManagementPage() {
             )}
             emptyState={{
               title: "Không có vận đơn nào",
-              description: filterStatus === "ALL" 
+              description: filterStatus === "ALL"
                 ? "Hệ thống chưa ghi nhận đơn giao hàng nào."
                 : "Không có đơn hàng nào ở trạng thái này.",
             }}
@@ -301,7 +297,7 @@ export default function DeliveryTasksManagementPage() {
             <p className="text-sm text-brand-gray-600">
               Chọn một shipper đang rảnh để gán giao đơn hàng này.
             </p>
-            
+
             <div>
               <label className="mb-2 block text-sm font-medium text-brand-brown">
                 Shipper (Online)
@@ -319,7 +315,7 @@ export default function DeliveryTasksManagementPage() {
                 ))}
               </select>
             </div>
-            
+
             {shippers.length === 0 && (
               <p className="text-sm text-brand-danger bg-brand-danger/10 p-3 rounded-lg">
                 Hiện không có Shipper nào đang hoạt động. Bạn cần thêm Shipper trước.
