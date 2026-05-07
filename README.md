@@ -15,7 +15,7 @@ Dự án chia làm 2 phần chính:
 - **Database**: PostgreSQL (Prisma ORM).
 - **Giao tiếp liên dịch vụ**: RabbitMQ (Message Queue).
 - **Caching/Auth**: Redis, JWT (Access/Refresh Token).
-- **Storage**: AWS S3 / Cloudinary (quản lý qua Media Service).
+- **Storage**: AWS S3 / Cloudfront (quản lý qua Media Service).
 - **UI/UX**: TailwindCSS, Lucide Icons, Framer Motion.
 
 ---
@@ -63,7 +63,7 @@ Hệ thống sử dụng cơ sở dữ liệu phân tán, mỗi dịch vụ sở
 | **Dine-in Service** | Quản lý bàn ăn, phiên làm việc tại quán và tích hợp QR Code. | ✅ Hoàn thiện |
 | **Delivery Service** | Điều phối Shipper, theo dõi vị trí và nhiệm vụ giao hàng. | 🚧 Đang code |
 | **Media Service** | Xử lý upload ảnh và quản lý tệp tin tập trung. | ✅ Hoàn thiện |
-| **Payment Service** | Tích hợp các cổng thanh toán (VNPay, Momo). | ⏳ Sắp phát triển |
+| **Payment Service** | Tích hợp các cổng thanh toán (VNPay, Momo). | ✅ Hoàn thiện |
 | **Notification Service** | Gửi thông báo đẩy, Email và SMS. | ⏳ Sắp phát triển |
 | **Review Service** | Hệ thống đánh giá món ăn và chất lượng dịch vụ. | ⏳ Sắp phát triển |
 
