@@ -1,4 +1,5 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { UserRole } from '@app/contracts/iam/auth/enums/user-role.enum';
 
 export class CreateStaffUserRequestDto {
   @IsEmail()
@@ -13,4 +14,8 @@ export class CreateStaffUserRequestDto {
   @IsString()
   @MinLength(6)
   password!: string;
+
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
 }

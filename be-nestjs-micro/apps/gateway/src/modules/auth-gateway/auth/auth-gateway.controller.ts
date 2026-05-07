@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   Req,
   Res,
@@ -13,6 +14,7 @@ import { AuthGatewayService } from './auth-gateway.service';
 import { LoginRequestDto } from './dto/request/login.request.dto';
 import { RegisterRequestDto } from './dto/request/register.dto';
 import { VerifyEmailRequestDto } from './dto/request/verify-email.request.dto';
+import { UpdateUserProfileRequestDto } from './dto/request/update-user-profile.request.dto';
 import type { Request } from 'express';
 import type { Response } from 'express';
 import { clearAuthCookies, setAuthCookies } from './auth-cookie.util';
@@ -88,20 +90,30 @@ export class AuthGatewayController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@Req() request: RequestWithUser) {
+  async me(@Req() request: RequestWithUser) {
     const user = request.user;
 
     if (!user) {
       return null;
     }
 
-    return {
-      id: user.sub,
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role,
-      isEmailVerified: true,
-    };
+    return this.authGatewayService.getProfile(user.sub);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(
+    @Req() request: RequestWithUser,
+    @Body() dto: UpdateUserProfileRequestDto,
+  ) {
+    if (!request.user) {
+      return null;
+    }
+
+    return this.authGatewayService.updateProfile({
+      id: request.user.sub,
+      ...dto,
+    });
   }
 
   //   @Get('profile')

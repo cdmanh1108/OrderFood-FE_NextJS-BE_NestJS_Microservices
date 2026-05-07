@@ -23,6 +23,7 @@ export default function TablesPage() {
   const [deletingTable, setDeletingTable] = useState<TableApiModel | null>(
     null,
   );
+  const [createdQrCode, setCreatedQrCode] = useState<string | null>(null);
   const [formData, setFormData] = useState({ number: "", seats: 4, note: "" });
 
   const fetchTables = useCallback(async () => {
@@ -87,6 +88,9 @@ export default function TablesPage() {
         });
         setTables((prev) => [...prev, created]);
         setIsCreateModalOpen(false);
+        if (created.qrCode) {
+          setCreatedQrCode(created.qrCode);
+        }
       }
       setFormData({ number: "", seats: 4, note: "" });
     } catch (err: unknown) {
@@ -331,6 +335,35 @@ export default function TablesPage() {
         confirmText={isSubmitting ? "Đang xóa..." : "Xóa"}
         variant="danger"
       />
+
+      {/* QR Code Result Modal */}
+      <Modal
+        isOpen={createdQrCode !== null}
+        onClose={() => setCreatedQrCode(null)}
+        title="Bàn đã được tạo thành công!"
+        footer={
+          <Button
+            variant="primary"
+            onClick={() => setCreatedQrCode(null)}
+          >
+            Đã lưu, đóng lại
+          </Button>
+        }
+      >
+        <div className="flex flex-col items-center justify-center space-y-4 py-4 text-center">
+          <p className="text-brand-gray-600 font-medium">
+            Hãy <span className="font-bold text-brand-amber">lưu ngay hình ảnh QR Code này</span> lại nhé. Nó sẽ không hiển thị lại ở bất kỳ đâu để đảm bảo tính duy nhất!
+          </p>
+          {createdQrCode && (
+            <div className="bg-white p-4 border border-brand-beige rounded-2xl shadow-sm">
+              <img src={createdQrCode} alt="QR Code" className="w-64 h-64 object-contain" />
+            </div>
+          )}
+          <p className="text-sm text-brand-gray-500">
+            (Chuột phải vào ảnh chọn &quot;Lưu hình ảnh dưới dạng...&quot; để tải về máy)
+          </p>
+        </div>
+      </Modal>
     </>
   );
 }

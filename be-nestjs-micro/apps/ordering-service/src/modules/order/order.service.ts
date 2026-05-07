@@ -33,6 +33,8 @@ import type { DeleteOrderCommand } from '@app/contracts/ordering/order/commands/
 import type { CreateOrderResult } from '@app/contracts/ordering/order/results/create-order.result';
 import type { DeleteOrderResult } from '@app/contracts/ordering/order/results/delete-order.result';
 import type { MarkSessionOrdersPaidCommand } from '@app/contracts/ordering/order/commands/mark-session-orders-paid.command';
+import type { GetUserOrderStatsQuery } from '@app/contracts/ordering/order/commands/get-user-order-stats.query';
+import type { UserOrderStatsResult } from '@app/contracts/ordering/order/results/user-order-stats.result';
 
 const ORDER_DETAIL_INCLUDE = {
   items: true,
@@ -138,7 +140,9 @@ export class OrderService {
     const result = await this.prisma.order.updateMany({
       where: {
         tableSessionId: command.tableSessionId,
-        paymentStatus: PrismaPaymentStatus.PENDING,
+        paymentStatus: {
+          in: [PrismaPaymentStatus.UNPAID, PrismaPaymentStatus.PENDING],
+        },
       },
       data: {
         paymentStatus: PrismaPaymentStatus.PAID,
@@ -165,6 +169,37 @@ export class OrderService {
     }
 
     return this.mapToResult(order);
+  }
+
+  async getUserOrderStats(query: GetUserOrderStatsQuery): Promise<UserOrderStatsResult> {
+    const orders = await this.prisma.order.findMany({
+      where: {
+        userId: query.userId,
+      },
+      select: {
+        status: true,
+        pricingSnapshot: {
+          select: {
+            grandTotal: true,
+          },
+        },
+      },
+    });
+
+    let totalSpent = 0;
+    // We can count all orders as totalOrders, or only COMPLETED. Let's count all non-canceled orders.
+    const validOrders = orders.filter((o) => o.status !== PrismaOrderStatus.CANCELED);
+    
+    for (const order of validOrders) {
+      if (order.pricingSnapshot && order.status === PrismaOrderStatus.COMPLETED) {
+        totalSpent += order.pricingSnapshot.grandTotal.toNumber();
+      }
+    }
+
+    return {
+      totalOrders: validOrders.length,
+      totalSpent,
+    };
   }
 
   async findAll(query: ListOrdersQuery): Promise<PaginatedOrdersResult> {

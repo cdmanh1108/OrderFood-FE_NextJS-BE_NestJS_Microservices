@@ -15,10 +15,11 @@ import { useUI } from "../../../contexts/ui-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading } = useAuth();
+  const { login } = useAuth();
   const {
     startLoading,
     stopLoading,
+    isLoading,
     setError: setErrorStatus,
     setSuccess,
   } = useUI();
@@ -64,7 +65,7 @@ export default function LoginPage() {
       }
 
       setSuccess("Đăng nhập thành công");
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch (err) {
       setErrorStatus(err instanceof Error ? err.message : "Đăng nhập thất bại");
     } finally {
@@ -102,7 +103,7 @@ export default function LoginPage() {
       setIsVerifyModalOpen(false);
       setVerifyCode("");
       setSuccess("Xác thực email thành công");
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch (error) {
       setErrorStatus(
         error instanceof Error ? error.message : "Không thể xác thực email",
@@ -150,7 +151,15 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <div 
+              className="space-y-5"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleSubmit(e as any);
+                }
+              }}
+            >
               <Input
                 label="Email"
                 type="email"
@@ -173,16 +182,20 @@ export default function LoginPage() {
               />
 
               <Button
-                type="submit"
+                type="button"
                 variant="primary"
                 className="w-full"
                 size="lg"
                 isLoading={isLoading}
                 disabled={isVerifying}
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleSubmit(e as any);
+                }}
               >
                 {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
-            </form>
+            </div>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-brand-gray-600">

@@ -62,6 +62,12 @@ export class OrderOrderingGatewayController {
     return this.orderService.findOneAdmin(id);
   }
 
+  @Get('stats/me')
+  async getUserStats(@Req() request: RequestWithUser) {
+    const userId = getUserIdOrThrow(request);
+    return this.orderService.getUserStats(userId);
+  }
+
   @Get(':id')
   async findOneUser(@Req() request: RequestWithUser, @Param('id') id: string) {
     const userId = getUserIdOrThrow(request);

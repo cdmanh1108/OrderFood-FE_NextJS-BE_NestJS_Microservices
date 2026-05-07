@@ -227,6 +227,7 @@ export class TaskService {
 
     const where: Prisma.DeliveryTaskWhereInput = {};
     if (query.shipperId) where.shipperId = query.shipperId;
+    if (query.orderId) where.orderId = query.orderId;
     if (query.status) where.status = query.status as PrismaTaskStatus;
 
     const [items, total] = await Promise.all([
@@ -283,7 +284,6 @@ export class TaskService {
             id: task.proof.id,
             taskId: task.proof.taskId,
             mediaFileId: task.proof.mediaFileId,
-            imageUrl: task.proof.imageUrl,
             note: task.proof.note,
             submittedAt: task.proof.submittedAt,
           }

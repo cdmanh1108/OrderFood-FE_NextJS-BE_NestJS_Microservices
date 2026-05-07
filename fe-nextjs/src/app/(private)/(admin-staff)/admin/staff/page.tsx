@@ -28,6 +28,7 @@ type StaffFormState = {
   fullName: string;
   phoneNumber: string;
   password: string;
+  role: "STAFF" | "SHIPPER";
 };
 
 const DEFAULT_FORM: StaffFormState = {
@@ -35,6 +36,7 @@ const DEFAULT_FORM: StaffFormState = {
   fullName: "",
   phoneNumber: "",
   password: "",
+  role: "STAFF",
 };
 
 export default function StaffPage() {
@@ -105,6 +107,7 @@ export default function StaffPage() {
       fullName: user.fullName ?? "",
       phoneNumber: user.phoneNumber ?? "",
       password: "",
+      role: user.role === "SHIPPER" ? "SHIPPER" : "STAFF",
     });
   };
 
@@ -163,6 +166,7 @@ export default function StaffPage() {
           fullName: formData.fullName.trim(),
           phoneNumber: formData.phoneNumber.trim(),
           password: formData.password || undefined,
+          role: formData.role,
         });
         setSuccess("Cập nhật nhân viên thành công");
       } else {
@@ -171,6 +175,7 @@ export default function StaffPage() {
           fullName: formData.fullName.trim(),
           phoneNumber: formData.phoneNumber.trim(),
           password: formData.password,
+          role: formData.role,
         });
         setSuccess("Thêm nhân viên thành công");
       }
@@ -214,6 +219,10 @@ export default function StaffPage() {
 
     if (role === "USER") {
       return { variant: "warning" as const, label: "User" };
+    }
+
+    if (role === "SHIPPER") {
+      return { variant: "success" as const, label: "Shipper" };
     }
 
     return { variant: "info" as const, label: "Staff" };
@@ -273,7 +282,7 @@ export default function StaffPage() {
               Quản Lý Nhân Viên
             </h1>
             <p className="text-brand-gray-600">
-              Danh sách nhân viên STAFF từ IAM service
+              Danh sách nhân viên (STAFF) và giao hàng (SHIPPER)
             </p>
           </div>
           <Button
@@ -385,6 +394,36 @@ export default function StaffPage() {
             leftIcon={<Phone size={18} />}
             required
           />
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-brand-brown">
+              Vai Trò
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="STAFF"
+                  checked={formData.role === "STAFF"}
+                  onChange={() => setFormData({ ...formData, role: "STAFF" })}
+                  className="text-brand-primary focus:ring-brand-primary"
+                />
+                <span className="text-sm font-medium text-brand-brown">Nhân viên (STAFF)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="SHIPPER"
+                  checked={formData.role === "SHIPPER"}
+                  onChange={() => setFormData({ ...formData, role: "SHIPPER" })}
+                  className="text-brand-primary focus:ring-brand-primary"
+                />
+                <span className="text-sm font-medium text-brand-brown">Giao hàng (SHIPPER)</span>
+              </label>
+            </div>
+          </div>
 
           <PasswordInput
             label={isEditMode ? "Mật khẩu mới (không bắt buộc)" : "Mật khẩu"}

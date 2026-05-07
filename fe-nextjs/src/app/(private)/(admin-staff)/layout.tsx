@@ -25,6 +25,9 @@ export default async function AdminStaffLayout({
     if (payload.role === "USER") {
       redirect("/dashboard");
     }
+    if (payload.role === "SHIPPER") {
+      redirect("/shipper");
+    }
 
     redirect("/login");
   }

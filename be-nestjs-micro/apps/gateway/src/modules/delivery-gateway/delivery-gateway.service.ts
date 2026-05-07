@@ -1,8 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { RMQ_SERVICES } from '@app/messaging/constants/services.constants';
-import { DELIVERY_PATTERNS } from '@app/messaging/constants/patterns.constant';
+import { DELIVERY_PATTERNS, ORDERING_PATTERNS } from '@app/messaging/constants/patterns.constant';
 import { firstValueFrom } from 'rxjs';
+import { DeliveryTaskStatus } from '@app/contracts/delivery/enums/delivery-task-status.enum';
+import { FulfillmentStatus } from '@app/contracts/ordering/enums/fulfillment-status.enum';
+import { OrderStatus } from '@app/contracts/ordering/enums/order-status.enum';
 
 import type { CreateShipperCommand } from '@app/contracts/delivery/shipper/commands/create-shipper.command';
 import type { UpdateShipperCommand } from '@app/contracts/delivery/shipper/commands/update-shipper.command';
@@ -18,6 +21,7 @@ import type { SubmitProofCommand } from '@app/contracts/delivery/proof/commands/
 export class DeliveryGatewayService {
   constructor(
     @Inject(RMQ_SERVICES.DELIVERY) private readonly deliveryClient: ClientProxy,
+    @Inject(RMQ_SERVICES.ORDERING) private readonly orderingClient: ClientProxy,
   ) {}
 
   // Shipper
@@ -56,6 +60,40 @@ export class DeliveryGatewayService {
 
   async updateTaskStatus(command: UpdateTaskStatusCommand) {
     return firstValueFrom(this.deliveryClient.send(DELIVERY_PATTERNS.UPDATE_TASK_STATUS, command));
+  }
+
+  async syncOrderStatus(orderId: string, taskStatus: DeliveryTaskStatus) {
+    let fulfillmentStatus: FulfillmentStatus;
+    let orderStatus: OrderStatus | undefined = undefined;
+
+    switch (taskStatus) {
+      case DeliveryTaskStatus.PICKED_UP:
+      case DeliveryTaskStatus.IN_TRANSIT:
+        fulfillmentStatus = FulfillmentStatus.SHIPPING;
+        break;
+      case DeliveryTaskStatus.DELIVERED:
+        fulfillmentStatus = FulfillmentStatus.DELIVERED;
+        orderStatus = OrderStatus.COMPLETED;
+        break;
+      case DeliveryTaskStatus.FAILED:
+      case DeliveryTaskStatus.CANCELLED:
+        fulfillmentStatus = FulfillmentStatus.FAILED;
+        break;
+      default:
+        return; // Don't sync other statuses like PENDING/ASSIGNED
+    }
+
+    try {
+      await firstValueFrom(
+        this.orderingClient.send(ORDERING_PATTERNS.UPDATE_ORDER_STATUS, {
+          id: orderId,
+          fulfillmentStatus,
+          ...(orderStatus ? { status: orderStatus } : {}),
+        })
+      );
+    } catch (error) {
+      console.error('Failed to sync order status from delivery task', error);
+    }
   }
 
   async cancelTask(taskId: string, note?: string) {

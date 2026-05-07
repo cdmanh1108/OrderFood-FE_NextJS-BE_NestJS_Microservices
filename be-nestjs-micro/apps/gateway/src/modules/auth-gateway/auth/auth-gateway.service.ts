@@ -10,6 +10,8 @@ import { VerifyEmailResultDto } from '@app/contracts/iam/auth/results/verify-ema
 import { LoginCommandDto } from '@app/contracts/iam/auth/commands/login.command.dto';
 import { RegisterCommandDto } from '@app/contracts/iam/auth/commands/register.command.dto';
 import { VerifyEmailCommandDto } from '@app/contracts/iam/auth/commands/verify-email.command.dto';
+import { UpdateUserProfileCommand } from '@app/contracts/iam/user/commands/update-user-profile.command';
+import { GetUserProfileQuery } from '@app/contracts/iam/user/commands/get-user-profile.query';
 import { IAM_PATTERNS } from '@app/messaging/constants/patterns.constant';
 import { mapRpcErrorToHttpException } from '@app/common/utils/map-rpc-error-to-http.utils';
 import { getOrCreateRequestId } from '@app/logger/utils/request-context.util';
@@ -85,7 +87,27 @@ export class AuthGatewayService {
     );
   }
 
-  // async getProfile(userId: string) {
-  //   return firstValueFrom(this.iamClient.send('iam.profile.get', { userId }));
-  // }
+  async getProfile(userId: string) {
+    return firstValueFrom(
+      this.iamClient
+        .send(IAM_PATTERNS.GET_USER_PROFILE, { id: userId } as GetUserProfileQuery)
+        .pipe(
+          catchError((error: unknown) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
+    );
+  }
+
+  async updateProfile(command: UpdateUserProfileCommand) {
+    return firstValueFrom(
+      this.iamClient
+        .send(IAM_PATTERNS.UPDATE_USER_PROFILE, command)
+        .pipe(
+          catchError((error: unknown) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
+    );
+  }
 }

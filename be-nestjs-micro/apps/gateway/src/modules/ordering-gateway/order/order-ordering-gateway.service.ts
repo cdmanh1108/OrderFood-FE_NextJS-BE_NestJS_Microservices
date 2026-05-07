@@ -13,6 +13,7 @@ import type { UpdateOrderStatusCommand } from '@app/contracts/ordering/order/com
 import type { CancelOrderCommand } from '@app/contracts/ordering/order/commands/cancel-order.command';
 import type { CreateOrderCommand } from '@app/contracts/ordering/order/commands/create-order.command';
 import type { DeleteOrderCommand } from '@app/contracts/ordering/order/commands/delete-order.command';
+import type { GetUserOrderStatsQuery } from '@app/contracts/ordering/order/commands/get-user-order-stats.query';
 
 import type { OrderDetailResult } from '@app/contracts/ordering/order/results/order-detail.result';
 import type { PaginatedOrdersResult } from '@app/contracts/ordering/order/results/paginated-orders.result';
@@ -20,6 +21,7 @@ import type { UpdateOrderStatusResult } from '@app/contracts/ordering/order/resu
 import type { CancelOrderResult } from '@app/contracts/ordering/order/results/cancel-order.result';
 import type { CreateOrderResult } from '@app/contracts/ordering/order/results/create-order.result';
 import type { DeleteOrderResult } from '@app/contracts/ordering/order/results/delete-order.result';
+import type { UserOrderStatsResult } from '@app/contracts/ordering/order/results/user-order-stats.result';
 
 import { ListOrdersRequestDto } from './dto/request/list-orders.request.dto';
 import { UpdateOrderStatusRequestDto } from './dto/request/update-order-status.request.dto';
@@ -135,6 +137,23 @@ export class OrderOrderingGatewayService {
     );
 
     return this.mapToUserOrder(result);
+  }
+
+  async getUserStats(userId: string): Promise<UserOrderStatsResult> {
+    const query: GetUserOrderStatsQuery = { userId };
+
+    return firstValueFrom(
+      this.orderingClient
+        .send<
+          UserOrderStatsResult,
+          GetUserOrderStatsQuery
+        >(ORDERING_PATTERNS.GET_USER_ORDER_STATS, query)
+        .pipe(
+          catchError((error) =>
+            throwError(() => mapRpcErrorToHttpException(error)),
+          ),
+        ),
+    );
   }
 
   async findAllAdmin(

@@ -7,4 +7,5 @@ export interface UpdateStaffUserCommand {
   fullName?: string;
   phoneNumber?: string;
   password?: string;
+  role?: UserRole;
 }

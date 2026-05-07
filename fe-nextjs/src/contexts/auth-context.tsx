@@ -29,7 +29,7 @@ function mapAuthUserToAppUser(authUser: AuthUser): User {
     id: authUser.id,
     name: authUser.fullName,
     email: authUser.email,
-    phone: "",
+    phone: authUser.phoneNumber ?? "",
     role: mapRoleToUserRole(authUser.role),
     createdAt: new Date().toISOString(),
     isActive: true,
@@ -64,7 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadCurrentUser]);
 
   const login = async (credentials: LoginCredentials) => {
-    setIsLoading(true);
 
     try {
       const response = await authApi.login({
@@ -82,8 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return {
         isEmailVerified: response.isEmailVerified,
       };
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+      throw err;
     }
   };
 

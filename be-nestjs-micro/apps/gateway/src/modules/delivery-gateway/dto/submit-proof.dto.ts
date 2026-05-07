@@ -5,10 +5,6 @@ export class SubmitProofDto {
   @IsString()
   mediaFileId: string;
 
-  @IsNotEmpty()
-  @IsString()
-  imageUrl: string;
-
   @IsOptional()
   @IsString()
   note?: string;

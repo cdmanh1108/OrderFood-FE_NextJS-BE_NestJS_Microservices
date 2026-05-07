@@ -48,7 +48,7 @@ export function UserAppLayout({ children }: { children: React.ReactNode }) {
     <PrivateShellLayout
       items={userSidebarItems}
       logoTitle="Bún Đậu"
-      logoSubtitle="User Portal"
+      logoSubtitle="User"
     >
       {children}
     </PrivateShellLayout>

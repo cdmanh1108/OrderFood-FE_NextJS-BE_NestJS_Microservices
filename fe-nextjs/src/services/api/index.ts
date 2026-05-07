@@ -6,6 +6,8 @@ export * from "./health.api";
 export * from "./media.api";
 export * from "./menu-item.api";
 export * from "./staff-user.api";
+export * from "./delivery-shipper.api";
+export * from "./delivery-task.api";
 export * from "./order.api";
 export * from "./checkout.api";
 export * from "./payment.api";

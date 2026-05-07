@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Loader2, MapPin, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/app/components/shared/Button";
 import { Input } from "@/app/components/shared/Input";
+import { ConfirmDialog } from "@/app/components/shared/ConfirmDialog";
 import { useAuth } from "@/contexts/auth-context";
-import { addressApi } from "@/services/api";
+import { addressApi, authApi } from "@/services/api";
 import { useUI } from "@/contexts/ui-context";
 import type {
   AddressApiModel,
@@ -98,6 +99,13 @@ export default function CustomerProfilePage() {
     useState<AddressFormValues>(INITIAL_ADDRESS_FORM);
   const [isAddressSubmitting, setIsAddressSubmitting] = useState(false);
   const [workingAddressId, setWorkingAddressId] = useState<string | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    addressId: string | null;
+  }>({
+    isOpen: false,
+    addressId: null,
+  });
 
   useEffect(() => {
     setProfileDraft({
@@ -221,16 +229,20 @@ export default function CustomerProfilePage() {
     }
   };
 
-  const handleDeleteAddress = async (addressId: string) => {
-    const confirmed = window.confirm("Bạn có chắc muốn xóa địa chỉ này?");
-    if (!confirmed) return;
+  const confirmDeleteAddress = (addressId: string) => {
+    setDeleteDialog({ isOpen: true, addressId });
+  };
 
-    setWorkingAddressId(addressId);
+  const handleDeleteAddress = async () => {
+    if (!deleteDialog.addressId) return;
+
+    setWorkingAddressId(deleteDialog.addressId);
 
     try {
-      await addressApi.delete(addressId);
+      await addressApi.delete(deleteDialog.addressId);
       await loadAddresses();
       setSuccess("Đã xóa địa chỉ");
+      setDeleteDialog({ isOpen: false, addressId: null });
     } catch (error) {
       setErrorStatus(
         error instanceof Error ? error.message : "Không thể xóa địa chỉ",
@@ -240,9 +252,19 @@ export default function CustomerProfilePage() {
     }
   };
 
-  const handleSaveProfileDraft = () => {
-    setIsEditingProfile(false);
-    setSuccess("Thông tin cá nhân chưa kết nối API");
+  const handleSaveProfileDraft = async () => {
+    try {
+      await authApi.updateProfile({
+        fullName: profileDraft.name,
+        phoneNumber: profileDraft.phone,
+      });
+      setIsEditingProfile(false);
+      setSuccess("Cập nhật thông tin thành công");
+    } catch (error) {
+      setErrorStatus(
+        error instanceof Error ? error.message : "Không thể cập nhật thông tin",
+      );
+    }
   };
 
   return (
@@ -509,11 +531,10 @@ export default function CustomerProfilePage() {
               {addresses.map((address) => (
                 <div
                   key={address.id}
-                  className={`rounded-3xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                    address.isDefault
-                      ? "border-brand-amber bg-brand-beige/40"
-                      : "border-gray-100 bg-white hover:border-brand-amber/40"
-                  }`}
+                  className={`rounded-3xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${address.isDefault
+                    ? "border-brand-amber bg-brand-beige/40"
+                    : "border-gray-100 bg-white hover:border-brand-amber/40"
+                    }`}
                 >
                   <div className="mb-3 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-3">
@@ -551,7 +572,7 @@ export default function CustomerProfilePage() {
                         variant="ghost"
                         className="text-red-600 hover:bg-red-50 hover:text-red-700"
                         isLoading={workingAddressId === address.id}
-                        onClick={() => void handleDeleteAddress(address.id)}
+                        onClick={() => confirmDeleteAddress(address.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -588,6 +609,18 @@ export default function CustomerProfilePage() {
           )}
         </section>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => setDeleteDialog({ isOpen: false, addressId: null })}
+        onConfirm={() => void handleDeleteAddress()}
+        title="Xóa địa chỉ"
+        message="Bạn có chắc chắn muốn xóa địa chỉ này không? Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={workingAddressId === deleteDialog.addressId}
+      />
     </main>
   );
 }

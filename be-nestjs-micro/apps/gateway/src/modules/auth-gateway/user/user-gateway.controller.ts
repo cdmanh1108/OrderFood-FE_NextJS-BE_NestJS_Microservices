@@ -40,6 +40,7 @@ export class UserGatewayController {
       fullName: dto.fullName,
       phoneNumber: dto.phoneNumber,
       password: dto.password,
+      role: dto.role,
     });
   }
 
@@ -80,6 +81,7 @@ export class UserGatewayController {
       fullName: dto.fullName,
       phoneNumber: dto.phoneNumber,
       password: dto.password,
+      role: dto.role,
     });
   }
 

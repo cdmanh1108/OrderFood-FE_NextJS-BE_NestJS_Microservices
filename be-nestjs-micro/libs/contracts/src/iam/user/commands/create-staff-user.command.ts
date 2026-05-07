@@ -6,4 +6,5 @@ export interface CreateStaffUserCommand {
   fullName: string;
   phoneNumber: string;
   password: string;
+  role?: UserRole;
 }

@@ -41,7 +41,6 @@ export class ProofService {
       data: {
         taskId: command.taskId,
         mediaFileId: command.mediaFileId,
-        imageUrl: command.imageUrl,
         note: command.note,
       },
     });
@@ -61,7 +60,6 @@ export class ProofService {
     id: string;
     taskId: string;
     mediaFileId: string;
-    imageUrl: string;
     note: string | null;
     submittedAt: Date;
   }): DeliveryProofResult {
@@ -69,7 +67,6 @@ export class ProofService {
       id: proof.id,
       taskId: proof.taskId,
       mediaFileId: proof.mediaFileId,
-      imageUrl: proof.imageUrl,
       note: proof.note,
       submittedAt: proof.submittedAt,
     };

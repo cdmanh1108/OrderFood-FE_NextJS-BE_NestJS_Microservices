@@ -10,6 +10,11 @@ import type {
 } from "@/types/api";
 import { httpService } from "../http/http-client";
 
+export interface UserOrderStatsResult {
+  totalOrders: number;
+  totalSpent: number;
+}
+
 const ORDER_ENDPOINT = "/ordering/orders";
 
 export const orderApi = {
@@ -21,6 +26,10 @@ export const orderApi = {
 
   getById(id: string): Promise<OrderApiModel> {
     return httpService.get<OrderApiModel>(`${ORDER_ENDPOINT}/${id}`);
+  },
+
+  getStats(): Promise<UserOrderStatsResult> {
+    return httpService.get<UserOrderStatsResult>(`${ORDER_ENDPOINT}/stats/me`);
   },
 
   listAdmin(query?: ListOrdersRequest): Promise<PaginatedOrdersResponse> {

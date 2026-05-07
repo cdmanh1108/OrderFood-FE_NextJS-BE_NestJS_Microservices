@@ -14,6 +14,8 @@ export const IAM_PATTERNS = {
   GET_STAFF_USER_DETAIL: 'iam.user.staff.get_detail',
   UPDATE_STAFF_USER: 'iam.user.staff.update',
   DELETE_STAFF_USER: 'iam.user.staff.delete',
+  GET_USER_PROFILE: 'iam.user.profile.get',
+  UPDATE_USER_PROFILE: 'iam.user.profile.update',
 } as const;
 
 // ======================
@@ -75,6 +77,7 @@ export const ORDERING_PATTERNS = {
   DELETE_ORDER: 'ordering.order.delete',
   MARK_SESSION_ORDERS_PAID: 'ordering.order.mark_session_paid',
   ORDER_READY_FOR_DELIVERY: 'ordering.order.ready_for_delivery',
+  GET_USER_ORDER_STATS: 'ordering.order.get_user_stats',
 } as const;
 
 // ======================

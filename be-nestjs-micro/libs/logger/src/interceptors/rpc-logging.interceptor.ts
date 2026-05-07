@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable, catchError, tap, throwError } from 'rxjs';
 import { AppLoggerService } from '../logger.service';
+import { maskSensitiveData } from '../utils/mask-sensitive.util';
 
 @Injectable()
 export class RpcLoggingInterceptor implements NestInterceptor {
@@ -31,7 +32,7 @@ export class RpcLoggingInterceptor implements NestInterceptor {
         requestId,
         controller: className,
         handler: handlerName,
-        payload: data,
+        payload: maskSensitiveData(data),
       },
     );
 

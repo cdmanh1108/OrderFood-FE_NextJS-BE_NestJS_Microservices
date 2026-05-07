@@ -21,7 +21,7 @@ import type { DeleteTableResult } from '@app/contracts/dinein/table/results/dele
 
 @Injectable()
 export class TableService {
-  constructor(private readonly prisma: DineinPrismaService) {}
+  constructor(private readonly prisma: DineinPrismaService) { }
 
   async create(command: CreateTableCommand): Promise<TableDetailResult> {
     const existing = await this.prisma.table.findUnique({
@@ -40,11 +40,20 @@ export class TableService {
         number: command.number,
         seats: command.seats,
         note: command.note,
-        qrCode: command.qrCode,
+        qrCode: command.qrCode, // Or we leave it empty if we don't save to db
       },
     });
 
-    return this.mapToResult(table);
+    const appOrigin = process.env.APP_ORIGIN || 'http://localhost:5000';
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(
+      `${appOrigin}/tables/${table.id}`,
+    )}`;
+
+    const result = this.mapToResult(table);
+    // Overwrite qrCode with the generated URL just for this response
+    result.qrCode = qrCodeUrl;
+
+    return result;
   }
 
   async update(command: UpdateTableCommand): Promise<TableDetailResult> {

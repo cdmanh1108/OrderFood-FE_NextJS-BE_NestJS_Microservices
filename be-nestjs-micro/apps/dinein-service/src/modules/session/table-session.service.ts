@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DineinPrismaService } from '@app/database/dinein-prisma.service';
 import { ERRORS } from '@app/common/constants/error-code.constant';
 import { AppRpcException } from '@app/common/exceptions/app-rpc.exception';
@@ -10,8 +10,13 @@ import {
   TableStatus as PrismaTableStatus,
 } from 'generated/dinein';
 
+import { catchError, firstValueFrom, throwError } from 'rxjs';
+import { ClientProxy } from '@nestjs/microservices';
+import { RMQ_SERVICES } from '@app/messaging/constants/services.constants';
+import { ORDERING_PATTERNS } from '@app/messaging/constants/patterns.constant';
 import type { JoinOrCreateSessionCommand } from '@app/contracts/dinein/session/commands/join-or-create-session.command';
 import type { CloseSessionCommand } from '@app/contracts/dinein/session/commands/close-session.command';
+import type { MarkSessionOrdersPaidCommand } from '@app/contracts/ordering/order/commands/mark-session-orders-paid.command';
 import type { TableSessionDetailResult } from '@app/contracts/dinein/session/results/table-session-detail.result';
 
 type SessionWithTable = Prisma.TableSessionGetPayload<{
@@ -20,7 +25,10 @@ type SessionWithTable = Prisma.TableSessionGetPayload<{
 
 @Injectable()
 export class TableSessionService {
-  constructor(private readonly prisma: DineinPrismaService) {}
+  constructor(
+    private readonly prisma: DineinPrismaService,
+    @Inject(RMQ_SERVICES.ORDERING) private readonly orderingClient: ClientProxy,
+  ) { }
 
   async joinOrCreate(
     command: JoinOrCreateSessionCommand,
@@ -143,6 +151,24 @@ export class TableSessionService {
         data: { status: PrismaTableStatus.AVAILABLE },
       }),
     ]);
+
+    // Ensure orders are updated before returning
+    await firstValueFrom(
+      this.orderingClient
+        .send<{ updatedCount: number }, MarkSessionOrdersPaidCommand>(
+          ORDERING_PATTERNS.MARK_SESSION_ORDERS_PAID,
+          {
+            tableSessionId: command.id,
+            paymentMethod: command.paymentMethod,
+          },
+        )
+        .pipe(
+          catchError((err) => {
+            console.error('Failed to mark session orders paid:', err);
+            return throwError(() => err);
+          }),
+        ),
+    ).catch(() => null); // Silently catch if order service is down, or we can throw
 
     return this.mapToResult(closed);
   }

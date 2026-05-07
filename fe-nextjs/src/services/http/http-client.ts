@@ -62,8 +62,9 @@ httpClient.interceptors.response.use(
     }
 
     return Promise.reject(
-      new ApiClientError(error.message || "Network request failed", {
+      new ApiClientError("Lỗi kết nối, vui lòng thử lại", {
         status,
+        code: error.code || "NETWORK_ERROR",
       }),
     );
   },

@@ -13,6 +13,8 @@ import { GetStaffUserDetailQuery } from '@app/contracts/iam/user/commands/get-st
 import { UpdateStaffUserCommand } from '@app/contracts/iam/user/commands/update-staff-user.command';
 import { DeleteStaffUserCommand } from '@app/contracts/iam/user/commands/delete-staff-user.command';
 import { DeleteStaffUserResult } from '@app/contracts/iam/user/results/delete-staff-user.result';
+import { UpdateUserProfileCommand } from '@app/contracts/iam/user/commands/update-user-profile.command';
+import { GetUserProfileQuery } from '@app/contracts/iam/user/commands/get-user-profile.query';
 
 @Injectable()
 export class UserService {
@@ -44,9 +46,11 @@ export class UserService {
       role:
         user.role === PrismaUserRole.ADMIN
           ? UserRole.ADMIN
-          : user.role === PrismaUserRole.STAFF
-            ? UserRole.STAFF
-            : UserRole.USER,
+          : user.role === PrismaUserRole.SHIPPER
+            ? UserRole.SHIPPER
+            : user.role === PrismaUserRole.STAFF
+              ? UserRole.STAFF
+              : UserRole.USER,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -87,7 +91,8 @@ export class UserService {
         fullName: command.fullName,
         phoneNumber: command.phoneNumber,
         password: hashedPassword,
-        role: PrismaUserRole.STAFF,
+        role: command.role === UserRole.SHIPPER ? PrismaUserRole.SHIPPER : PrismaUserRole.STAFF,
+        isEmailVerified: true,
       },
       select: {
         id: true,
@@ -116,7 +121,7 @@ export class UserService {
 
     const where = keyword
       ? {
-        role: PrismaUserRole.STAFF,
+        role: { in: [PrismaUserRole.STAFF, PrismaUserRole.SHIPPER] },
         OR: [
           { email: { contains: keyword, mode: 'insensitive' as const } },
           { fullName: { contains: keyword, mode: 'insensitive' as const } },
@@ -125,7 +130,7 @@ export class UserService {
           },
         ],
       }
-      : { role: PrismaUserRole.STAFF };
+      : { role: { in: [PrismaUserRole.STAFF, PrismaUserRole.SHIPPER] } };
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
@@ -161,7 +166,7 @@ export class UserService {
     this.ensureAdmin(query.actorRole);
 
     const staffUser = await this.prisma.user.findFirst({
-      where: { id: query.id, role: PrismaUserRole.STAFF },
+      where: { id: query.id, role: { in: [PrismaUserRole.STAFF, PrismaUserRole.SHIPPER] } },
       select: {
         id: true,
         email: true,
@@ -189,7 +194,7 @@ export class UserService {
     this.ensureAdmin(command.actorRole);
 
     const currentStaff = await this.prisma.user.findFirst({
-      where: { id: command.id, role: PrismaUserRole.STAFF },
+      where: { id: command.id, role: { in: [PrismaUserRole.STAFF, PrismaUserRole.SHIPPER] } },
       select: {
         id: true,
         email: true,
@@ -243,6 +248,7 @@ export class UserService {
       fullName?: string;
       phoneNumber?: string;
       password?: string;
+      role?: PrismaUserRole;
     } = {};
 
     if (command.email !== undefined) {
@@ -256,6 +262,9 @@ export class UserService {
     }
     if (command.password !== undefined) {
       updateData.password = await bcrypt.hash(command.password, 10);
+    }
+    if (command.role !== undefined) {
+      updateData.role = command.role === UserRole.SHIPPER ? PrismaUserRole.SHIPPER : PrismaUserRole.STAFF;
     }
 
     const updatedUser = await this.prisma.user.update({
@@ -281,7 +290,7 @@ export class UserService {
     this.ensureAdmin(command.actorRole);
 
     const currentStaff = await this.prisma.user.findFirst({
-      where: { id: command.id, role: PrismaUserRole.STAFF },
+      where: { id: command.id, role: { in: [PrismaUserRole.STAFF, PrismaUserRole.SHIPPER] } },
       select: { id: true },
     });
 
@@ -300,5 +309,93 @@ export class UserService {
       id: command.id,
       deleted: true,
     };
+  }
+
+  async updateUserProfile(command: UpdateUserProfileCommand) {
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: command.id },
+      select: {
+        id: true,
+        email: true,
+        phoneNumber: true,
+      },
+    });
+
+    if (!currentUser) {
+      throw new AppRpcException({
+        code: ERRORS.USER_NOT_FOUND.code,
+        message: ERRORS.USER_NOT_FOUND.message,
+      });
+    }
+
+    if (
+      command.phoneNumber &&
+      command.phoneNumber !== (currentUser.phoneNumber ?? undefined)
+    ) {
+      const existedPhone = await this.prisma.user.findFirst({
+        where: {
+          phoneNumber: command.phoneNumber,
+          NOT: { id: command.id },
+        },
+      });
+      if (existedPhone) {
+        throw new AppRpcException({
+          code: ERRORS.USER_PHONE_ALREADY_EXISTS.code,
+          message: ERRORS.USER_PHONE_ALREADY_EXISTS.message,
+        });
+      }
+    }
+
+    const updateData: {
+      fullName?: string;
+      phoneNumber?: string;
+    } = {};
+
+    if (command.fullName !== undefined) {
+      updateData.fullName = command.fullName;
+    }
+    if (command.phoneNumber !== undefined) {
+      updateData.phoneNumber = command.phoneNumber;
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: command.id },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return this.mapStaffUserResult(updatedUser);
+  }
+
+  async getUserProfile(query: GetUserProfileQuery) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: query.id },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new AppRpcException({
+        code: ERRORS.USER_NOT_FOUND.code,
+        message: ERRORS.USER_NOT_FOUND.message,
+      });
+    }
+
+    return this.mapStaffUserResult(user);
   }
 }

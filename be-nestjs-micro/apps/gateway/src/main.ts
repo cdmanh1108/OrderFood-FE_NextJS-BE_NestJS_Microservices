@@ -26,7 +26,7 @@ async function bootstrap() {
     new ResponseInterceptor(),
   );
 
-  const appOrigin = process.env.APP_ORIGIN ?? "http://localhost:3000";
+  const appOrigin = process.env.APP_ORIGIN ?? "http://localhost:5000";
 
   app.enableCors({
     origin(origin, callback) {

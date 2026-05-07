@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   Settings,
   CalendarCheck,
+  Bike,
 } from "lucide-react";
 import { PrivateShellLayout, type SidebarItem } from "./PrivateShellLayout";
 
@@ -22,6 +23,11 @@ const adminSidebarItems: SidebarItem[] = [
     label: "Nhân viên",
     path: "/admin/staff",
     icon: Users,
+  },
+  {
+    label: "Giao hàng",
+    path: "/admin/shippers",
+    icon: Bike,
   },
   {
     label: "Danh mục",
@@ -38,11 +44,11 @@ const adminSidebarItems: SidebarItem[] = [
     path: "/admin/tables",
     icon: Table,
   },
-  {
-    label: "Đặt bàn",
-    path: "/admin/reservations",
-    icon: CalendarCheck,
-  },
+  // {
+  //   label: "Đặt bàn",
+  //   path: "/admin/reservations",
+  //   icon: CalendarCheck,
+  // },
   {
     label: "Đơn hàng",
     path: "/admin/orders",
@@ -64,7 +70,7 @@ export function AdminStaffAppLayout({
     <PrivateShellLayout
       items={adminSidebarItems}
       logoTitle="Bún Đậu"
-      logoSubtitle="Admin Portal"
+      logoSubtitle="Admin"
     >
       {children}
     </PrivateShellLayout>

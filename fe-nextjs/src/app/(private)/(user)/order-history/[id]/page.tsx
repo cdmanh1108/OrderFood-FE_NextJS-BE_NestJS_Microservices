@@ -24,6 +24,7 @@ import type {
   PaymentStatus,
 } from "@/types/api";
 import { formatCurrency } from "@/utils/cn";
+import Link from "next/link";
 
 const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   DRAFT: "Nháp",
@@ -308,9 +309,8 @@ export default function CustomerOrderDetailPage() {
                   </div>
 
                   <span
-                    className={`w-fit rounded-full px-4 py-2 text-sm font-bold ${
-                      ORDER_STATUS_CLASS[order.status]
-                    }`}
+                    className={`w-fit rounded-full px-4 py-2 text-sm font-bold ${ORDER_STATUS_CLASS[order.status]
+                      }`}
                   >
                     {ORDER_STATUS_LABEL[order.status]}
                   </span>
@@ -422,11 +422,10 @@ export default function CustomerOrderDetailPage() {
                       return (
                         <div key={step.label} className="flex gap-3">
                           <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-                              step.active
-                                ? "bg-brand-amber text-white"
-                                : "bg-gray-100 text-gray-400"
-                            }`}
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${step.active
+                              ? "bg-brand-amber text-white"
+                              : "bg-gray-100 text-gray-400"
+                              }`}
                           >
                             <Icon className="h-5 w-5" />
                           </div>
@@ -458,6 +457,18 @@ export default function CustomerOrderDetailPage() {
                       </div>
                     )}
                   </div>
+
+                  {order.channel === "ONLINE" && order.status !== "CANCELED" && order.status !== "DRAFT" && (
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                      <Link
+                        href={`/order-history/${order.id}/tracking`}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-amber py-3 text-sm font-bold text-white transition hover:bg-brand-brown shadow-sm"
+                      >
+                        <MapPin className="h-4 w-4" />
+                        Theo dõi Giao hàng
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
 

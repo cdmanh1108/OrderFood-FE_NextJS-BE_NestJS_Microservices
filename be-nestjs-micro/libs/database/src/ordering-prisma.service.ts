@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from 'generated/ordering';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { createPrismaPool } from './prisma-pool.util';
 
 @Injectable()
 export class OrderingPrismaService
@@ -16,12 +17,7 @@ export class OrderingPrismaService
       throw new Error('ORDERING_DATABASE_URL is not defined');
     }
 
-    const pool = new Pool({
-      connectionString,
-      ssl: {
-        rejectUnauthorized: false,
-      },
-    });
+    const pool = createPrismaPool(connectionString);
 
     super({
       adapter: new PrismaPg(pool),

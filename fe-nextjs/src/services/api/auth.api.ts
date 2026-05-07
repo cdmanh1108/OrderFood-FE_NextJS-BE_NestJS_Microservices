@@ -41,8 +41,12 @@ export const authApi = {
   logout(): Promise<{ loggedOut: boolean }> {
     return httpService.post<{ loggedOut: boolean }>(
       `${AUTH_ENDPOINT}/logout`,
-      undefined,
+      {},
       { skipAuth: true },
     );
+  },
+
+  updateProfile(payload: Partial<AuthUser>): Promise<AuthUser> {
+    return httpService.patch<AuthUser>(`${AUTH_ENDPOINT}/me`, payload);
   },
 };

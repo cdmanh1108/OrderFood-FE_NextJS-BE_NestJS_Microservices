@@ -40,6 +40,7 @@ export default function OrdersPage() {
   const { setSuccess, setError: setErrorStatus } = useUI();
   const [orders, setOrders] = useState<OrderApiModel[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"ONLINE" | "DINE_IN">("ONLINE");
   const [isLoading, setIsLoading] = useState(true);
   const [statusModal, setStatusModal] = useState<{
     isOpen: boolean;
@@ -88,10 +89,11 @@ export default function OrdersPage() {
 
   const filteredOrders = orders.filter(
     (order) =>
-      order.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.shippingAddress?.receiverName
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()),
+      order.channel === activeTab &&
+      (order.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.shippingAddress?.receiverName
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase())),
   );
 
   const getOrderStatusBadge = (status: OrderStatus) => {
@@ -303,12 +305,42 @@ export default function OrdersPage() {
       </div>
 
       <div className="bg-white rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-4">
-        <Input
-          placeholder="Tìm kiếm theo mã đơn hoặc tên khách hàng..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          leftIcon={<Search size={18} />}
-        />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div className="flex gap-2 p-1 bg-brand-beige/30 rounded-xl w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setActiveTab("ONLINE")}
+              className={`flex-1 sm:flex-none px-6 py-2 rounded-lg font-medium text-sm transition-colors ${
+                activeTab === "ONLINE"
+                  ? "bg-white text-brand-brown shadow-sm"
+                  : "text-brand-gray-600 hover:text-brand-brown hover:bg-white/50"
+              }`}
+            >
+              Đặt Giao Hàng
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("DINE_IN")}
+              className={`flex-1 sm:flex-none px-6 py-2 rounded-lg font-medium text-sm transition-colors ${
+                activeTab === "DINE_IN"
+                  ? "bg-white text-brand-brown shadow-sm"
+                  : "text-brand-gray-600 hover:text-brand-brown hover:bg-white/50"
+              }`}
+            >
+              Tại Quán
+            </button>
+          </div>
+          
+          <div className="w-full sm:w-72">
+            <Input
+              placeholder="Tìm theo mã đơn hoặc tên..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              leftIcon={<Search size={18} />}
+            />
+          </div>
+        </div>
+
       </div>
 
       {isLoading ? (

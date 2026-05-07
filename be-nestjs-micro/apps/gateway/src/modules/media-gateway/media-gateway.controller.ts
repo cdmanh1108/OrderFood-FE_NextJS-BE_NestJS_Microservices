@@ -11,7 +11,7 @@ export class MediaGatewayController {
 
   @Post('upload-url')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'STAFF')
+  @Roles('ADMIN', 'STAFF', 'SHIPPER')
   createUploadUrl(
     @Body() dto: CreateUploadUrlRequestDto,
   ): Promise<UploadUrlResponseDto> {

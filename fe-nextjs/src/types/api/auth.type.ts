@@ -2,6 +2,7 @@ export interface AuthUser {
   id: string;
   email: string;
   fullName: string;
+  phoneNumber?: string;
   role: "ADMIN" | "STAFF" | "USER";
   isEmailVerified: boolean;
 }

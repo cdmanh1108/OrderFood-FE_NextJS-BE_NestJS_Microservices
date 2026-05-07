@@ -8,6 +8,7 @@ import { Request, Response } from 'express';
 import { Observable, catchError, tap, throwError } from 'rxjs';
 import { AppLoggerService } from '../logger.service';
 import { getOrCreateRequestId } from '../utils/request-context.util';
+import { maskSensitiveData } from '../utils/mask-sensitive.util';
 
 @Injectable()
 export class HttpLoggingInterceptor implements NestInterceptor {
@@ -34,9 +35,9 @@ export class HttpLoggingInterceptor implements NestInterceptor {
         method,
         url: originalUrl,
         ip,
-        params,
-        query,
-        body,
+        params: maskSensitiveData(params),
+        query: maskSensitiveData(query),
+        body: maskSensitiveData(body),
       },
     );
 

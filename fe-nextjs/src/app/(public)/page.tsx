@@ -86,7 +86,7 @@ export default async function HomePage() {
               </p>
             </div>
 
-            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-3xl bg-brand-brown shadow-lg" />
+            {/* <div className="absolute -right-4 -top-4 h-24 w-24 rounded-3xl bg-brand-brown shadow-lg" /> */}
           </div>
         </div>
       </section>
@@ -184,7 +184,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-6">
             {categories.map((category) => (
               <Link
                 key={category.id}
@@ -229,7 +229,7 @@ export default async function HomePage() {
               {
                 icon: MapPin,
                 title: "Địa Chỉ",
-                text: "123 Phố Huế, Hai Bà Trưng,\nHà Nội",
+                text: "80/27 đường số 4, Bình Thọ, Thủ Đức,\nHồ Chí Minh",
               },
               {
                 icon: Phone,

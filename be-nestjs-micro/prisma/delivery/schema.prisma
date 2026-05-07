@@ -123,8 +123,7 @@ model DeliveryProof {
     taskId      String      @unique @db.Uuid
     task        DeliveryTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-    mediaFileId String  @db.VarChar(36) // ID từ media-service
-    imageUrl    String  @db.VarChar(500)
+    mediaFileId String  @db.VarChar(255) // ID từ media-service
     note        String? @db.VarChar(500)
 
     submittedAt DateTime @default(now())

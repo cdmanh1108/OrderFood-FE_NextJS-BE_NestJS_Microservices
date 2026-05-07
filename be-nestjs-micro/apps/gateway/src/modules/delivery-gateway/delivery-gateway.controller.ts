@@ -82,12 +82,14 @@ export class DeliveryGatewayController {
   @Roles('ADMIN', 'STAFF')
   async listTasks(
     @Query('shipperId') shipperId?: string,
+    @Query('orderId') orderId?: string,
     @Query('status') status?: DeliveryTaskStatus,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     return this.deliveryService.listTasks({
       shipperId,
+      orderId,
       status,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 20,
@@ -119,6 +121,12 @@ export class DeliveryGatewayController {
     return this.deliveryService.getTaskDetail(id);
   }
 
+  @Get('order-tasks/:orderId')
+  async getTaskByOrderId(@Param('orderId') orderId: string) {
+    const res = await this.deliveryService.listTasks({ orderId, limit: 1 });
+    return res.items[0] || null;
+  }
+
   @Patch('tasks/:id/status')
   @Roles('SHIPPER', 'ADMIN', 'STAFF')
   async updateTaskStatus(
@@ -126,12 +134,18 @@ export class DeliveryGatewayController {
     @Body() dto: UpdateTaskStatusDto,
     @CurrentUser() user: any,
   ) {
-    return this.deliveryService.updateTaskStatus({
+    const updatedTask = await this.deliveryService.updateTaskStatus({
       taskId: id,
       status: dto.status,
       note: dto.note,
       changedBy: user.sub,
     });
+
+    if (updatedTask.orderId) {
+      await this.deliveryService.syncOrderStatus(updatedTask.orderId, dto.status);
+    }
+
+    return updatedTask;
   }
 
   @Post('tasks/:id/cancel')
@@ -153,7 +167,7 @@ export class DeliveryGatewayController {
   }
 
   @Get('shippers/:id/location')
-  @Roles('ADMIN', 'STAFF')
+  @Roles('ADMIN', 'STAFF', 'USER')
   async getShipperLocation(@Param('id') id: string) {
     return this.deliveryService.getCurrentLocation({ shipperId: id });
   }

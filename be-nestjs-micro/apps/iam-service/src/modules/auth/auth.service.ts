@@ -26,6 +26,8 @@ function normalizeUserRole(role: string): UserRole {
       return UserRole.ADMIN;
     case UserRole.STAFF:
       return UserRole.STAFF;
+    case UserRole.SHIPPER:
+      return UserRole.SHIPPER;
     case UserRole.USER:
     default:
       return UserRole.USER;
@@ -217,6 +219,8 @@ export class AuthService {
         id: true,
         email: true,
         fullName: true,
+        role: true,
+        isEmailVerified: true,
       },
     });
 

@@ -13,6 +13,8 @@ import type { ListStaffUsersQuery } from '@app/contracts/iam/user/commands/list-
 import type { GetStaffUserDetailQuery } from '@app/contracts/iam/user/commands/get-staff-user-detail.query';
 import type { UpdateStaffUserCommand } from '@app/contracts/iam/user/commands/update-staff-user.command';
 import type { DeleteStaffUserCommand } from '@app/contracts/iam/user/commands/delete-staff-user.command';
+import type { UpdateUserProfileCommand } from '@app/contracts/iam/user/commands/update-user-profile.command';
+import type { GetUserProfileQuery } from '@app/contracts/iam/user/commands/get-user-profile.query';
 
 @Controller()
 export class UserController {
@@ -58,6 +60,26 @@ export class UserController {
   ) {
     return handleRpcMessage(context, () =>
       this.userService.deleteStaff(command),
+    );
+  }
+
+  @MessagePattern(IAM_PATTERNS.UPDATE_USER_PROFILE)
+  updateUserProfile(
+    @Payload() command: UpdateUserProfileCommand,
+    @Ctx() context: RmqContext,
+  ) {
+    return handleRpcMessage(context, () =>
+      this.userService.updateUserProfile(command),
+    );
+  }
+
+  @MessagePattern(IAM_PATTERNS.GET_USER_PROFILE)
+  getUserProfile(
+    @Payload() query: GetUserProfileQuery,
+    @Ctx() context: RmqContext,
+  ) {
+    return handleRpcMessage(context, () =>
+      this.userService.getUserProfile(query),
     );
   }
 }

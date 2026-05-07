@@ -5,7 +5,6 @@ export interface DeliveryProofResult {
   id: string;
   taskId: string;
   mediaFileId: string;
-  imageUrl: string;
   note: string | null;
   submittedAt: Date;
 }

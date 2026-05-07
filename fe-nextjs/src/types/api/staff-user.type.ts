@@ -1,4 +1,4 @@
-export type IamUserRole = "ADMIN" | "STAFF" | "USER";
+export type IamUserRole = "ADMIN" | "STAFF" | "USER" | "SHIPPER";
 
 export interface StaffUserApiModel {
   id: string;
@@ -15,6 +15,7 @@ export interface CreateStaffUserRequest {
   fullName: string;
   phoneNumber: string;
   password: string;
+  role?: IamUserRole;
 }
 
 export interface UpdateStaffUserRequest {
@@ -22,6 +23,7 @@ export interface UpdateStaffUserRequest {
   fullName?: string;
   phoneNumber?: string;
   password?: string;
+  role?: IamUserRole;
 }
 
 export interface ListStaffUsersQuery {
