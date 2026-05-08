@@ -33,6 +33,13 @@ Hệ thống sử dụng cơ sở dữ liệu phân tán, mỗi dịch vụ sở
 
 ### 1. Dành cho Khách hàng (User)
 - **Đặt món tại bàn (Dine-in)**: Quét mã QR tại bàn để xem thực đơn và đặt món trực tiếp.
+  
+  
+  | ![QR Vào Bàn](https://res.cloudinary.com/mysocialmediaweb/image/upload/v1778221846/weatherforecast_user_avatar/nqkznxqzct5rpu0ytgds.png) | ![QR Đặt Món](https://res.cloudinary.com/mysocialmediaweb/image/upload/v1778221913/weatherforecast_user_avatar/ud2vb53cmxekunkpw16s.png) |
+  | :---: | :---: |
+  | *QR Vào Bàn* | *QR Đặt Món* |
+
+
 - **Đặt món giao hàng (Online)**: Tìm kiếm món ăn, quản lý giỏ hàng và đặt hàng về địa chỉ cá nhân.
 - **Dashboard cá nhân**: Theo dõi tổng đơn hàng, tổng chi tiêu và lịch sử 5 đơn hàng gần nhất theo thời gian thực.
 - **Hỗ trợ khách hàng**: Hệ thống gửi yêu cầu hỗ trợ và nhận thông báo.
