@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, LogIn, UserPlus } from "lucide-react";
 import { cn } from "../../../utils/cn";
 import { Button } from "../shared/Button";
 
@@ -83,21 +83,19 @@ export function PublicHeader({ cartItemsCount = 0 }: PublicHeaderProps) {
               )}
             </Link>
             <Link href="/login">
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden sm:inline-flex"
-              >
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex">
                 Đăng Nhập
+              </Button>
+              <Button variant="outline" size="sm" className="sm:hidden px-2" aria-label="Đăng Nhập">
+                <LogIn size={18} />
               </Button>
             </Link>
             <Link href="/signup">
-              <Button
-                variant="primary"
-                size="sm"
-                className="hidden sm:inline-flex"
-              >
+              <Button variant="primary" size="sm" className="hidden sm:inline-flex">
                 Đăng Ký
+              </Button>
+              <Button variant="primary" size="sm" className="sm:hidden px-2" aria-label="Đăng Ký">
+                <UserPlus size={18} />
               </Button>
             </Link>
           </div>
