@@ -1,19 +1,17 @@
 import type { NextConfig } from "next";
 
+const imageHosts = process.env.NEXT_PUBLIC_IMAGE_HOSTS
+  ?.split(",")
+  .map((host) => host.trim())
+  .filter(Boolean) ?? [];
+
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "order-food-media.s3.ap-southeast-1.amazonaws.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "d3j0s5326wg516.cloudfront.net",
-        pathname: "/**",
-      },
-    ],
+    remotePatterns: imageHosts.map((hostname) => ({
+      protocol: "https" as const,
+      hostname,
+      pathname: "/**",
+    })),
   },
 };
 
