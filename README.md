@@ -35,7 +35,7 @@ Hệ thống sử dụng cơ sở dữ liệu phân tán, mỗi dịch vụ sở
 - **Đặt món tại bàn (Dine-in)**: Quét mã QR tại bàn để xem thực đơn và đặt món trực tiếp.
   
   
-  | ![Tưởng tượng bạn đến quán, ngồi vào bàn và quét QR trên bàn](https://res.cloudinary.com/mysocialmediaweb/image/upload/v1778221846/weatherforecast_user_avatar/nqkznxqzct5rpu0ytgds.png) | ![QR Vào Bàn](https://res.cloudinary.com/mysocialmediaweb/image/upload/v1778221913/weatherforecast_user_avatar/ud2vb53cmxekunkpw16s.png) |
+  | ![Tưởng tượng bạn đến quán, ngồi vào bàn và quét QR trên bàn](https://res.cloudinary.com/mysocialmediaweb/image/upload/v1778830374/weatherforecast_user_avatar/btb9a1ifgk2ezuaqpux8.png) | ![QR Vào Bàn](https://res.cloudinary.com/mysocialmediaweb/image/upload/v1778830398/weatherforecast_user_avatar/tllnr03f1rdydugepe9p.png) |
   | :---: | :---: |
   | *Tưởng tượng bạn đến quán, ngồi vào bàn và quét QR trên bàn* | *Đây là QR code trên bàn* |
 
